@@ -1847,6 +1847,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .hqcopy{padding:0 20px 8vh;justify-content:flex-end}     /* copy agrupada perto do rodapé */
     .hqvideo .skicker{font-size:11px;letter-spacing:.26em}
     .hqtitle{font-size:clamp(30px,7.4vw,42px);line-height:1.14;max-width:100%;margin-top:12px}
+    .hqbr{display:none}   /* quebras de linha forcadas so no desktop; no mobile o texto quebra sozinho */
     /* troca a copy "Role para percorrer" (sem sentido no autoplay) via data-m */
     .hqsub{font-size:0;max-width:100%;margin-top:14px}
     .hqsub::after{content:attr(data-m);font-size:14px;line-height:1.6;
@@ -2338,11 +2339,11 @@ window.igRefresh=(function(){
   <div class="hqscrim"></div>
   <div class="hqcopy">
     <span class="skicker">Sede Própria no Brasil</span>
-    <h2 class="hqtitle">Um espaço <em class="hl2">construído</em> para o próximo nível.</h2>
+    <h2 class="hqtitle">Um espaço <br class="hqbr"><em class="hl2">construído</em> para <br class="hqbr">o próximo nível.</h2>
     <!-- "Role para percorrer" saiu: o video agora toca em loop e nao responde mais ao scroll, entao
          a frase mentiria. Passa a usar a mesma copy que o mobile ja usava por este mesmo motivo
          (ver o data-m e o comentario na media query) — as duas ficam iguais de proposito. -->
-    <p class="hqsub" data-m="Projetada para escalar o maior ecossistema sustentável do Brasil.">Projetada para escalar o maior ecossistema sustentável do Brasil.</p>
+    <p class="hqsub" data-m="Projetada para escalar o maior ecossistema sustentável do Brasil.">Projetada para escalar o maior <br class="hqbr">ecossistema sustentável do Brasil.</p>
     <div class="hqbadges">
       <span class="hqbadge"><b>3.000 m²</b> de estrutura própria</span>
       <span class="hqbadge"><b>R. Marfim, 265</b> · Jaraguá, Uberlândia/MG</span>
