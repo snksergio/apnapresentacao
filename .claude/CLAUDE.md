@@ -77,7 +77,7 @@ Há ainda um hook do **git** em `.githooks/pre-commit`, que cobre o commit feito
 
 Na hora do commit roda um segundo verificador, `node .claude/scripts/antes-de-commitar.js`, disparado pelo mesmo hook que pede confirmação de `git commit`. Ele olha o que está no commit e aponta os quatro esquecimentos clássicos desta base: **(1)** alterou o site e não atualizou nenhum mapa em `.claude/mapas/`; **(2)** trocou um número em texto ("N mil") sem tocar no `data-target`/`data-cnum` que anima o mesmo número; **(3)** criou `href="#id"` para um ID que não existe — falha em silêncio; **(4)** o `revisar.js` está com erro. Também **não bloqueia**: se o aviso não se aplica, siga.
 
-Estado atual da base: **0 erros, 111 avisos** (76 imagens com lazy sem dimensões, 24 blends, entre outros). São dívidas conhecidas, não regressões. Não as conserte em massa sem o dono pedir — mas **não crie novas**.
+Estado atual da base: **0 erros, 110 avisos** (75 imagens com lazy sem dimensões, 24 blends, entre outros), medido em 2026-07-30. São dívidas conhecidas, não regressões. Não as conserte em massa sem o dono pedir — mas **não crie novas**.
 
 ## Desempenho é requisito, não enfeite
 
