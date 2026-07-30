@@ -549,14 +549,14 @@
       </div>
       <div class="media rv">
         <figure><picture><source srcset="../assets/img/igreen-conexao-livre.avif" type="image/avif"><source srcset="../assets/img/igreen-conexao-livre.webp" type="image/webp"><img src="../assets/img/igreen-conexao-livre.png" alt="Conexão Livre iGreen" decoding="async"></picture></figure>
-        <div class="chip"><b data-cnum="800" data-prefix="+" data-suffix=" mil">0</b><span>clientes ativos</span></div>
+        <div class="chip"><b data-cnum="800" data-prefix="+" data-suffix=" mil">+800 mil</b><span>clientes ativos</span></div>
       </div>
     </div>
     <div class="stats">
-      <div class="rv"><div class="val" data-target="800" data-prefix="+" data-suffix=" mil">0</div><div class="lbl">Clientes ativos no Brasil</div></div>
-      <div class="rv"><div class="val" data-target="21">0</div><div class="lbl">Estados atendidos</div></div>
-      <div class="rv"><div class="val" data-target="500" data-prefix="+">0</div><div class="lbl">Usinas parceiras</div></div>
-      <div class="rv"><div class="val" data-target="68" data-suffix=" mil t">0</div><div class="lbl">De CO₂ evitado por ano</div></div>
+      <div class="rv"><div class="val" data-target="800" data-prefix="+" data-suffix=" mil">+800 mil</div><div class="lbl">Clientes ativos no Brasil</div></div>
+      <div class="rv"><div class="val" data-target="21">21</div><div class="lbl">Estados atendidos</div></div>
+      <div class="rv"><div class="val" data-target="500" data-prefix="+">+500</div><div class="lbl">Usinas parceiras</div></div>
+      <div class="rv"><div class="val" data-target="68" data-suffix=" mil t">68 mil t</div><div class="lbl">De CO₂ evitado por ano</div></div>
     </div>
   </div>
 </section>
@@ -977,6 +977,18 @@ if(window.matchMedia&&matchMedia("(min-width:1025px)").matches){var pm=document.
     var target=parseFloat(val.getAttribute('data-target')||val.getAttribute('data-cnum'))||0;
     var pre=val.getAttribute('data-prefix')||'', suf=val.getAttribute('data-suffix')||'';
     if (reduce){ val.textContent=pre+fmt(target)+suf; return; }
+    /* O HTML nasce com o numero REAL (ex.: "+800 mil"), nao com "0": quem le a pagina
+       sem executar JS -- robos e leitores de texto -- via todos os numeros zerados.
+       Zeramos aqui, de forma SINCRONA, antes do primeiro quadro da animacao.
+       Por que aqui e NAO junto do reduce acima: com prefers-reduced-motion o CSS deixa
+       .rv em opacity:1 desde o primeiro quadro (~linha 54), entao zerar naquele caminho
+       criaria um piscar visivel -- real, zero, real. O reduce ja escreve o valor final
+       e sai. Neste ponto o .rv ainda esta em opacity:0 e acabou de receber .in no MESMO
+       tick, entao o numero real nunca chega a ser pintado.
+       Escrevemos '0' PURO, e nao pre+fmt(0)+suf, de proposito: e exatamente o texto que
+       este elemento tinha no HTML antes desta mudanca. Assim o estado pre-animacao fica
+       byte a byte igual ao de hoje, e o primeiro quadro da contagem nao muda em nada. */
+    val.textContent='0';
     var t0=null, dur=1300;
     var step=function(ts){ if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
       var e=1-Math.pow(1-p,3); val.textContent=pre+fmt(Math.round(target*e))+suf;

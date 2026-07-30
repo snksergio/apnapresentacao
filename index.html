@@ -38,6 +38,32 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
 <meta name="twitter:description" content="Energia por assinatura com economia, telecom 5G, seguros e renda recorrente. Mais de 800 mil clientes no ecossistema iGreen.">
 <meta name="twitter:image" content="https://apn.igreenenergy.com.br/assets/img/og-igreen.jpg">
 <meta name="twitter:image:alt" content="Logomarca iGreen Energy sobre a sede própria, com jardim vertical iluminado em verde">
+
+<!-- Dados estruturados (schema.org Organization) para o Google: rich results da busca e
+     AI Overviews, que usam o índice tradicional. NÃO é para assistentes de IA citarem o
+     site — isso foi testado à exaustão e schema markup não influencia a resposta deles.
+     Fica escrito aqui para ninguém "melhorar" o bloco com essa expectativa errada.
+     REGRA AO MEXER AQUI: só fato simples e verificável que já existe nesta página. Nada de
+     aggregateRating, número de clientes, nota ou review — dado inventado em rich result é
+     penalizado pelo Google e, pior, mente para quem lê.
+     Os 4 links de sameAs são exatamente os 4 do rodapé (L5735 em diante); a logo é a mesma
+     do cabeçalho (L2187) e do rodapé. É script inline, sem chamada de rede, então não fere
+     a regra de "nada de terceiros" do DESIGN.md. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "iGreen Energy",
+  "url": "https://apn.igreenenergy.com.br/",
+  "logo": "https://apn.igreenenergy.com.br/assets/logos/igreen-logomarca-neon.svg",
+  "sameAs": [
+    "https://www.instagram.com/igreen.energy/",
+    "https://www.linkedin.com/company/igreen.energy/",
+    "https://www.youtube.com/@IgreenEnergy",
+    "https://www.facebook.com/igreen.energy.facebook/"
+  ]
+}
+</script>
 <link rel="preload" href="assets/fonts/InterDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   @font-face{
@@ -2258,14 +2284,28 @@ window.igRefresh=(function(){
       <h2 class="stitle"><span class="line"><span>Resultados que</span></span><span class="line"><span>falam <em class="hl2">por si</em></span></span></h2>
       <p class="ssub">Uma trajetória construída com energia, tecnologia e milhares de licenciados em todo o Brasil.</p>
     </div>
-    <div class="sfloat" style="top:21%;left:16%"><div class="sfnum"><i>+R$</i><b data-target="140">0</b><i>mi</i></div><span class="sflbl">de bônus distribuídos à rede</span></div>
-    <div class="sfloat sr" style="top:11%;right:10%"><div class="sfnum"><i>+</i><b data-target="800">0</b><i>mil</i></div><span class="sflbl">clientes conectados</span></div>
-    <div class="sfloat" style="top:44%;left:8%"><div class="sfnum"><i>+</i><b data-target="35">0</b><i>mil</i></div><span class="sflbl">licenciados ativos</span></div>
-    <div class="sfloat sr" style="top:44%;right:8%"><div class="sfnum"><i>+</i><b data-target="11">0</b></div><span class="sflbl">milionários formados</span></div>
-    <div class="sfloat" style="bottom:15%;left:12%"><div class="sfnum"><b data-target="3000">0</b><i>m²</i></div><span class="sflbl">de sede própria no Brasil<small>R. Marfim, 265 · Jaraguá, Uberlândia/MG</small></span></div>
-    <div class="sfloat sf-team" style="bottom:8%;left:42%"><div class="sfnum"><i>+</i><b data-target="500">0</b></div><span class="sflbl">colaboradores na equipe interna</span></div>
-    <div class="sfloat sr" style="top:24%;right:26%"><div class="sfnum"><i>+</i><b data-target="500">0</b></div><span class="sflbl">usinas solares em operação</span></div>
-    <div class="sfloat sr" style="bottom:20%;right:10%"><div class="sfnum"><b data-target="21">0</b></div><span class="sflbl">estados atendidos pela Conexão Green</span></div>
+    <div class="sfloat" style="top:21%;left:16%"><div class="sfnum"><i>+R$</i><b data-target="140">140</b><i>mi</i></div><span class="sflbl">de bônus distribuídos à rede</span></div>
+    <div class="sfloat sr" style="top:11%;right:10%"><div class="sfnum"><i>+</i><b data-target="800">800</b><i>mil</i></div><span class="sflbl">clientes conectados</span></div>
+    <div class="sfloat" style="top:44%;left:8%"><div class="sfnum"><i>+</i><b data-target="35">35</b><i>mil</i></div><span class="sflbl">licenciados ativos</span></div>
+    <div class="sfloat sr" style="top:44%;right:8%"><div class="sfnum"><i>+</i><b data-target="11">11</b></div><span class="sflbl">milionários formados</span></div>
+    <div class="sfloat" style="bottom:15%;left:12%"><div class="sfnum"><b data-target="3000">3.000</b><i>m²</i></div><span class="sflbl">de sede própria no Brasil<small>R. Marfim, 265 · Jaraguá, Uberlândia/MG</small></span></div>
+    <div class="sfloat sf-team" style="bottom:8%;left:42%"><div class="sfnum"><i>+</i><b data-target="500">500</b></div><span class="sflbl">colaboradores na equipe interna</span></div>
+    <div class="sfloat sr" style="top:24%;right:26%"><div class="sfnum"><i>+</i><b data-target="500">500</b></div><span class="sflbl">usinas solares em operação</span></div>
+    <div class="sfloat sr" style="bottom:20%;right:10%"><div class="sfnum"><b data-target="21">21</b></div><span class="sflbl">estados atendidos pela Conexão Green</span></div>
+    <!-- Os 8 números acima nascem no HTML com o valor REAL (140, 800, 35...), não com "0".
+         Motivo: quem lê a página sem executar este JS — robôs e leitores de texto — via os
+         oito valores zerados, justamente os números mais importantes do site.
+         Este script zera de volta para "0" AQUI, durante o parse, antes de qualquer animação
+         ser montada e antes do primeiro quadro em que esses elementos poderiam aparecer. A
+         contagem visual continua exatamente igual.
+         Duas garantias INDEPENDENTES de que o número real nunca pisca na tela:
+           1. .sfloat é opacity:0 no CSS — desktop (~L220) e mobile (~L1774) — até o JS revelar;
+           2. o #boot cobre a tela inteira (position:fixed, z-index:10000) até depois do load.
+         Ou seja, mesmo que este script falhe, o pior caso é o número aparecer parado, sem
+         contagem. Feio, não quebrado. -->
+    <script>(function(){try{
+      document.querySelectorAll('.sfloat b[data-target]').forEach(function(b){ b.textContent='0'; });
+    }catch(e){}})();</script>
   </div>
 </section>
 <section class="journey" id="trajetoria">
