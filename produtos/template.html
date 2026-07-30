@@ -56,6 +56,80 @@
 <meta name="twitter:title" content="Conexao NOME — iGreen">
 <meta name="twitter:description" content="DESCRICAO DA PAGINA em uma frase, ate ~155 caracteres.">
 <meta name="twitter:image" content="https://apn.igreenenergy.com.br/assets/img/og-igreen.jpg">
+<!-- Dados estruturados: Service (o que a pagina oferece) e FAQPage (as 5 perguntas do #faq).
+     ATENCAO AO DUPLICAR -- este bloco NAO se atualiza sozinho:
+       1. troque "Conexao NOME", a DESCRICAO e as duas URLs (mesmos marcadores em
+          MAIUSCULAS das metatags acima, de proposito: erro esquecido salta aos olhos);
+       2. as 5 perguntas abaixo sao as do Conexao Livre, que e o exemplo vivo deste
+          template. TROQUE pelas perguntas reais da sua pagina -- schema que discorda do
+          que esta na tela e pior que schema nenhum, porque mente para o Google em
+          silencio, sem erro no console e sem nada quebrado na tela.
+     Nada de aggregateRating, nota ou review: dado inventado em rich result e penalizado.
+     Nao gera selo visivel na busca (Service nao tem rich result, e o de FAQ foi restrito
+     pelo Google em 2023 a governo e saude) e nao faz assistentes de IA citarem o site. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      "name": "Conexao NOME",
+      "description": "DESCRICAO DA PAGINA em uma frase, ate ~155 caracteres.",
+      "url": "https://apn.igreenenergy.com.br/produtos/NOME-DO-ARQUIVO.html",
+      "provider": {
+        "@id": "https://apn.igreenenergy.com.br/#organization"
+      },
+      "areaServed": "BR"
+    },
+    {
+      "@type": "FAQPage",
+      "url": "https://apn.igreenenergy.com.br/produtos/NOME-DO-ARQUIVO.html",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Como e quando recebo o bônus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "O bônus de 10% é pago sobre cada conta líquida ativada, conforme o ciclo de repasse definido no Manual de Negócio. Assim que a conta é validada e ativada, ela entra na sua apuração."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "A recorrência dura enquanto o cliente for ativo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim. Você recebe até 2% sobre a fatura iGreen do cliente todo mês, enquanto ele permanecer ativo. É uma renda que continua chegando mesmo sem novas vendas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Preciso de CNPJ para ser licenciado?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Você pode começar como pessoa física e formalizar depois. Para receber os repasses de forma recorrente, recomendamos ter CNPJ — a equipe orienta todo o processo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "O que é conta líquida?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "É a conta efetivamente ativada e válida na base — descontados cancelamentos e contas que não completaram a ativação. O bônus incide sobre essas contas líquidas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Onde acompanho minha carteira?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tudo pelo app iGreen: clientes ativos, bônus, recorrência do mês e histórico. Sua carteira fica visível em tempo real, na palma da mão."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="icon" type="image/svg+xml" href="../assets/logos/igreen-isotipo-neon.svg">
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="../css/page-transition.css">
