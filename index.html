@@ -413,6 +413,19 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .jphoto{position:absolute;opacity:0;pointer-events:auto;cursor:grab;z-index:3;
     border-radius:9px;
     box-shadow:0 20px 44px rgba(0,0,0,.55)}
+  /* Marco 2026: foto Forbes + selo GPTW lado a lado. O selo e um logo colorido, entao fica FORA
+     do .jphoto (nao herda o filtro CRT verde de .jphoto img, nao e arrastavel). No desktop o
+     .jmedia some do fluxo (display:contents) -> a foto mantem o drift absoluto e o selo flutua a
+     direita, revelado junto com o card (.jitem.on). No mobile vira flex (ver media query). */
+  .jmedia{position:absolute;top:0;left:calc(100% + 152px);display:flex;align-items:center;
+    gap:22px;z-index:3;width:max-content}
+  .jmedia .jphoto{position:relative;inset:auto;left:auto;right:auto;top:auto;
+    width:224px;height:224px;margin:0;flex:0 0 auto}
+  .jseal{position:relative;width:108px;height:auto;flex:0 0 auto;align-self:center;
+    opacity:0;transform:translateY(12px);
+    transition:opacity .7s ease,transform .7s cubic-bezier(.16,1.1,.3,1);
+    filter:drop-shadow(0 12px 26px rgba(0,0,0,.55));pointer-events:none}
+  .jitem.on .jseal{opacity:1;transform:none}
   /* "shadow" = clone borrado da propria imagem, atras e maior — bloom de TV que estende a
      foto (o box-shadow some no fundo escuro). Vaza pra fora pois o overflow:hidden foi p/ o .jpinner. */
   .jphoto .jpglow{ position:absolute; inset:-14px; width:calc(100% + 28px); height:calc(100% + 28px);
@@ -1812,6 +1825,13 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .jphoto{position:relative;inset:auto;display:block;width:100%;max-width:172px;height:auto;
       margin:0 0 14px;border-radius:12px;cursor:default}
     .jphoto img{width:100%;height:auto;aspect-ratio:16/10}
+    /* 2026: foto no MESMO tamanho das outras (172px) + selo GPTW pequeno ao lado */
+    .jmedia{position:static;display:flex;align-items:flex-start;gap:12px;margin:0 0 14px}
+    .jmedia .jphoto{position:relative;left:auto;top:auto;margin:0;width:172px;max-width:172px;height:auto;flex:0 0 auto}
+    .jseal{position:relative;inset:auto;width:auto;height:auto;max-height:108px;flex:0 0 auto;
+      transform:none;opacity:0;translate:0 22px;
+      transition:opacity .55s ease,translate .6s cubic-bezier(.16,1.1,.3,1)}
+    .jitem.inview .jseal{opacity:1;translate:0 0}
     .jyear{font-size:clamp(20px,5.4vw,26px)}
     .jname{font-size:17px;margin-top:6px}
     .jdesc{font-size:14px;margin-top:9px;line-height:1.55}
@@ -2293,11 +2313,11 @@ window.igRefresh=(function(){
           <span class="jyear">2024</span><span class="jname">Expansão e Telecom</span>
           <span class="jdesc">Mais de 100 mil clientes em apenas 2 anos. Início da operação iGreen Telecom: energia, tecnologia e conexão para todo o Brasil.</span>
         </div></li>
-        <li class="jitem jr"><span class="jdot"></span><span class="jphoto jp4" data-rot="8" data-dx="-40" data-dy="-170" data-off="90"><picture><source srcset="assets/img/timeline-forbes.avif" type="image/avif"><source srcset="assets/img/timeline-forbes.webp" type="image/webp"><img src="assets/img/timeline-forbes.png" alt="" decoding="async"></picture></span><div class="jcard">
+        <li class="jitem jr"><span class="jdot"></span><div class="jcard">
           <span class="jyear">2025</span><span class="jname">A maior do Setor</span>
           <span class="jdesc">Mais de 450 mil clientes. A expansão se torna real — e este é apenas o começo de uma grande jornada.</span>
         </div></li>
-        <li class="jitem jl"><span class="jdot"></span><div class="jcard">
+        <li class="jitem jl"><span class="jdot"></span><span class="jmedia"><span class="jphoto jp4" data-rot="0" data-dx="0" data-dy="-40" data-off="90"><picture><source srcset="assets/img/timeline-forbes.avif" type="image/avif"><source srcset="assets/img/timeline-forbes.webp" type="image/webp"><img src="assets/img/timeline-forbes.png" alt="" decoding="async"></picture></span><img class="jseal" src="assets/img/gptw-brasil.png" width="220" height="311" alt="Selo Great Place To Work Certificada Brasil" decoding="async"></span><div class="jcard">
           <span class="jyear">2026</span><span class="jname">Dominação Global</span>
           <span class="jdesc">A trajetória da CEO Amanda Durante é reconhecida pela Forbes. A iGreen inicia sua expansão internacional, amplia seu ecossistema de multisserviços com a Conexão Seguros e supera a marca de 800 mil clientes. Um novo ciclo de crescimento e expansão está apenas começando.</span>
         </div></li>
