@@ -64,6 +64,13 @@ Cada card aponta para uma `produtos/conexao*.html` — card novo precisa de pág
 
 ⚠ Avançar por dentro deste stop **navega para a página de produto**. **Isso é INTENCIONAL** — confirmado pelo dono: a apresentação entra no produto de propósito, e quem não quiser usa a navegação **lateral** (direita/esquerda). Não "conserte" isso. Consequência prática: derruba teste automatizado (destrói o contexto), então para testar aquele trecho use as setas laterais ou salte pelos dots.
 
+## Resultados / "Os números não mentem" — 7 `.sfloat`
+Seção `.stats#resultados` (`.spin` como palco). Cada stat é um `.sfloat` com `.sfnum` (número + prefixo/sufixo em `<i>`, ex.: `+R$`, `mi`, `mil`, `m²`) e `.sflbl` (rótulo). O número **anima de 0 até `data-target`** — para trocar o valor exibido, troque o `data-target`, **não** o texto `0` (que é só o ponto de partida da contagem). Locale pt-BR formata milhar com ponto: `data-target="1000"` renderiza **"1.000"** (igual a "3.000 m²").
+
+Estado em 2026-07-30 (7 itens): `+R$140mi` bônus · `+800mil` clientes · `+35mil` licenciados · `+11` milionários · `3.000m²` sede · `+500` colaboradores · `+1.000` usinas solares. (O item "21 estados atendidos" foi removido a pedido do dono nesta data.)
+
+**Animação (nenhuma contagem fixa no JS):** desktop = timeline pinada (`.stats` `start:'top top'` `end:'+=260%'`, scrub) dirigida por `floats.length` e índice `n` — `STEP=.32`, `TOTAL=floats.length*STEP+1.1`, drift `-(60+((n*53)%90))`; some/adiciona `.sfloat` que ela recalcula sozinha. Mobile (≤1024px) = grade `auto-fit repeat(minmax(150px,1fr))` com reveal+contagem por IntersectionObserver (`.sfloat.inview`); nº ímpar de itens deixa o último sozinho na coluna esquerda (ok). Apresentação: `#resultados` tem `subs:[]` (parada única) — mexer nos itens não muda paradas.
+
 ## Recorrência — 6 `.rblock` + 7 `.rfloat`
 Os `.rfloat` têm **posição fixa por índice**: `.g1` a `.g7`, com valores **diferentes** no desktop e dentro de `@media (max-width:1024px)`. Um oitavo card não tem posição e empilha no canto.
 
