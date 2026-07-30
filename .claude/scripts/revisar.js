@@ -80,6 +80,90 @@ const REGRAS = [
   }
 ];
 
+/* ---------- schema.org / JSON-LD ---------- */
+/* Existe porque schema que DISCORDA da pagina e pior que schema nenhum: ele mente para o
+   Google em silencio -- sem erro no console, sem nada quebrado na tela, sem ninguem notar
+   por meses. Foi o risco assumido em 2026-07-30 ao gerar Service/FAQPage das 7 paginas de
+   produto a partir do HTML delas: os dados batiam no dia, mas nada obrigava a continuarem
+   batendo. Estas checagens sao essa rede. Se alguem trocar um titulo, uma descricao ou uma
+   pergunta da FAQ e esquecer o bloco, reclama na hora da edicao. */
+const PLACEHOLDERS = ['NOME-DO-ARQUIVO', 'Conexao NOME', 'DESCRICAO DA PAGINA'];
+const PROIBIDOS = ['aggregateRating', 'review', 'ratingValue', 'price', 'offers'];
+
+const textoLimpo = h => String(h)
+  .replace(/<span class="pl">[^<]*<\/span>/g, '')   /* o "+" decorativo do <summary> */
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+  .replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/\s+/g, ' ').trim();
+
+function checaSchema(arq, txt) {
+  const blocos = txt.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) || [];
+  if (!blocos.length) return;
+  /* o template usa marcadores em MAIUSCULAS de proposito; numa pagina real eles sao bug */
+  const ehTemplate = /template\.html$/.test(arq);
+  const linha = txt.slice(0, txt.indexOf('application/ld+json')).split(/\r?\n/).length;
+
+  const pega = re => { const m = txt.match(re); return m ? textoLimpo(m[1]) : null; };
+  const titulo = (pega(/<title>([^<]*)<\/title>/) || '').replace(/\s*—\s*iGreen\s*$/, '');
+  const descricao = pega(/<meta name="description" content="([^"]*)"/);
+  const canonical = (txt.match(/<link rel="canonical" href="([^"]*)"/) || [, null])[1];
+  const faq = txt.indexOf('id="faq"') >= 0 ? textoLimpo(txt.slice(txt.indexOf('id="faq"'))) : '';
+
+  const ehPlaceholder = v => PLACEHOLDERS.some(p => String(v).includes(p));
+  const confere = (valor, esperado, campo) => {
+    if (valor == null || esperado == null) return;
+    if (ehPlaceholder(valor)) {
+      if (!ehTemplate) add(ERRO, arq, linha, 'schema-placeholder-em-pagina-real',
+        campo + ' ainda esta com o marcador do template ("' + valor + '"). Pagina duplicada e o bloco JSON-LD nao foi trocado — o Google le o marcador como se fosse o nome real.');
+      return;
+    }
+    if (valor !== esperado) add(ERRO, arq, linha, 'schema-diverge-da-pagina',
+      campo + ' nao bate com a pagina. schema: "' + String(valor).slice(0, 55) + '" / pagina: "' + String(esperado).slice(0, 55) + '". Atualize o bloco JSON-LD junto com o texto.');
+  };
+
+  for (const bloco of blocos) {
+    const cru = bloco.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, '');
+    let dados;
+    try { dados = JSON.parse(cru); }
+    catch (e) {
+      add(ERRO, arq, linha, 'schema-json-invalido',
+        'o bloco JSON-LD nao e JSON valido (' + e.message + '). O Google descarta o bloco inteiro sem avisar ninguem.');
+      continue;
+    }
+    PROIBIDOS.forEach(k => {
+      if (new RegExp('"' + k + '"').test(JSON.stringify(dados)))
+        add(ERRO, arq, linha, 'schema-campo-inventado',
+          'campo "' + k + '" no JSON-LD. Aqui so se declara fato simples que existe na pagina: nota, review e preco nao existem neste site, e dado inventado em rich result e penalizado pelo Google.');
+    });
+
+    for (const it of (dados['@graph'] || [dados])) {
+      if (it['@type'] === 'Service') {
+        confere(it.name, titulo, 'Service.name');
+        confere(it.description, descricao, 'Service.description');
+        confere(it.url, canonical, 'Service.url');
+      }
+      if (it['@type'] === 'FAQPage') {
+        confere(it.url, canonical, 'FAQPage.url');
+        if (!ehTemplate) (it.mainEntity || []).forEach(q => {
+          const p = textoLimpo(q.name || ''), r = textoLimpo((q.acceptedAnswer || {}).text || '');
+          if (p && !faq.includes(p)) add(ERRO, arq, linha, 'schema-diverge-da-pagina',
+            'pergunta do FAQPage nao existe na secao #faq: "' + p.slice(0, 55) + '". Ou a pergunta mudou na pagina, ou o bloco ficou para tras.');
+          else if (r && !faq.includes(r)) add(ERRO, arq, linha, 'schema-diverge-da-pagina',
+            'resposta do FAQPage nao existe na pagina, para a pergunta "' + p.slice(0, 45) + '".');
+        });
+      }
+      /* Exige href="..." e nao um includes solto: o proprio bloco JSON-LD faz parte do
+         arquivo, entao procurar a URL no texto inteiro sempre acha ela mesma e a regra
+         nunca dispara. Descoberto testando a regra de proposito com um link trocado. */
+      if (it['@type'] === 'Organization') (it.sameAs || []).forEach(u => {
+        if (!txt.includes('href="' + u + '"')) add(ERRO, arq, linha, 'schema-diverge-da-pagina',
+          'sameAs "' + u + '" nao aparece em nenhum href desta pagina. Rede social trocada no rodape e esquecida no schema?');
+      });
+    }
+  }
+}
+
 /* ---------- checagens de arquivo inteiro ---------- */
 function checaArquivoInteiro(arq, txt) {
   if (/\.html$/.test(arq)) {
@@ -89,6 +173,8 @@ function checaArquivoInteiro(arq, txt) {
 
     const semLazy = imgs.filter(t => !/loading\s*=/.test(t) && !/fetchpriority/.test(t)).length;
     if (semLazy > 2) add(AVISO, arq, 0, 'muitas-img-sem-lazy', semLazy + ' <img> sem loading nem fetchpriority. O que nao aparece no primeiro quadro deve ser lazy.');
+
+    checaSchema(arq, txt);
   }
 }
 
