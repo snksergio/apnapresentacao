@@ -1,5 +1,6 @@
 # iGreen Energy — site institucional
-# Site publico: tudo pode ser indexado. Nao ha area restrita nem conteudo duplicado.
+# Site publico: o conteudo real pode ser indexado. Nao ha area restrita.
+# As excecoes abaixo sao pasta nao publicada e rascunho, nunca conteudo protegido.
 
 User-agent: *
 Allow: /
@@ -8,5 +9,14 @@ Allow: /
 # Ficam aqui por seguranca, caso algum dia sejam servidas por engano.
 Disallow: /produtos/legados/
 Disallow: /docs/
+
+# Este, ao contrario dos de cima, E servido: /produtos/template.html responde 200 em
+# producao. E o rascunho de onde as paginas de produto sao duplicadas, e o corpo dele
+# ainda carrega o conteudo de exemplo do Conexao Livre -- praticamente um duplicado de
+# conexaolivre.html competindo com a pagina real no indice do Google.
+# Nao resolvemos com noindex dentro do template, de proposito: noindex seria herdado
+# pela copia, e cada pagina de produto nova nasceria invisivel no Google, em silencio.
+# Aqui a regra vale so para este endereco e nao acompanha quem duplica o arquivo.
+Disallow: /produtos/template.html
 
 Sitemap: https://apn.igreenenergy.com.br/sitemap.xml
