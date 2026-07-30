@@ -19,7 +19,7 @@
   var html = document.documentElement;
   var REVEAL = 620, COVER = 500;
   /* normaliza o pathname p/ a chave: '/index.html' e '/' viram a mesma chave
-     (a Vercel serve a home nas duas URLs; o link "voltar" vai p/ ../index.html,
+     (o servidor entrega a home nas duas URLs; o link "voltar" vai p/ ../index.html,
      e sem isto a seção de origem não era restaurada — voltava pro topo). */
   var KEY = 'pt-scroll:' + location.pathname.replace(/index\.html$/, '');
   var IS_PRODUTO = /\/produtos\//.test(location.pathname);

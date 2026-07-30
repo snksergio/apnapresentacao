@@ -66,7 +66,7 @@ No celular usa `navigator.share` (folha nativa do sistema); no desktop copia par
 transferência e mostra "Copiado!" por 1,6s. Sem SDK de terceiro — coerente com o `DESIGN.md`.
 
 **As duas APIs exigem HTTPS.** Em `file://` falham caladas e o botão parece quebrado — teste
-servindo por http (`npx serve .`) ou na Vercel.
+servindo por http (`npx serve .`) ou no site em produção, https://apn.igreenenergy.com.br/.
 
 `conexaoexpansao.html` não tem simulador (nenhum id de resultado), então não recebeu o botão.
 

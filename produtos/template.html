@@ -1,11 +1,23 @@
 <!--
   ============================================================
   TEMPLATE DE PÁGINA DE PRODUTO — iGreen
-  Base de referência para novas telas internas (Telecom, Seguros,
-  Expansão, iGreen Pay, etc.). O conteúdo abaixo está preenchido
-  com dados de "Conexão Livre" só como exemplo vivo — duplique este
-  arquivo, renomeie e troque textos/imagens/links por produto.
-  Página em produção: conexaolivre.html
+  Base de referência para uma tela interna nova. O conteúdo abaixo está
+  preenchido com dados de "Conexão Livre" só como exemplo vivo — duplique
+  este arquivo, renomeie e troque textos/imagens/links por produto.
+  Página em produção que ele espelha: conexaolivre.html
+
+  As 7 páginas de produto já existem: green, solar, livre, placas, telecom,
+  seguros e expansão. Este texto listava Telecom, Seguros e Expansão como
+  "a criar" até 2026-07-30, muito depois de as três estarem no ar — quem
+  lesse podia achar que havia três páginas pendentes.
+
+  AO DUPLICAR, os três esquecimentos clássicos:
+    1. trocar as 5 URLs do bloco de SEO logo abaixo (o placeholder está em
+       MAIÚSCULAS de propósito, para o erro saltar aos olhos);
+    2. acrescentar a página nova no sitemap.xml da raiz — sem isso o Google
+       não a encontra, porque só se chega nela por link a partir da home;
+    3. conferir o vídeo — ver o comentário do video-inview.js perto do fim
+       deste arquivo.
   ============================================================
 -->
 <!doctype html>
@@ -905,6 +917,15 @@
 
 </div><!-- /overhero -->
 
+<!-- Toca o video de fundo so quando ele esta visivel (IntersectionObserver). As 7 paginas
+     de produto em producao carregam este script; o template nao carregava, entao pagina
+     nova nascia com o video decodificando fora da tela -- contra o orcamento "zero video
+     decodificando invisivel" do projeto.
+     CUIDADO ao trocar o video desta pagina: o seletor do script e
+     video[loop][src*="bolt-glass"], ou seja, ele so alcanca o arquivo bolt-glass. Se voce
+     apontar para outro .mp4, o script deixa de gerenciar este video -- e falha calada,
+     sem erro no console. Conferido em 2026-07-30. -->
+<script src="../js/video-inview.js"></script>
 <script src="../js/page-transition.js"></script>
 <script>
 /* parallax de atraso no fundo da seção "Venda uma vez" (fazenda solar) */
