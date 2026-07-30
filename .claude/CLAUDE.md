@@ -86,6 +86,8 @@ Guardiões (acione só os necessários, para não gastar contexto):
 
 `node .claude/scripts/revisar.js [arquivo]` checa os padrões deste projeto — animação de layout, imagem sem dimensões, referência a terceiros, blend de tela cheia, `progress(1)`, e mais. Cada regra existe porque o problema **realmente aconteceu aqui**.
 
+Desde 2026-07-30 ele também confere os **dados estruturados (JSON-LD)** contra a própria página: se você trocar um `<title>`, uma `meta description`, o `canonical`, uma pergunta da FAQ ou um link de rede social e **esquecer de atualizar o bloco**, ele acusa na hora. Motivo: schema que discorda da página mente para o Google **em silêncio** — sem erro no console e sem nada quebrado na tela. São 4 regras, todas `ERRO`: `schema-diverge-da-pagina`, `schema-placeholder-em-pagina-real` (duplicou o template e não trocou os marcadores), `schema-campo-inventado` (`aggregateRating`, `price` e afins) e `schema-json-invalido`. As 10 foram testadas quebrando cada caso de propósito.
+
 Um hook roda isso sozinho depois de cada edição em `.html`/`.js` e mostra o resultado. Ele **não bloqueia** — informa. Leia o que aparecer: `ERRO` corrija antes de entregar, `AVISO` confirme se é intencional.
 
 Todos os hooks entram por um único arquivo: `node .claude/scripts/hook.js <sessao|antes-bash|depois-edicao>`. Ele é escrito em **node, não em `sh`**, de propósito: `sh` não existe no Windows fora do Git Bash, e quem abrisse o projeto no terminal do VS Code sem ele tinha os hooks **falhando calados** — o pipeline parecia ativo e não estava. Node já é requisito, então não há o que instalar.
