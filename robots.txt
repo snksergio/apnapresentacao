@@ -9,4 +9,4 @@ Allow: /
 Disallow: /produtos/legados/
 Disallow: /docs/
 
-Sitemap: https://igreen-apresentacao.vercel.app/sitemap.xml
+Sitemap: https://apn.igreenenergy.com.br/sitemap.xml
