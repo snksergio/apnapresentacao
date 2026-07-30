@@ -48,20 +48,43 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
      penalizado pelo Google e, pior, mente para quem lê.
      Os 4 links de sameAs são exatamente os 4 do rodapé (L5735 em diante); a logo é a mesma
      do cabeçalho (L2187) e do rodapé. É script inline, sem chamada de rede, então não fere
-     a regra de "nada de terceiros" do DESIGN.md. -->
+     a regra de "nada de terceiros" do DESIGN.md.
+
+     SEM SearchAction, de propósito: ele declara que o site tem busca interna, e este site
+     NÃO tem — zero <form> e zero campo de busca, conferido. Declarar seria inventar.
+
+     dateModified fica no WebSite e NÃO na Organization: a propriedade só é válida em
+     CreativeWork (conferido em schema.org/dateModified, "Used on these types:
+     CreativeWork, DataFeedItem"). WebSite é CreativeWork (Thing > CreativeWork > WebSite);
+     Organization não é. Pôr a data lá seria schema inválido.
+     A data vem do git — o último commit que alterou este arquivo. ATUALIZE ao mexer no
+     conteúdo, junto com o <lastmod> do sitemap.xml, que precisa dizer o mesmo. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": "https://apn.igreenenergy.com.br/#organization",
-  "name": "iGreen Energy",
-  "url": "https://apn.igreenenergy.com.br/",
-  "logo": "https://apn.igreenenergy.com.br/assets/logos/igreen-logomarca-neon.svg",
-  "sameAs": [
-    "https://www.instagram.com/igreen.energy/",
-    "https://www.linkedin.com/company/igreen.energy/",
-    "https://www.youtube.com/@IgreenEnergy",
-    "https://www.facebook.com/igreen.energy.facebook/"
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://apn.igreenenergy.com.br/#organization",
+      "name": "iGreen Energy",
+      "url": "https://apn.igreenenergy.com.br/",
+      "logo": "https://apn.igreenenergy.com.br/assets/logos/igreen-logomarca-neon.svg",
+      "sameAs": [
+        "https://www.instagram.com/igreen.energy/",
+        "https://www.linkedin.com/company/igreen.energy/",
+        "https://www.youtube.com/@IgreenEnergy",
+        "https://www.facebook.com/igreen.energy.facebook/"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://apn.igreenenergy.com.br/#website",
+      "name": "iGreen Energy",
+      "url": "https://apn.igreenenergy.com.br/",
+      "inLanguage": "pt-BR",
+      "publisher": { "@id": "https://apn.igreenenergy.com.br/#organization" },
+      "dateModified": "2026-07-30"
+    }
   ]
 }
 </script>

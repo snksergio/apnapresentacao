@@ -2,38 +2,45 @@
 <!-- Mapa do site: a home e as 7 paginas de produto.
      Existe porque as paginas de produto so eram alcancaveis seguindo links a partir da home —
      com o sitemap, o Google as encontra direto.
-     Ao trocar de dominio, os enderecos abaixo entram na mesma troca do canonical/og:url. -->
+     Ao trocar de dominio, os enderecos abaixo entram na mesma troca do canonical/og:url.
+
+     <lastmod> tem de dizer a data REAL da ultima mudanca de conteudo de cada pagina, e a
+     mesma que o dateModified do JSON-LD daquela pagina. Ate 2026-07-30 dizia 28/07 com o
+     conteudo ja alterado no dia 30 -- desalinhado. A data sai do git:
+       git log -1 --format=%ad --date=short -- <arquivo>
+     Nao "atualize" a data sem mudanca real de conteudo: mecanismos de busca comparam
+     versoes da pagina entre visitas e descartam frescor cosmetico. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://apn.igreenenergy.com.br/</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaogreen.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaosolar.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaolivre.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaoplacas.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaotelecom.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaoseguros.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
   <url>
     <loc>https://apn.igreenenergy.com.br/produtos/conexaoexpansao.html</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-30</lastmod>
   </url>
 </urlset>
