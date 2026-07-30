@@ -97,6 +97,75 @@ const textoLimpo = h => String(h)
   .replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
   .replace(/\s+/g, ' ').trim();
 
+/* ---------- datas: dateModified x sitemap x git ----------
+   A data e escrita a mao no arquivo e nao se atualiza sozinha. Sem conferencia, basta
+   alguem mexer no conteudo e esquecer para que a pagina passe a declarar uma data falsa --
+   em silencio, como todo o resto desta familia de problemas. E frescor mentido nao e
+   inofensivo: mecanismos de busca comparam versoes da pagina entre visitas e descontam
+   quem finge. Duas fontes de verdade independentes: o sitemap.xml e o proprio historico. */
+let _sitemap;
+function lastmodDoSitemap(url) {
+  if (_sitemap === undefined) {
+    try { _sitemap = fs.readFileSync('sitemap.xml', 'utf8').replace(/<!--[\s\S]*?-->/g, ''); }
+    catch (e) { _sitemap = ''; }        /* rodando fora da raiz: nao confere, nao inventa */
+  }
+  if (!_sitemap) return undefined;
+  const escapada = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = _sitemap.match(new RegExp('<loc>\\s*' + escapada + '\\s*</loc>[\\s\\S]*?<lastmod>\\s*([^<]+?)\\s*</lastmod>'));
+  return m ? m[1] : null;               /* null = a URL nao esta no sitemap */
+}
+
+/* Um unico `git log` para todos os arquivos, e nao um por arquivo: o hook roda o revisar a
+   cada edicao, e 9 chamadas de git a cada tecla seria lento o bastante para alguem desligar
+   o hook -- e hook desligado nao previne nada. Como o log vem do mais novo para o mais
+   velho, a PRIMEIRA vez que um nome aparece ja e a data mais recente dele. */
+let _datasGit;
+function dataDoGit(arq) {
+  if (_datasGit === undefined) {
+    _datasGit = {};
+    try {
+      const saida = require('child_process').execSync(
+        'git log --date=short --format=D:%ad --name-only -n 500',
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
+      let d = null;
+      for (const l of saida.split(/\r?\n/)) {
+        if (l.startsWith('D:')) { d = l.slice(2).trim(); continue; }
+        const nome = l.trim();
+        if (nome && d && !(nome in _datasGit)) _datasGit[nome] = d;
+      }
+    } catch (e) { _datasGit = {}; }     /* sem git (zip, clone raso): nao confere, nao quebra */
+  }
+  return _datasGit[String(arq).replace(/\\/g, '/')];
+}
+
+/* Nao precisa saber se e o template: a excecao dele cai naturalmente do canonical, que la
+   e um marcador em MAIUSCULAS e por isso nunca estara no sitemap. */
+function confereData(arq, linha, tipo, data, canonical) {
+  if (!/^\d{4}-\d{2}-\d{2}/.test(data)) {
+    add(ERRO, arq, linha, 'schema-data-invalida',
+      tipo + '.dateModified = "' + data + '" nao esta em AAAA-MM-DD. Formato fora do padrao pode ser simplesmente ignorado pelo buscador.');
+    return;
+  }
+  const soDia = data.slice(0, 10);
+
+  /* 1) contra o sitemap.xml, que declara a mesma coisa em outro arquivo */
+  if (canonical && !PLACEHOLDERS.some(p => canonical.includes(p))) {
+    const lm = lastmodDoSitemap(canonical);
+    if (lm === null) add(AVISO, arq, linha, 'schema-data-fora-do-sitemap',
+      'esta pagina declara dateModified mas o canonical (' + canonical + ') nao aparece em nenhum <loc> do sitemap.xml, entao nao da para conferir. Pagina nova que esqueceram de acrescentar ao sitemap?');
+    else if (lm !== undefined && lm.slice(0, 10) !== soDia) add(ERRO, arq, linha, 'schema-data-diverge',
+      tipo + '.dateModified diz ' + soDia + ' e o <lastmod> desta pagina no sitemap.xml diz ' + lm + '. Os dois descrevem a MESMA coisa e tem de dizer a mesma data.');
+  }
+
+  /* 2) contra o historico: quando o arquivo mudou de verdade pela ultima vez */
+  const git = dataDoGit(arq);
+  if (!git) return;
+  if (git > soDia) add(ERRO, arq, linha, 'schema-data-diverge',
+    'o arquivo foi alterado em ' + git + ' (ultimo commit) mas ' + tipo + '.dateModified ainda diz ' + soDia + '. Mudou o conteudo e a data ficou para tras — atualize as duas, aqui e no <lastmod> do sitemap.xml.');
+  else if (git < soDia) add(AVISO, arq, linha, 'schema-data-adiantada',
+    tipo + '.dateModified diz ' + soDia + ' mas o ultimo commit deste arquivo e de ' + git + '. Se nao houve mudanca real de conteudo, isso e frescor cosmetico — buscadores comparam versoes da pagina entre visitas e descontam. Se houve, commite antes de confiar na data.');
+}
+
 function checaSchema(arq, txt) {
   const blocos = txt.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) || [];
   if (!blocos.length) return;
@@ -160,6 +229,7 @@ function checaSchema(arq, txt) {
         if (!txt.includes('href="' + u + '"')) add(ERRO, arq, linha, 'schema-diverge-da-pagina',
           'sameAs "' + u + '" nao aparece em nenhum href desta pagina. Rede social trocada no rodape e esquecida no schema?');
       });
+      if (it.dateModified) confereData(arq, linha, it['@type'], it.dateModified, canonical);
     }
   }
 }
