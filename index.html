@@ -39,6 +39,31 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
 <meta name="twitter:image" content="https://apn.igreenenergy.com.br/assets/img/og-igreen.jpg">
 <meta name="twitter:image:alt" content="Logomarca iGreen Energy sobre a sede própria, com jardim vertical iluminado em verde">
 
+<!-- Dados estruturados (schema.org Organization) para o Google: rich results da busca e
+     AI Overviews, que usam o índice tradicional. NÃO é para assistentes de IA citarem o
+     site — isso foi testado à exaustão e schema markup não influencia a resposta deles.
+     Fica escrito aqui para ninguém "melhorar" o bloco com essa expectativa errada.
+     REGRA AO MEXER AQUI: só fato simples e verificável que já existe nesta página. Nada de
+     aggregateRating, número de clientes, nota ou review — dado inventado em rich result é
+     penalizado pelo Google e, pior, mente para quem lê.
+     Os 4 links de sameAs são exatamente os 4 do rodapé (L5735 em diante); a logo é a mesma
+     do cabeçalho (L2187) e do rodapé. É script inline, sem chamada de rede, então não fere
+     a regra de "nada de terceiros" do DESIGN.md. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "iGreen Energy",
+  "url": "https://apn.igreenenergy.com.br/",
+  "logo": "https://apn.igreenenergy.com.br/assets/logos/igreen-logomarca-neon.svg",
+  "sameAs": [
+    "https://www.instagram.com/igreen.energy/",
+    "https://www.linkedin.com/company/igreen.energy/",
+    "https://www.youtube.com/@IgreenEnergy",
+    "https://www.facebook.com/igreen.energy.facebook/"
+  ]
+}
+</script>
 <link rel="preload" href="assets/fonts/InterDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   @font-face{
