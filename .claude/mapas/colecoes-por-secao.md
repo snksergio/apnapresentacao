@@ -19,7 +19,7 @@ O último é o mais importante: mostra se a seção usa `subs`, `buildStops` ou 
 
 ## Hero — 4 KPIs no carrossel (`.kpi` / `.ktx`)
 
-Estado em 2026-07-28: `+800 mil` · `5G Ultra Veloz` · `0 burocracia` · `Expansão`.
+Estado em 2026-07-30: `+800 mil` · `5G Ultra Veloz` · `Zero Burocracia` · `Expansão`.
 Cada KPI é `<button class="kpi" data-i="N" aria-label="...">` com um `<span class="kic">` (ícone SVG
 inline) e um `<span class="ktx"><b>título</b><span data-m="copy curta do mobile">descrição</span>`.
 
