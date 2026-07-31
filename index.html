@@ -2384,7 +2384,7 @@ window.igRefresh=(function(){
   <div class="orb-fadeb" aria-hidden="true"></div>
 
   <div class="orb-head">
-    <span class="skicker">Tudo em um</span>
+    <span class="skicker">Aplicativo do Licenciado</span>
     <h2 class="orb-title"><span class="ts1">Tudo orbita em torno</span><br><span class="ts2">de </span><em class="hl2 ts3">um só app</em></h2>
     <p class="orb-sub"><span class="ts4">Green, Telecom, Seguros, Expansão, Pay e Clube — cada produto gira no mesmo sistema e converge para a sua mão.</span></p>
     <a class="aio-cta orb-cta" href="#">Começar agora
@@ -4279,10 +4279,15 @@ window.igRefresh=(function(){
     ['Clube de Descontos','para ','membros iGreen',
      'Benefícios exclusivos com parceiros — alimentação, cinema, farmácia, academia e muito mais, direto no app.']
   ];
-  var headEls=[orb.querySelector('.orb-title'),orb.querySelector('.orb-sub')];
+  /* kicker acompanha o estado do titulo: estado 0 (app) = "Aplicativo do Licenciado",
+     estado 1 (Clube) = "Aplicativo do Cliente". Entra no headEls p/ fazer crossfade junto. */
+  var orbKicker=orb.querySelector('.skicker');
+  var KICK=['Aplicativo do Licenciado','Aplicativo do Cliente'];
+  var headEls=[orb.querySelector('.orb-title'),orb.querySelector('.orb-sub'),orbKicker];
   function setCopy(state){
     var c=COPY[state];
     for(var i=0;i<4;i++) TS[i].textContent=c[i];
+    if(orbKicker) orbKicker.textContent=KICK[state];
   }
   var headState=0, typeDrv=null;
   function swapHead(state){
