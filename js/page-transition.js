@@ -101,6 +101,10 @@
     var href = el.getAttribute('data-pt-href') || el.getAttribute('href');
     if (!href || href.charAt(0) === '#') return;
     e.preventDefault();
+    /* TRAVA (pedido do dono): NUNCA entra nas paginas de produto (os 7 servicos, em produtos/...),
+       em qualquer modo. O resto passa normal (ex.: voltar pro index). Pareado com a trava do
+       goNext em presentation-mode.js. */
+    if (href.indexOf('produtos/') !== -1) return;
     go(href, el);
   }, false);
 
@@ -109,7 +113,9 @@
     var el = e.target.closest('[data-pt-href]');
     if (!el) return;
     e.preventDefault();
-    go(el.getAttribute('data-pt-href'), el);
+    var kh = el.getAttribute('data-pt-href');
+    if (kh && kh.indexOf('produtos/') !== -1) return;
+    go(kh, el);
   });
 
   /* PREFETCH: em desktop com mouse, pre-baixa a pagina de destino ao passar o cursor no card

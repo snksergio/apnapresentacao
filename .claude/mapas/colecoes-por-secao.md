@@ -19,7 +19,7 @@ O último é o mais importante: mostra se a seção usa `subs`, `buildStops` ou 
 
 ## Hero — 4 KPIs no carrossel (`.kpi` / `.ktx`)
 
-Estado em 2026-07-28: `+800 mil` · `5G Ultra Veloz` · `0 burocracia` · `Expansão`.
+Estado em 2026-07-30: `+800 mil` · `5G Ultra Veloz` · `Zero Burocracia` · `Expansão`.
 Cada KPI é `<button class="kpi" data-i="N" aria-label="...">` com um `<span class="kic">` (ícone SVG
 inline) e um `<span class="ktx"><b>título</b><span data-m="copy curta do mobile">descrição</span>`.
 
@@ -63,6 +63,15 @@ Há uma constante de duração casada com a animação do deck: `CARO = 5` em `j
 Cada card aponta para uma `produtos/conexao*.html` — card novo precisa de página nova (base: `produtos/template.html`).
 
 ⚠ Avançar por dentro deste stop **navega para a página de produto**. **Isso é INTENCIONAL** — confirmado pelo dono: a apresentação entra no produto de propósito, e quem não quiser usa a navegação **lateral** (direita/esquerda). Não "conserte" isso. Consequência prática: derruba teste automatizado (destrói o contexto), então para testar aquele trecho use as setas laterais ou salte pelos dots.
+
+## Resultados / "Os números não mentem" — 7 `.sfloat`
+Seção `.stats#resultados` (`.spin` como palco). Cada stat é um `.sfloat` com `.sfnum` (número + prefixo/sufixo em `<i>`, ex.: `+R$`, `mi`, `mil`, `m²`) e `.sflbl` (rótulo). O número **anima de 0 até `data-target`**. Locale pt-BR formata milhar com ponto: `data-target="1000"` renderiza **"1.000"** (igual a "3.000 m²").
+
+**Ao trocar um valor, mude os DOIS:** o `data-target` e o texto dentro do `<b>`. Desde 2026-07-30 o texto **não** nasce mais `0` — ele nasce com o valor real, e um `<script>` logo abaixo dos 7 itens zera tudo durante o parse, antes do primeiro quadro. O motivo é SEO e acessibilidade: quem lê a página sem executar JS via os sete números mais importantes do site zerados. Consequência prática: `data-target="1000"` pede texto `1.000` — os dois no formato pt-BR. Deixar o texto velho não quebra nada na tela (o script zera de qualquer jeito e a contagem sobe até o `data-target`), mas **mente para o Google e para leitores de tela**, em silêncio.
+
+Estado em 2026-07-31 (7 itens): `+R$140mi` bônus · `+800mil` clientes · `+35mil` licenciados · `+11` milionários · `3.000m²` sede · `+500` colaboradores · `+1.000` usinas solares. (O item "21 estados atendidos" foi removido a pedido do dono em 2026-07-30.)
+
+**Animação (nenhuma contagem fixa no JS):** desktop = timeline pinada (`.stats` `start:'top top'` `end:'+=260%'`, scrub) dirigida por `floats.length` e índice `n` — `STEP=.32`, `TOTAL=floats.length*STEP+1.1`, drift `-(60+((n*53)%90))`; some/adiciona `.sfloat` que ela recalcula sozinha. Mobile (≤1024px) = grade `auto-fit repeat(minmax(150px,1fr))` com reveal+contagem por IntersectionObserver (`.sfloat.inview`); nº ímpar de itens deixa o último sozinho na coluna esquerda (ok). Apresentação: `#resultados` tem `subs:[]` (parada única) — mexer nos itens não muda paradas.
 
 ## Recorrência — 6 `.rblock` + 7 `.rfloat`
 Os `.rfloat` têm **posição fixa por índice**: `.g1` a `.g7`, com valores **diferentes** no desktop e dentro de `@media (max-width:1024px)`. Um oitavo card não tem posição e empilha no canto.
