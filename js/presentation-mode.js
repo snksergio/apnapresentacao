@@ -104,6 +104,32 @@
         }
         return out;
       } },
+    { label:'Recorrência',  sel:'#recorrencia',  subs:[], on:true,
+      /* transições mais suaves (entrada e beat1↔beat2) */
+      dur:2.6,
+      /* 2 subcategorias: (1) texto central + cards convergindo (fim do scrub radial,
+         ainda no pin); (2) grid "Seis frentes, uma recorrência" enquadrado. Enquadra
+         o grid por geometria em vez de usar o fim do reveal (que ia parar na bonificação). */
+      buildStops:function(st, node){
+        if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
+        var stage = node.querySelector('.recstage');
+        var grid  = node.querySelector('.recgrid');
+        var out = [];
+        /* recstage oculto (pedido do dono): a cena radial nao existe mais -> pula o beat 1,
+           deixa so o enquadramento do grid ("Seis frentes"). */
+        var stageHidden = stage && getComputedStyle(stage).display === 'none';
+        if (!stageHidden){
+          var all = sectionTriggers({}, node), radial = null;
+          for (var i = 0; i < all.length; i++){ if (all[i].trigger === stage && !all[i].pin){ radial = all[i]; break; } }
+          out.push(radial ? (radial.start + (radial.end - radial.start) * 0.98) : st.end);   // beat 1
+        }
+        if (grid){
+          var r = grid.getBoundingClientRect(), vh = window.innerHeight;
+          var off = Math.max(80, (vh - r.height) / 2);
+          out.push(curY() + r.top - off);                                                  // beat 2
+        }
+        return out;
+      } },
     { label:'Órbita',       sel:'#orbita',       on:true,
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
          Ao ir pela seta a ponte eco2→órbita dispara o igStartOrbita; ao ir pelo dot
@@ -131,32 +157,6 @@
             if(window.ScrollTrigger) ScrollTrigger.update();
           } }; }
         return [ mk(0.26), mk(0.58), mk(0.93) ];
-      } },
-    { label:'Recorrência',  sel:'#recorrencia',  subs:[], on:true,
-      /* transições mais suaves (entrada e beat1↔beat2) */
-      dur:2.6,
-      /* 2 subcategorias: (1) texto central + cards convergindo (fim do scrub radial,
-         ainda no pin); (2) grid "Seis frentes, uma recorrência" enquadrado. Enquadra
-         o grid por geometria em vez de usar o fim do reveal (que ia parar na bonificação). */
-      buildStops:function(st, node){
-        if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
-        var stage = node.querySelector('.recstage');
-        var grid  = node.querySelector('.recgrid');
-        var out = [];
-        /* recstage oculto (pedido do dono): a cena radial nao existe mais -> pula o beat 1,
-           deixa so o enquadramento do grid ("Seis frentes"). */
-        var stageHidden = stage && getComputedStyle(stage).display === 'none';
-        if (!stageHidden){
-          var all = sectionTriggers({}, node), radial = null;
-          for (var i = 0; i < all.length; i++){ if (all[i].trigger === stage && !all[i].pin){ radial = all[i]; break; } }
-          out.push(radial ? (radial.start + (radial.end - radial.start) * 0.98) : st.end);   // beat 1
-        }
-        if (grid){
-          var r = grid.getBoundingClientRect(), vh = window.innerHeight;
-          var off = Math.max(80, (vh - r.height) / 2);
-          out.push(curY() + r.top - off);                                                  // beat 2
-        }
-        return out;
       } },
     { label:'Bonificação',  sel:'#bonificacao',  subs:[], on:true,
       /* seção de enquadramento (sem scrub): o vídeo dos carros toca sozinho ao
