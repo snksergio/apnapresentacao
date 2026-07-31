@@ -849,6 +849,41 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .rtxt p b{color:var(--green);font-weight:600}
   .rnote{display:block;margin-top:4px;font-size:11px;letter-spacing:.06em;
     text-transform:uppercase;color:rgba(232,255,228,.42)}
+  /* ===== entrada de "Seis frentes, uma recorrência" (desktop) =====
+     Esta seção NÃO animava nada no desktop. A coreografia dela existia, mas morava dentro
+     do bloco de JS que só roda com a cena `.recstage` visível — e ela está display:none por
+     pedido do dono. Conferido no navegador antes de mexer: 0 gatilhos no .recgrid, traço sem
+     transform e título/cards já em opacidade 1 desde o primeiro quadro.
+     Ordem pedida: o TRAÇO desce primeiro, como um caminho; depois o texto; depois os cards.
+     Feito com TEMPO (transition-delay), não com scroll — é o padrão do projeto (mesma
+     mecânica da cascata da sede): nada roda por quadro e não depende de rolar devagar.
+     Só opacity e transform, as duas que a GPU compõe sem recalcular layout.
+     Escopado em min-width:1025px porque o mobile já tem a própria entrada por .inview. */
+  @media (min-width:1025px){
+    #recorrencia .rl-v{transform:scaleY(0);transform-origin:top;
+      transition:transform .85s cubic-bezier(.16,1.1,.3,1)}
+    #recorrencia .rl-dot{opacity:0;transition:opacity .35s ease}
+    #recorrencia .rectitle2{opacity:0;transform:translateY(20px);
+      transition:opacity .6s ease,transform .65s cubic-bezier(.16,1.1,.3,1)}
+    #recorrencia .rblock{opacity:0;transform:translateY(22px);
+      transition:opacity .6s ease,transform .65s cubic-bezier(.16,1.1,.3,1)}
+    #recorrencia .recgrid.reveal .rl-v{transform:scaleY(1)}
+    #recorrencia .recgrid.reveal .rl-dot{opacity:1;transition-delay:.78s}   /* ponta chega no fim do traço */
+    #recorrencia .recgrid.reveal .rectitle2{opacity:1;transform:none;transition-delay:.9s}
+    #recorrencia .recgrid.reveal .rblock{opacity:1;transform:none}
+    /* cascata de ~90ms entre os 6 cards, começando depois do título */
+    #recorrencia .recgrid.reveal .rblock:nth-child(1){transition-delay:1.06s}
+    #recorrencia .recgrid.reveal .rblock:nth-child(2){transition-delay:1.15s}
+    #recorrencia .recgrid.reveal .rblock:nth-child(3){transition-delay:1.24s}
+    #recorrencia .recgrid.reveal .rblock:nth-child(4){transition-delay:1.33s}
+    #recorrencia .recgrid.reveal .rblock:nth-child(5){transition-delay:1.42s}
+    #recorrencia .recgrid.reveal .rblock:nth-child(6){transition-delay:1.51s}
+    /* quem prefere menos movimento vê tudo posto, sem espera */
+    @media (prefers-reduced-motion:reduce){
+      #recorrencia .rl-v{transform:scaleY(1)}
+      #recorrencia .rl-dot,#recorrencia .rectitle2,#recorrencia .rblock{opacity:1;transform:none;transition:none}
+    }
+  }
   @media (prefers-reduced-motion:reduce){
     .bolt,.badge,h1,.sub,.ctas,.proof,.kpis{animation:none;opacity:1}
     .kpi.active{animation:none}
@@ -2395,7 +2430,11 @@ window.igRefresh=(function(){
           <span class="jyear">2025</span><span class="jname">A maior do Setor</span>
           <span class="jdesc">Mais de 450 mil clientes. A expansão se torna real, e este é apenas o começo de uma grande jornada.</span>
         </div></li>
-        <li class="jitem jl"><span class="jdot"></span><span class="jmedia"><span class="jphoto jp4" data-rot="0" data-dx="0" data-dy="-40" data-off="90"><picture><source srcset="assets/img/timeline-forbes.avif?v=2" type="image/avif"><source srcset="assets/img/timeline-forbes.webp?v=2" type="image/webp"><img src="assets/img/timeline-forbes.png?v=2" alt="" decoding="async"></picture></span><img class="jseal" src="assets/img/gptw-brasil.png" width="220" height="311" alt="Selo Great Place To Work Certificada Brasil" decoding="async"></span><div class="jcard">
+        <!-- data-off do 2026 era 90: a foto (Forbes + selo GPTW) só disparava 90px DEPOIS
+             do marco, então na apresentação o texto aparecia primeiro e a imagem chegava
+             atrasada. Com 0 ela entra junto com os escritos, que é o pedido do dono.
+             O atributo é só o LIMIAR de disparo — não muda posição nem tamanho da foto. -->
+        <li class="jitem jl"><span class="jdot"></span><span class="jmedia"><span class="jphoto jp4" data-rot="0" data-dx="0" data-dy="-40" data-off="0"><picture><source srcset="assets/img/timeline-forbes.avif?v=2" type="image/avif"><source srcset="assets/img/timeline-forbes.webp?v=2" type="image/webp"><img src="assets/img/timeline-forbes.png?v=2" alt="" decoding="async"></picture></span><img class="jseal" src="assets/img/gptw-brasil.png" width="220" height="311" alt="Selo Great Place To Work Certificada Brasil" decoding="async"></span><div class="jcard">
           <span class="jyear">2026</span><span class="jname">Dominação Global</span>
           <span class="jdesc">A trajetória da CEO Amanda Durante é reconhecida pela Forbes. A iGreen inicia sua expansão internacional, amplia seu ecossistema de multisserviços com a Conexão Seguros e supera a marca de 800 mil clientes. Um novo ciclo de crescimento e expansão está apenas começando.</span>
         </div></li>
@@ -3826,6 +3865,24 @@ window.igRefresh=(function(){
       .to('.rblock',{autoAlpha:1,y:0,duration:.34,stagger:.07,ease:'none'},.4);
   }
 
+  /* Entrada de "Seis frentes, uma recorrência" no desktop — só acende a classe; o tempo e a
+     ordem (traço → texto → cards) são do CSS, ver "entrada de Seis frentes" na folha acima.
+     Fica FORA do if de cima DE PROPÓSITO: aquele bloco exige a cena `.recstage` visível, que
+     está oculta por pedido do dono, e era por isso que a seção não animava nada.
+     Se um dia a cena voltar, o bloco antigo assume os mesmos elementos por estilo inline
+     (que vence CSS) e continua funcionando — não é preciso desfazer isto. */
+  var recgridEl=document.querySelector('#recorrencia .recgrid');
+  if(recgridEl&&window.matchMedia('(min-width:1025px)').matches){
+    /* 'top 58%' e não o 'top 78%' habitual do projeto: a parada da apresentação pousa com o
+       topo do grid a 80px do alto da tela, então um gatilho em 78% dispara ~660px ANTES do
+       destino — medido, a cascata inteira terminava antes de a varredura parar e o dono
+       chegava com tudo já posto (o mesmo defeito relatado no simulador). Em 58% a animação
+       começa com a seção já entrando no enquadramento e termina depois da parada.
+       Para quem rola normalmente continua natural: em 58% o traço está na metade da tela. */
+    ScrollTrigger.create({trigger:recgridEl,start:'top 58%',once:true,
+      onEnter:function(){ recgridEl.classList.add('reveal'); }});
+  }
+
 /* ---- bonificacao: carros ---- */
   var cvid=document.querySelector('.carvid'), cstill=document.querySelector('.carstill');
   if(cvid&&cstill){
@@ -4175,9 +4232,16 @@ window.igRefresh=(function(){
   }
 
   var deckTL=buildTL();
+  /* scrub 0.8 -> 0.3: o dono relatou "uma leve tremida de 1 ou 2px" ao terminar de focar o
+     próximo card no modo apresentação. Medido: NÃO é tremor e não é vertical — o scroll para
+     seco (variação 0) e o progresso congela, mas o baralho CONTINUA deslizando na horizontal
+     por 11,77px depois do passo acabar, convergindo devagar (os últimos 2px levam quase 1s).
+     É a cauda do scrub: a timeline persegue o progresso com atraso, e quando a varredura
+     termina ela ainda está chegando. 0.3 encurta essa cauda; o preço é o baralho ficar um
+     pouco mais colado à roda no scroll normal — é o mesmo controle para os dois casos. */
   var eco2ST=ScrollTrigger.create({
     trigger:'#ecossistema2', start:'top top', end:'+=4480',
-    pin:true, scrub:0.8, invalidateOnRefresh:true,
+    pin:true, scrub:0.3, invalidateOnRefresh:true,
     animation:deckTL,
     onRefresh:function(){ measure(); },
     onUpdate:function(self){ carouselUpdate(self.progress); }
@@ -4763,8 +4827,14 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 document.addEventListener('pointermove',function(e){var el=e.target.closest('.chip,.grad,.card');if(!el)return;var r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');});
 if(window.gsap&&window.ScrollTrigger){
+  /* O gatilho mirava na SEÇÃO, não no texto. Como #simulador tem 130px de padding e a .wrap
+     mais 56px, o cabeçalho nasce 186px abaixo do topo da seção — e o "top 82%" disparava com
+     o texto ainda ~962px abaixo da borda de baixo da tela (medido: gatilho em y=13.769, texto
+     em y=14.731, viewport de 946px). A animação inteira (0,9s + cascata) rodava fora do campo
+     de visão e, quando a pessoa finalmente chegava, já estava tudo posto — parecia que não
+     havia animação nenhuma. Mirando no próprio .sim-head o fade acontece na hora do foco. */
   gsap.from("#simulador .sim-head>*",{autoAlpha:0,y:24,duration:.9,ease:"power3.out",stagger:.12,
-    scrollTrigger:{trigger:"#simulador",start:"top 82%",once:true}});
+    scrollTrigger:{trigger:"#simulador .sim-head",start:"top 85%",once:true}});
 
   /* sticky do card de resultado (position:sticky nao funciona dentro do ScrollSmoother) */
   var simEl=document.getElementById("sim");
