@@ -6150,11 +6150,22 @@ if(window.gsap&&window.ScrollTrigger){
   var sim=document.getElementById('simulador');
   var orb=document.getElementById('orbita');
   if(!(sc&&sim&&orb)) return;
+  var moved=false;
+  /* PASSO 1: simulador imediatamente antes da orbita (miro o pin-spacer se ja pinada) */
   var orbTarget=orb.closest('.pin-spacer')||orb;
   if(orbTarget.parentNode && sim!==orbTarget && sim.nextElementSibling!==orbTarget){
-    orbTarget.parentNode.insertBefore(sim, orbTarget);
-    if(window.ScrollTrigger) ScrollTrigger.refresh();
+    orbTarget.parentNode.insertBefore(sim, orbTarget); moved=true;
   }
+  /* PASSO 2: ordem do final = Planos, Graduacoes, Bonificacao (antes do rodape). Nenhuma delas
+     e pinada, entao insertBefore direto no smooth-content e seguro e mantem tudo dentro dele. */
+  var rod=document.getElementById('rodape');
+  if(rod && rod.parentNode){
+    ['planos','graduacoes','bonificacao'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && el!==rod){ rod.parentNode.insertBefore(el, rod); moved=true; }
+    });
+  }
+  if(moved && window.ScrollTrigger) ScrollTrigger.refresh();
 })();
 </script>
 <script>/* PERF: modo apresentacao e desktop-only (o JS ja faz early-return no mobile). Carrega so no desktop p/ poupar ~41KB no mobile. */
