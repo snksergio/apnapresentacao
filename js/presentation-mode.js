@@ -724,7 +724,11 @@
       }
       goToIndex(curIdx + 1, false); return;
     }
-    if (curIdx >= 0 && isEcoCardStop(curIdx)){ openEcoCard(activeStops[curIdx].sub); return; }
+    /* TRAVA (pedido do dono): no modo apresentacao NAO entra nas paginas de produto (os 7
+       servicos). No stop de card do ecossistema, ↓/espaco/roda apenas AVANCA (troca de card
+       e, no ultimo, segue pra proxima secao) — mesmo comportamento da seta →, que ja "NUNCA
+       abre produto". Antes aqui chamava openEcoCard() -> card.click() -> abria o produto. */
+    if (curIdx >= 0 && isEcoCardStop(curIdx)){ goToIndex(curIdx + 1, false, true); return; }
     goToIndex(curIdx < 0 ? 0 : curIdx + 1, false);
   }
   function goPrev(){ stopAuto(); goToIndex(curIdx <= 0 ? 0 : curIdx - 1, false, true); }
