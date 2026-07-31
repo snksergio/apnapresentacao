@@ -1158,7 +1158,10 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     pointer-events:none;opacity:0;filter:blur(8px);
     background:radial-gradient(46% 46% at 50% 50%,rgba(24,255,0,.32),rgba(14,150,4,.15) 44%,transparent 74%)}
   /* fase 3: download do app */
-  .orb-dl{position:absolute;inset:0;z-index:7;pointer-events:none}
+  /* OCULTO (pedido do dono): bloco de download do app ("Leve a iGreen no bolso" + QR).
+     display:none esconde em desktop e mobile; mantido no DOM porque o JS referencia .dlL/.dlR
+     (index e mobile) — remover do DOM daria null. Para reexibir, tire o display:none. */
+  .orb-dl{position:absolute;inset:0;z-index:7;pointer-events:none;display:none}
   .dlL{position:absolute;left:calc(50% - 620px);top:50%;transform:translateY(-50%);max-width:420px;
     opacity:0;visibility:hidden;will-change:transform}
   .dlR{position:absolute;right:calc(50% - 598px);top:50%;transform:translateY(-50%);width:310px;text-align:center;
