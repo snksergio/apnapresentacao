@@ -858,14 +858,22 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
      Feito com TEMPO (transition-delay), não com scroll — é o padrão do projeto (mesma
      mecânica da cascata da sede): nada roda por quadro e não depende de rolar devagar.
      Só opacity e transform, as duas que a GPU compõe sem recalcular layout.
-     Escopado em min-width:1025px porque o mobile já tem a própria entrada por .inview. */
+     Escopado em min-width:1025px porque o mobile já tem a própria entrada por .inview.
+
+     POR QUE O ESTADO ESCONDIDO EXIGE `.anim` (e não vale de saída):
+     quem esconde é o CSS, mas quem revela é o JS. Se o GSAP não carregar, o JS nunca
+     acende a classe e o texto + os 6 cards ficariam INVISÍVEIS para sempre — presentes no
+     HTML, apagados na tela, sem erro nenhum no console. É a mesma falha silenciosa que já
+     apagou o fundo de moedas dos planos aqui. Com `.anim` (que o próprio JS coloca uma
+     linha antes de criar o gatilho), a conta se inverte: sem JS, nada esconde e a seção
+     aparece como sempre apareceu. O animado é que é o caso especial, não o visível. */
   @media (min-width:1025px){
-    #recorrencia .rl-v{transform:scaleY(0);transform-origin:top;
+    #recorrencia .recgrid.anim .rl-v{transform:scaleY(0);transform-origin:top;
       transition:transform .85s cubic-bezier(.16,1.1,.3,1)}
-    #recorrencia .rl-dot{opacity:0;transition:opacity .35s ease}
-    #recorrencia .rectitle2{opacity:0;transform:translateY(20px);
+    #recorrencia .recgrid.anim .rl-dot{opacity:0;transition:opacity .35s ease}
+    #recorrencia .recgrid.anim .rectitle2{opacity:0;transform:translateY(20px);
       transition:opacity .6s ease,transform .65s cubic-bezier(.16,1.1,.3,1)}
-    #recorrencia .rblock{opacity:0;transform:translateY(22px);
+    #recorrencia .recgrid.anim .rblock{opacity:0;transform:translateY(22px);
       transition:opacity .6s ease,transform .65s cubic-bezier(.16,1.1,.3,1)}
     #recorrencia .recgrid.reveal .rl-v{transform:scaleY(1)}
     #recorrencia .recgrid.reveal .rl-dot{opacity:1;transition-delay:.78s}   /* ponta chega no fim do traço */
@@ -878,10 +886,15 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     #recorrencia .recgrid.reveal .rblock:nth-child(4){transition-delay:1.33s}
     #recorrencia .recgrid.reveal .rblock:nth-child(5){transition-delay:1.42s}
     #recorrencia .recgrid.reveal .rblock:nth-child(6){transition-delay:1.51s}
-    /* quem prefere menos movimento vê tudo posto, sem espera */
+    /* quem prefere menos movimento vê tudo posto, sem espera.
+       Os seletores repetem `.recgrid.anim` de propósito: o estado escondido acima passou a
+       ter 3 classes, e sem igualar a especificidade aqui ele venceria este bloco — a regra
+       de acessibilidade viraria letra morta em silêncio. */
     @media (prefers-reduced-motion:reduce){
-      #recorrencia .rl-v{transform:scaleY(1)}
-      #recorrencia .rl-dot,#recorrencia .rectitle2,#recorrencia .rblock{opacity:1;transform:none;transition:none}
+      #recorrencia .recgrid.anim .rl-v{transform:scaleY(1)}
+      #recorrencia .recgrid.anim .rl-dot,
+      #recorrencia .recgrid.anim .rectitle2,
+      #recorrencia .recgrid.anim .rblock{opacity:1;transform:none;transition:none}
     }
   }
   @media (prefers-reduced-motion:reduce){
@@ -3879,6 +3892,10 @@ window.igRefresh=(function(){
        chegava com tudo já posto (o mesmo defeito relatado no simulador). Em 58% a animação
        começa com a seção já entrando no enquadramento e termina depois da parada.
        Para quem rola normalmente continua natural: em 58% o traço está na metade da tela. */
+    /* `anim` LIGA o estado escondido do CSS. Vem daqui, e não da folha de estilo, para que
+       a seção só possa ficar escondida se este script estiver de fato rodando — se o GSAP
+       falhar, esta linha não roda, nada esconde e o conteúdo aparece normalmente. */
+    recgridEl.classList.add('anim');
     ScrollTrigger.create({trigger:recgridEl,start:'top 58%',once:true,
       onEnter:function(){ recgridEl.classList.add('reveal'); }});
   }
