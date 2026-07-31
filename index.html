@@ -2229,7 +2229,7 @@ window.igRefresh=(function(){
   <div class="shell">
     <div class="content">
       <span class="badge"><span class="dot"></span>Plano de Negócios · Agosto 2026</span>
-      <h1>Empreenda com<br>o Ecossistema<br>de <span class="hl seg" id="segWord">energia</span><span class="caret" id="segCaret"></span></h1>
+      <h1>Empreenda com<br>o <span class="hl">Ecossistema<br>iGreen</span></h1>
       <p class="sub">Enriquecemos vidas conectando energia, telefonia, seguros e tecnologia em uma única plataforma — sustentabilidade que vira recorrência para quem empreende.</p>
       <div class="ctas">
         <!-- href corrigido: apontava para #plano e #simulacao, IDs que NAO EXISTEM (as secoes sao
@@ -3348,6 +3348,9 @@ window.igRefresh=(function(){
   vids.forEach(function(v){ try{ v.removeAttribute('autoplay'); }catch(e){} });
   vids.forEach(function(v,i){ if(i===idx) playVid(v); else pauseVid(v); });
   function typeSwap(nextWord,done){
+    /* Titulo do hero agora e FIXO ("Ecossistema iGreen") — sem #segWord/#segCaret.
+       Sem elemento pra digitar, so segue adiante e deixa o carrossel de videos/KPIs girar. */
+    if(!word||!caret){ if(done)done(); return; }
     caret.classList.add('on');
     var cur=word.textContent, i=cur.length;
     var er=setInterval(function(){
