@@ -130,6 +130,12 @@
         }
         return out;
       } },
+    { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
+      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
+      buildStops:function(st, node){
+        var head = node.querySelector('.sim-head') || node;
+        return [ curY() + head.getBoundingClientRect().top - 88 ];
+      } },
     { label:'Órbita',       sel:'#orbita',       on:true,
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
          Ao ir pela seta a ponte eco2→órbita dispara o igStartOrbita; ao ir pelo dot
@@ -175,12 +181,6 @@
           { y:y, action:function(){ if (document.body.classList.contains('cars-ready')) carSelectRaw(0); } },
           { y:y, action:function(){ carSelect(1); } }
         ];
-      } },
-    { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
-      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
-      buildStops:function(st, node){
-        var head = node.querySelector('.sim-head') || node;
-        return [ curY() + head.getBoundingClientRect().top - 88 ];
       } },
     { label:'Graduações',   sel:'#graduacoes',   subs:[], on:true, trig:'#gradSection', dur:2.8,
       onLeave:function(){ gradEventsClose(); gradClear(); },

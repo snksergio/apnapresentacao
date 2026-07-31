@@ -6138,6 +6138,25 @@ if(window.gsap&&window.ScrollTrigger){
   io.observe(orb);
 })();
 </script>
+<script id="reorder-secoes">
+/* Reorganizacao (pedido do dono) — PASSO 1: mover #simulador p/ logo ANTES da #orbita,
+   por JS e DENTRO do #smooth-content. Feito por JS (nao por move de HTML) de proposito: a
+   #orbita e PINADA e, num move de HTML, escapa do #smooth-content e some com as secoes
+   seguintes. Aqui roda depois de todo o setup (ScrollSmoother/pins/relocacoes) e antes de a
+   apresentacao carregar. Se ja pinada, miramos o .pin-spacer da orbita (senao o insertBefore
+   colocaria o simulador dentro do spacer). */
+(function(){
+  var sc=document.getElementById('smooth-content');
+  var sim=document.getElementById('simulador');
+  var orb=document.getElementById('orbita');
+  if(!(sc&&sim&&orb)) return;
+  var orbTarget=orb.closest('.pin-spacer')||orb;
+  if(orbTarget.parentNode && sim!==orbTarget && sim.nextElementSibling!==orbTarget){
+    orbTarget.parentNode.insertBefore(sim, orbTarget);
+    if(window.ScrollTrigger) ScrollTrigger.refresh();
+  }
+})();
+</script>
 <script>/* PERF: modo apresentacao e desktop-only (o JS ja faz early-return no mobile). Carrega so no desktop p/ poupar ~41KB no mobile. */
 if(window.matchMedia&&matchMedia('(min-width:1025px)').matches){var pm=document.createElement('script');pm.src='js/presentation-mode.js';document.body.appendChild(pm);}</script>
 <script src="js/page-transition.js"></script>
