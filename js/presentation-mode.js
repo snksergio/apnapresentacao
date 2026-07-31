@@ -60,6 +60,16 @@
           p = Math.min(1, p + 0.05);               // margem além do limiar → foto já disparada
           out.push(st.start + span * p);
         });
+        /* ÚLTIMOS DOIS MARCOS EM UMA PARADA SÓ (2025 + 2026).
+           Medido em 1920x946: na parada do 2025 (y=5273) o marco 2026 já começa em 844px da
+           tela — entrando no campo de visão ainda invisível (opacity 0), o que dá a sensação
+           de que a apresentação "já está indo embora" para a seção seguinte. Na parada do
+           2026 (y=5647) os DOIS aparecem inteiros e revelados: 2025 em 182-320 e 2026 em
+           470-685. Ou seja, a parada boa já existia — a do 2025 é que sobrava.
+           Descartamos a PENÚLTIMA e ficamos com a última, que enquadra os dois.
+           (Não é auto-scroll: conferido que a posição fica cravada e o snap da sede só
+           começa 106px abaixo desta parada. A hipótese de snap foi medida e descartada.) */
+        if (out.length >= 2) out.splice(out.length - 2, 1);
         return out.length ? out : null;
       } },
     /* frame:true + frameOff:0 -> enquadra o topo da secao no topo da tela, ignorando triggers.
@@ -87,6 +97,14 @@
       onLeave:function(){ var v=document.querySelector('.hqbg');
         if(v){ try{ v.loop=true; }catch(e){} } } },
     { label:'Ecossistema',  sel:'#ecossistema2', subs:[], on:true,
+      /* passo entre cards: as paradas ficam a 350px uma da outra, o que caía no PISO da
+         conta por distância (0,85s). Como o dono pediu "bem pouca coisa" mais rápido,
+         0,7s — 18% mais ágil, sem virar corte seco.
+         O `enterDur` está aqui SÓ para a entrada não mudar junto: sem ele, o `dur` também
+         vale ao entrar na seção (é o mesmo caminho no goToIndex) e a chegada vinda da Sede
+         — 1.656px — encurtaria de 0,85s para 0,7s, coisa que ninguém pediu. 0,85s é
+         exatamente o que a conta por distância já entregava. */
+      dur:0.7, enterDur:0.85,
       /* baralho: um passo por card em foco (como a trajetória). O card i fica em
          foco quando cp = i/(N-1); e cp = (progress*D)/CARO_DUR, com CARO_DUR=5 e
          D = duração da deckTL (exposta pelo próprio trigger em st.animation). */
@@ -107,6 +125,13 @@
     { label:'Recorrência',  sel:'#recorrencia',  subs:[], on:true,
       /* transições mais suaves (entrada e beat1↔beat2) */
       dur:2.6,
+      /* ENTRADA VINDA DO ECOSSISTEMA: é a viagem mais longa da apresentação inteira —
+         medido 3.235px (do último card, y=10456, até o grid, y=13691), porque no caminho
+         cabe todo o resto do pin do baralho (+=4480) e a cena da recorrência que está
+         oculta. Com os 2,6s de `dur` isso dava ~1.244 px/s e passava voando.
+         `enterDur` só vale na ENTRADA pela seta (o `dur` continua valendo entre passos),
+         e força ease uniforme (power1.inOut) em vez de acelerar no meio. */
+      enterDur:4.6,
       /* 2 subcategorias: (1) texto central + cards convergindo (fim do scrub radial,
          ainda no pin); (2) grid "Seis frentes, uma recorrência" enquadrado. Enquadra
          o grid por geometria em vez de usar o fim do reveal (que ia parar na bonificação). */
@@ -131,18 +156,28 @@
         return out;
       } },
     { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
-      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
+      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo).
+         O 88 virou 148 a pedido do dono: o título estava colado demais no alto da tela.
+         Este número é a distância do título ao topo da viewport quando a parada pousa —
+         MAIOR = título mais para baixo. Só mexe na posição do scroll, não no layout. */
       buildStops:function(st, node){
         var head = node.querySelector('.sim-head') || node;
-        return [ curY() + head.getBoundingClientRect().top - 88 ];
+        return [ curY() + head.getBoundingClientRect().top - 148 ];
       } },
-    { label:'Órbita',       sel:'#orbita',       on:true,
+    /* rótulo: a seção se chama "Aplicativo do Licenciado" na tela e "App" no menu.
+       "Órbita" é o nome INTERNO da mecânica (a órbita de chips, hoje oculta) e não
+       significava nada para quem lê o trilho durante uma apresentação ao vivo. */
+    { label:'App',          sel:'#orbita',       on:true,
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
          Ao ir pela seta a ponte eco2→órbita dispara o igStartOrbita; ao ir pelo dot
          disparamos o intro na mão e garantimos o smoother ativo. */
-      /* entrada pela seta é LENTA: cobre o colapso dos cards no núcleo + a descida
-         até o celular (era rápido demais pra ver). Não afeta os passos internos. */
-      enterDur:6,
+      /* ENTRADA: eram 6s. Faziam sentido quando o ecossistema vinha logo antes e a
+         viagem cobria o colapso dos cards no núcleo. Hoje o SIMULADOR está no meio
+         (movido pelo script `reorder-secoes`), então a viagem que sobra é curta —
+         medido 1.809px, que em 6s dá 301 px/s: quatro vezes mais lento que qualquer
+         outra transição da apresentação. É este número que controla o ritmo.
+         Ajustado de novo para 2,7s depois do dono ver os 3,4s no navegador. */
+      enterDur:2.7,
       onEnter:function(){
         try{ var s=(window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null; if(s) s.paused(false); }catch(e){}
         if (window.igStartOrbita) window.igStartOrbita();
@@ -166,11 +201,16 @@
       } },
     { label:'Planos',       sel:'#planos',       subs:[], on:true,
       /* sub-steps (os cards são altos e não cabem juntos): (1) título + plano 1;
-         (2) plano 2 enquadrado; (3) footer (#rodape). Sem pin/scrub → geometria. */
+         (2) plano 2 enquadrado. Sem pin/scrub → geometria.
+         O 3º passo era o RODAPÉ, e isso quebrava o trilho de dots: como a lista de
+         paradas é ordenada por posição e o rodapé é o fim da página, aquela parada
+         caía DEPOIS de Qualificações e Bonificação. Medido: y=25.283 contra 23.056
+         (Qualificações) e 24.469 (Bonificação) — ou seja, no último passo da
+         apresentação o dot que acendia era o de PLANOS, lá no meio do trilho.
+         O rodapé virou o 3º passo da Bonificação, que é a última seção antes dele. */
       buildStops:function(st, node){
         var head = node.querySelector('.pl-head');
         var plans = node.querySelectorAll('.pl-list .plan');
-        var footer = document.getElementById('rodape');
         var vh = window.innerHeight, base = curY(), out = [];
         var ref1 = head || plans[0];
         /* off1 ADAPTATIVO: rola o quanto precisar p/ o plano 1 caber inteiro (antes era fixo
@@ -186,13 +226,11 @@
           var r2 = plans[1].getBoundingClientRect();
           out.push(base + r2.top - Math.max(80, (vh - r2.height) / 2));            // plano 2
         }
-        if (footer){
-          var rf = footer.getBoundingClientRect();
-          out.push(base + rf.top - Math.max(60, (vh - rf.height) / 2));            // footer (clamp leva ao fim)
-        }
         return out.length ? out : null;
       } },
-    { label:'Graduações',   sel:'#graduacoes',   subs:[], on:true, trig:'#gradSection', dur:2.8,
+    /* rótulo: na tela esta seção se chama "Qualificações" (é o que o kicker mostra e
+       o que o dono fala em apresentação). "Graduações" só sobrevive nos ids do código. */
+    { label:'Qualificações', sel:'#graduacoes',  subs:[], on:true, trig:'#gradSection', dur:2.8,
       onLeave:function(){ gradEventsClose(); gradClear(); },
       /* 1º passo: gráfico completo. Depois um passo por barra (hover do nível).
          Por fim, abre o modal "Nossos Eventos" e navega os slides — tudo na mesma
@@ -218,16 +256,31 @@
       /* telas altas: sobe um pouco (-72). telas baixas (notebook ~700-768px): 0,
          senão o título encavala na navbar. */
       frameOff:function(){ return window.innerHeight < 900 ? 0 : -72; },
+      /* ENTRADA vinda das Qualificações: são 1.413px e não havia `dur` nenhum aqui, então
+         caía na conta por distância — clamp(0,85s .. 1,7s) — e resolvia em 0,85s, ~1.663 px/s.
+         Era a transição mais rápida da apresentação, logo depois da mais contemplativa
+         (a escada de níveis), e por isso parecia um corte seco. */
+      enterDur:3,
       onEnter:function(){ var v=document.querySelector('.carvid'); if (v){ var p=v.play(); if (p&&p.catch) p.catch(function(){}); } },
-      /* 2 passos na mesma posição: (1) enquadra (BYD Royal 5K é o padrão); (2) troca
-         para o Porsche Taycan (Embaixador 12K). Volta ao passo 1 reverte pro BYD. */
+      /* 3 passos: (1) enquadra (BYD Royal 5K é o padrão); (2) troca para o Porsche Taycan
+         (Embaixador 12K) — os dois na mesma posição; (3) o RODAPÉ, que fecha a apresentação.
+         O passo do rodapé morava em Planos e, por ser o fim da página, aparecia fora de
+         ordem no trilho de dots (ver o comentário lá). Aqui ele fica na última seção antes
+         do rodapé, então a sequência de dots termina no fim do trilho, como se espera. */
       buildStops:function(st, node){
         var off = (typeof this.frameOff === 'function') ? this.frameOff() : (this.frameOff != null ? this.frameOff : 90);
-        var y = curY() + node.getBoundingClientRect().top - off;
-        return [
+        var base = curY(), vh = window.innerHeight;
+        var y = base + node.getBoundingClientRect().top - off;
+        var out = [
           { y:y, action:function(){ if (document.body.classList.contains('cars-ready')) carSelectRaw(0); } },
           { y:y, action:function(){ carSelect(1); } }
         ];
+        var footer = document.getElementById('rodape');
+        if (footer){
+          var rf = footer.getBoundingClientRect();
+          out.push({ y: base + rf.top - Math.max(60, (vh - rf.height) / 2), action:null });
+        }
+        return out;
       } },
   ];
 
@@ -494,6 +547,18 @@
       });
     });
     activeStops.sort(function(a, b){ return a.y - b.y; });
+
+    /* RE-ANCORA O PASSO ATUAL. Um rebuild acontece a cada refresh do ScrollTrigger (fonte
+       que assenta, mídia que carrega, resize) e pode mudar a QUANTIDADE de paradas. O
+       curIdx é um índice cru nessa lista: sem re-ancorar, ele passa a apontar para a
+       parada de outra seção — ou para fora da lista, e aí `activeStops[curIdx]` é
+       undefined, activeSi vira -1 e NENHUM dot fica aceso ("o trilho se perde").
+       Durante uma varredura não re-ancoramos pela posição (estaríamos no meio do voo,
+       não no destino): ali basta manter o índice dentro da faixa. */
+    if (curIdx >= 0){
+      if (activeTween) curIdx = clamp(0, activeStops.length - 1, curIdx);
+      else curIdx = nearestIdx();
+    }
 
     renderDotsState();
   }
