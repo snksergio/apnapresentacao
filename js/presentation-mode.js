@@ -142,10 +142,15 @@
         if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
         var stage = node.querySelector('.recstage');
         var grid  = node.querySelector('.recgrid');
-        var all = sectionTriggers({}, node), radial = null;
-        for (var i = 0; i < all.length; i++){ if (all[i].trigger === stage && !all[i].pin){ radial = all[i]; break; } }
         var out = [];
-        out.push(radial ? (radial.start + (radial.end - radial.start) * 0.98) : st.end);   // beat 1
+        /* recstage oculto (pedido do dono): a cena radial nao existe mais -> pula o beat 1,
+           deixa so o enquadramento do grid ("Seis frentes"). */
+        var stageHidden = stage && getComputedStyle(stage).display === 'none';
+        if (!stageHidden){
+          var all = sectionTriggers({}, node), radial = null;
+          for (var i = 0; i < all.length; i++){ if (all[i].trigger === stage && !all[i].pin){ radial = all[i]; break; } }
+          out.push(radial ? (radial.start + (radial.end - radial.start) * 0.98) : st.end);   // beat 1
+        }
         if (grid){
           var r = grid.getBoundingClientRect(), vh = window.innerHeight;
           var off = Math.max(80, (vh - r.height) / 2);

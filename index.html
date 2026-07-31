@@ -673,7 +673,12 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .cibonus b{color:var(--green);font-weight:600}
   /* ===== recorrencia: expansao + blocos ===== */
   .rec{position:relative}
-  .recstage{position:relative;height:100vh;overflow:hidden}
+  /* OCULTO (pedido do dono): cena "Renda que se repete todo mes" + cards flutuantes.
+     display:none em desktop e mobile. O pin/scrub dela e PULADO no JS quando esta oculta
+     (senao sobraria vao de scroll) e a parada da apresentacao vira 1 beat (so o grid).
+     "Seis frentes, uma recorrencia" (.recgrid) permanece. Reverter: tirar o display:none
+     E o guard do JS. */
+  .recstage{position:relative;height:100vh;overflow:hidden;display:none}
   .recbg{position:absolute;inset:0;z-index:0;pointer-events:none;
     background:
       linear-gradient(rgba(24,255,0,.024) 1px,transparent 1px),
@@ -770,7 +775,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .g5{left:3.5%;top:57%;width:480px;height:300px}
   .g6{left:40%;top:81%}
   .g7{right:21%;top:72%}
-  .recgrid{position:relative;max-width:1160px;margin:0 auto;padding:0 28px 14vh}
+  .recgrid{position:relative;max-width:1160px;margin:0 auto;padding:clamp(72px,10vh,150px) 28px 14vh}
   .rlink{position:relative;height:120px}
   .rl-v{position:absolute;left:50%;top:0;width:2px;height:96px;margin-left:-1px;
     background:linear-gradient(180deg,rgba(24,255,0,.05),var(--green));
@@ -1990,7 +1995,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .g6{left:2%;top:86%}
     .g7{right:3%;top:75%}
     /* grade: linha já crescida (JS não zera no mobile), blocos 1 por linha */
-    .recgrid{padding:8px 20px 64px}   /* topo 40->8: idem (o vao ate a linha somava 152px) */
+    .recgrid{padding:56px 20px 64px}   /* topo 56: o .recstage acima foi OCULTO (pedido do dono), entao o grid precisa de respiro proprio (antes era 8 porque a cena de cima ja separava) */
     /* linha conectora: ACIMA do título (sem sobrepor), visível de cara. O bloco de cima
        foi reduzido ~50% (era 78/52/52/22) porque o vão até o título era grande demais no
        mobile; depois só o TRAÇO voltou +50% (26->39), mantendo o vão aprovado: os 13px
@@ -3690,7 +3695,9 @@ window.igRefresh=(function(){
   var recstage=document.querySelector('.recstage');
   var rfloats=[].slice.call(document.querySelectorAll('.rfloat'));
   /* mobile: rec montada no script independente (IO+CSS). Aqui só o desktop. */
-  if(recstage&&rfloats.length&&window.matchMedia('(min-width:1025px)').matches){
+  /* se o .recstage esta oculto (display:none — pedido do dono), NAO cria pin/scrub/parallax:
+     sem isso o pin reservaria scroll de uma cena invisivel (vao morto). */
+  if(recstage&&rfloats.length&&window.matchMedia('(min-width:1025px)').matches&&getComputedStyle(recstage).display!=='none'){
     var recEase=gsap.parseEase('power2.out');
     function recSetup(){
       var W=recstage.offsetWidth,H=recstage.offsetHeight;
