@@ -162,7 +162,7 @@
             if(s) s.scrollTop(y); else window.scrollTo(0,y);
             if(window.ScrollTrigger) ScrollTrigger.update();
           } }; }
-        return [ mk(0.26), mk(0.58), mk(0.93) ];
+        return [ mk(0.26), mk(0.58) ];   /* 3o stop (mk .93 = fase download) removido: 3o step do celular oculto (pedido do dono) */
       } },
     { label:'Planos',       sel:'#planos',       subs:[], on:true,
       /* sub-steps (os cards são altos e não cabem juntos): (1) título + plano 1;

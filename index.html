@@ -4457,7 +4457,8 @@ window.igRefresh=(function(){
   var lastRf=0, lastDf=0;
   function apply(){
     var p=prog.p;
-    var df=sm((p-.64)/.2);   /* fase download */
+    var df=0;   /* fase download DESATIVADA (pedido do dono: ocultar o 3o step do celular). O celular
+                   fica na tela do Clube como estado final, sem voar p/ a "mao"/download. Antes: sm((p-.64)/.2) */
     /* so forca o fim da entrada se o usuario ja passou do hero (nunca durante trava/reverso) */
     if(p>.16&&played&&!scrollLocked&&!tl.reversed()&&tl.progress()<1) tl.progress(1);
     /* cards: sobem do repouso, seguram e saem — tudo pelo scroll */
