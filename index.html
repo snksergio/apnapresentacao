@@ -2522,7 +2522,7 @@ window.igRefresh=(function(){
 
   <div class="orb-head">
     <span class="skicker">Aplicativo do Licenciado</span>
-    <h2 class="orb-title"><span class="ts1">Acompanhe seus ganhos,</span><br><span class="ts2">monitore sua </span><em class="hl2 ts3">rede e solicite saques</em></h2>
+    <h2 class="orb-title"><span class="ts1">Acompanhe seus ganhos,</span><br><span class="ts2">monitore sua </span><em class="hl2 ts3">rede e solicite saques</em><span class="ts3b"></span></h2>
     <p class="orb-sub"><span class="ts4">App iGreen Connect | Todas as soluções trabalham de forma integrada para oferecer uma experiência completa e conectada.</span></p>
     <a class="aio-cta orb-cta" href="#">Começar agora
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#052008" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -4286,12 +4286,12 @@ window.igRefresh=(function(){
   if(window.ScrollTrigger&&ScrollTrigger.addEventListener) ScrollTrigger.addEventListener('refresh',fitOrbita);
 
   /* apagar/digitar do titulo e descricao (fase clube) */
-  var TS=[orb.querySelector('.ts1'),orb.querySelector('.ts2'),orb.querySelector('.ts3'),orb.querySelector('.ts4')];
+  var TS=[orb.querySelector('.ts1'),orb.querySelector('.ts2'),orb.querySelector('.ts3'),orb.querySelector('.ts3b'),orb.querySelector('.ts4')];
   var COPY=[
-    ['Acompanhe seus ganhos,','monitore sua ','rede e solicite saques',
+    ['Acompanhe seus ganhos,','monitore sua ','rede e solicite saques','',
      'App iGreen Connect | Todas as soluções trabalham de forma integrada para oferecer uma experiência completa e conectada.'],
-    ['Clube de Descontos','para ','membros iGreen',
-     'Benefícios exclusivos com parceiros — alimentação, cinema, farmácia, academia e muito mais, direto no app.']
+    ['Cashback, monitoramento das','','contas e muito mais',' em um só lugar.',
+     'App iGreen Club | Acompanhamento da conta de energia, seguros e telefonia. Acesso ao link de indicação para gerar cashback recorrente, além de descontos exclusivos em mais de 600 mil produtos e serviços.']
   ];
   /* kicker acompanha o estado do titulo: estado 0 (app) = "Aplicativo do Licenciado",
      estado 1 (Clube) = "Aplicativo do Cliente". Entra no headEls p/ fazer crossfade junto. */
@@ -4300,7 +4300,7 @@ window.igRefresh=(function(){
   var headEls=[orb.querySelector('.orb-title'),orb.querySelector('.orb-sub'),orbKicker];
   function setCopy(state){
     var c=COPY[state];
-    for(var i=0;i<4;i++) TS[i].textContent=c[i];
+    for(var i=0;i<TS.length;i++){ if(TS[i]) TS[i].textContent=(c[i]!=null?c[i]:''); }
     if(orbKicker) orbKicker.textContent=KICK[state];
   }
   var headState=0, typeDrv=null;
@@ -6027,8 +6027,8 @@ if(window.gsap&&window.ScrollTrigger){
       mfcs.forEach(function(c){ mtop.appendChild(c); });
       appstage.insertBefore(mtop, appstage.firstChild);
       var h2w=document.createElement('div'); h2w.className='morb-h2';
-      h2w.innerHTML='<h2>Clube de Descontos para <em>membros iGreen</em></h2>'
-        +'<p>Benefícios exclusivos com parceiros — alimentação, cinema, farmácia, academia e muito mais, direto no app.</p>';
+      h2w.innerHTML='<h2>Cashback, monitoramento das <em>contas e muito mais</em> em um só lugar.</h2>'
+        +'<p>App iGreen Club | Acompanhamento da conta de energia, seguros e telefonia. Acesso ao link de indicação para gerar cashback recorrente, além de descontos exclusivos em mais de 600 mil produtos e serviços.</p>';
       mtop.parentNode.insertBefore(h2w, mtop.nextSibling);
       var orbDl=orb.querySelector('.orb-dl');
       if(orbDl) orb.appendChild(orbDl);
