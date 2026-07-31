@@ -288,7 +288,11 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .eco2 .cphone{display:none!important}
   .ncanvas{position:fixed;inset:0;z-index:60;pointer-events:none}
   .eco2 .ecore{display:none!important}
-  .ncorefx{position:fixed;left:0;top:0;width:110px;height:110px;border-radius:26px;z-index:61;
+  /* OCULTO (pedido do dono): o "nucleo" verde da transicao ecossistema->orbita. Escondemos
+     SO o visual com display:none — o GSAP anima autoAlpha/transform (nao mexe em display), e o
+     ScrollTrigger que dispara a orbita (igStartOrbita) NAO depende da visibilidade, entao a
+     orbita continua iniciando normal. Reverter: tirar o display:none. */
+  .ncorefx{position:fixed;left:0;top:0;width:110px;height:110px;border-radius:26px;z-index:61;display:none;
     pointer-events:none;background:linear-gradient(150deg,#8dff5f,#18FF00 46%,#0a9a10);
     box-shadow:0 0 60px rgba(24,255,0,.6),0 0 150px rgba(24,255,0,.32),inset 0 0 32px rgba(255,255,255,.28);
     opacity:0;visibility:hidden;will-change:transform}
