@@ -41,6 +41,17 @@ Ao religar: descomente o bloco e **dê um destino real**. Se for âncora, confir
 - **`Começar agora`** (home) — único CTA visível que ainda não leva a lugar nenhum.
 - Um `href="#"` sem texto por volta da linha 2156 do `index.html` — verificar o que é antes de mexer.
 
+## Outros blocos desativados por marcador (2026-08-03)
+
+Mesma decisão de sempre — **desativar, não apagar** — mas estes não são CTAs de conversão:
+
+| marcador | onde | o que é / como religar |
+|---|---|---|
+| `CTA-DESATIVADO` | seção da sede, `.hqwatch` | Card "Assista ao vídeo institucional". O vídeo ainda não existe. O bloco está dentro de comentário HTML; as referências em JS são null-guarded, então descomentar basta. |
+| `PINS-DESATIVADO` | seção dos carros (`#bonificacao`) | Medalhas 3D **Royal 5K** (`assets/pins/pin-r5.webp`, sobre a BYD) e **Embaixador 12K** (`pin-e12.webp`, sobre a Porsche), girando em `rotateY` 360°. Foram pedidas, feitas e então ocultadas. Reativar = remover **uma linha** de `display:none!important`. Toda a mecânica segue viva: o `setCar` ainda alterna `.on`, e no mobile o JS ainda move os pins para dentro da `.carband`. |
+
+Detalhe do mobile que custou tempo: os pins **precisam** entrar na `.carband` (a faixa que envolve só o vídeo). Lá a seção é uma coluna (título → vídeo → abas), então um `position:absolute` na `.carstage` mede a seção inteira e joga o pin longe do carro.
+
 ## `href="#"` que estão CORRETOS — não ligue
 
 `Ver extrato`, `Ver toda jornada` e `Ver detalhes` (×2) ficam **dentro do mockup do celular**, na

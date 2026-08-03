@@ -299,7 +299,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .eco2 .ewrap{justify-content:flex-start;padding-top:14vh}
   .eco2 .etrack{position:absolute;left:50%;top:59.5%;width:0;height:0;padding:0;margin:0;display:block;overflow:visible;will-change:transform}
   .eco2 .ecard{position:absolute;left:0;top:0;opacity:1;transition:none!important;margin:0}
-  .eco2 .ecard.focus,.eco2 .ecard:hover{transform:none;box-shadow:0 0 48px rgba(24,255,0,.18)}
+  .eco2 .ecard.focus{transform:none;box-shadow:0 0 48px rgba(24,255,0,.18)}
   .decking .ecard{background:linear-gradient(180deg,#0c1a0e,#070f08)!important;border-color:rgba(24,255,0,.16)!important;box-shadow:0 12px 40px rgba(0,0,0,.5)!important;pointer-events:none!important}
   .decking .ecard::before{opacity:0!important;animation:none!important}
   .eco2 .ecore{left:50%;top:50%;margin:0}
@@ -387,14 +387,25 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     transition:border-color .35s,transform .35s,opacity .35s,box-shadow .35s}
   .ecard.focus{opacity:1;transform:translateY(-6px);border-color:rgba(24,255,0,.36);
     box-shadow:0 0 48px rgba(24,255,0,.18)}
-  .ecard:hover{opacity:1;transform:translateY(-6px);box-shadow:0 0 48px rgba(24,255,0,.18)}
+  /* HOVER SEM DESTAQUE (pedido do dono): os cards nao sao clicaveis, entao passar o mouse
+     nao pode "acender" (verde/borda/elevacao) — quem manda no destaque e SO o .focus
+     (o card selecionado pelo carrossel). Pareado com a remocao do cursor "+". */
+  /* ENFASE (pedido do dono): havendo um card selecionado (.focus), TODOS os outros recuam —
+     antes os nao-selecionados ficavam no mesmo .68 e o destaque era fraco.
+     Usa FILTER, nao `opacity`: o GSAP do carrossel escreve opacity INLINE em cada card
+     (fade de entrada), e inline vence folha de estilo — a regra com `opacity` simplesmente
+     nao pegava. `filter:opacity()` multiplica por cima e convive com o fade do GSAP.
+     Sem excecao de :hover: o mouse nao acende card nenhum (eles nao sao clicaveis). */
+  .etrack:has(.ecard.focus) .ecard:not(.focus){
+    filter:opacity(.22) saturate(.6);transition:filter .35s ease}
+  .ecard{transition:border-color .35s,transform .35s,opacity .35s,box-shadow .35s,filter .35s}
   @property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
   .ecard::before{content:'';position:absolute;inset:-1px;border-radius:21px;padding:1.5px;
     background:conic-gradient(from var(--a),transparent 0 68%,var(--green) 84%,transparent 100%);
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;
     opacity:0;transition:opacity .3s;pointer-events:none}
-  .ecard:hover::before,.ecard.focus::before{opacity:1;animation:brotate 2.6s linear infinite}
+  .ecard.focus::before{opacity:1;animation:brotate 2.6s linear infinite}
   @keyframes brotate{to{--a:360deg}}
   .etag{font-size:11.5px;font-weight:500;letter-spacing:.22em;color:var(--green);text-transform:uppercase}
   .eimg{margin-top:14px;position:relative;aspect-ratio:4/3;border-radius:12px}
@@ -661,6 +672,34 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     box-shadow:0 16px 44px rgba(0,0,0,.6);transform:translate(-50%,-50%);
     pointer-events:none;opacity:0;visibility:hidden;animation:hintfloat 3.2s ease-in-out infinite}
   @keyframes hintfloat{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 9px))}}
+  /* ===== pins/medalhas 3D acima dos carros ===== */
+  /* PINS-DESATIVADO (pedido do dono): oculta as medalhas Royal/Embaixador sobre os carros.
+     O resto da mecanica fica intacta (o JS ainda alterna .on em setCar e, no mobile, move os
+     pins p/ dentro da .carband) — para reativar, basta remover este display:none. */
+  .carpin{display:none!important}
+  .carpin{position:absolute;z-index:4;pointer-events:none;
+    width:clamp(96px,9vw,150px);aspect-ratio:1/1;
+    perspective:1000px;                         /* profundidade do giro 3D */
+    opacity:0;visibility:hidden;
+    transform:translate(-50%,-50%) scale(.72);
+    transition:opacity .5s ease,transform .55s cubic-bezier(.2,.9,.25,1),visibility 0s linear .5s}
+  .carpin.pinL{left:25%;top:33%}               /* acima da BYD (esq.) — tunável */
+  .carpin.pinR{left:75%;top:33%}               /* acima da Porsche (dir.) — tunável */
+  .carpin.on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);
+    transition:opacity .5s ease,transform .55s cubic-bezier(.2,.9,.25,1)}
+  .carpin::before{content:'';position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+    width:120%;height:120%;border-radius:50%;z-index:-1;pointer-events:none;
+    background:radial-gradient(50% 50% at 50% 50%,rgba(24,255,0,.34),rgba(24,255,0,0) 70%);filter:blur(4px)}
+  .carpin-sp{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform;
+    animation:pinspin 6s linear infinite}
+  .carpin-sp img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55))}
+  .carpin-sp .pb{transform:rotateY(180deg)}    /* verso vira p/ fora: giro não espelha o logo */
+  @keyframes pinspin{0%{transform:translateY(0) rotateY(0)}
+    50%{transform:translateY(-9px) rotateY(180deg)}
+    100%{transform:translateY(0) rotateY(360deg)}}
+  @media (prefers-reduced-motion:reduce){ .carpin-sp{animation:none} }
   .carinfos{position:relative;width:100%;display:grid;margin-top:10px}
   .carinfo{grid-area:1/1;opacity:0;visibility:hidden;text-align:center}
   .cikicker{font-size:12px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--green)}
@@ -676,6 +715,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     background:rgba(3,6,3,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .cibonus b{color:var(--green);font-weight:600}
   /* ===== recorrencia: expansao + blocos ===== */
+  #recorrencia{display:none}   /* ocultado a pedido do dono (secao "Seis frentes, uma recorrencia") */
   .rec{position:relative}
   /* OCULTO (pedido do dono): cena "Renda que se repete todo mes" + cards flutuantes.
      display:none em desktop e mobile. O pin/scrub dela e PULADO no JS quando esta oculta
@@ -1213,7 +1253,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .orb-fadeb{position:absolute;left:0;right:0;bottom:0;height:170px;z-index:6;pointer-events:none;
     opacity:0;background:linear-gradient(180deg,rgba(3,6,3,0),#030603 82%)}
   /* palco do app dentro da orbita (identico ao allinone/orbita) */
-  .orb-appstage{position:absolute;left:50%;bottom:-100px;width:1520px;height:760px;
+  .orb-appstage{position:absolute;left:50%;bottom:-30px;width:1520px;height:760px;   /* bottom = -ORB_BASE (JS reescreve em fitOrbita) */
     margin-left:-760px;z-index:5;user-select:none;-webkit-user-select:none;
     pointer-events:none}   /* nao rouba o hover da orbita; trilhas reativam o proprio */
   .orb-appstage::before{content:'';position:absolute;left:50%;top:-30px;transform:translateX(-50%);z-index:1;
@@ -1444,15 +1484,17 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   opacity:0;transition:opacity .3s;pointer-events:none}
 #simulador .card:hover::after{opacity:.9}
 #simulador .out{border:none;background:none;box-shadow:none;padding:0}
-#simulador .v13{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:22px;align-items:start;grid-template-areas:"sel receipt" "cfg receipt" "chart receipt"}
+#simulador .v13{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:22px;align-items:start;grid-template-areas:"sel receipt" "cfg receipt"}
 #simulador #sim{display:contents}
 #simulador .sel{grid-area:sel}#hint{grid-area:receipt}.receipt{grid-area:receipt}.config{grid-area:cfg}.chartcard{grid-area:chart}
 #simulador .v13full{margin-top:22px}.v13full[hidden]{display:none}
 #simulador .sel,#simulador .config,#simulador .chartcard{border:1px solid var(--line);border-radius:22px;background:linear-gradient(165deg,rgba(232,255,228,.035),rgba(4,10,6,.9));padding:24px}
 #simulador .chartcard .chart{margin-top:0;border:none;background:none;padding:0}
+#simulador .chartcard{display:none}   /* grafico de barras oculto (pedido do dono). svg#chart fica no DOM p/ nao quebrar o JS (observer/draw) */
 #simulador .selsec+.selsec{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
 #simulador .sidelbl{font-family:var(--disp);font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--txt);margin-bottom:15px}
 #simulador .sel .chips{display:flex;flex-wrap:wrap;gap:8px}
+#simulador .selhelp{margin:13px 0 0;font-size:11.5px;color:var(--mute)}
 #simulador .sel .chip{flex-direction:row;gap:7px;padding:9px 14px;border-radius:99px;font-size:10px;letter-spacing:.04em}
 #simulador .sel .chip svg{width:15px;height:15px}
 #simulador .sel .grads{grid-template-columns:repeat(4,1fr);gap:9px}
@@ -1481,7 +1523,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
 #simulador .sharebtn:hover{box-shadow:0 0 22px rgba(24,255,0,.42)}
 #simulador .sharebtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #simulador .sharebtn.copied{background:var(--emerald)}
-@media(max-width:900px){#simulador .v13{grid-template-columns:1fr;grid-template-areas:"sel" "cfg" "chart" "receipt"}#simulador .receipt{position:static}}
+@media(max-width:900px){#simulador .v13{grid-template-columns:1fr;grid-template-areas:"sel" "cfg" "receipt"}#simulador .receipt{position:static}}
 /* hint (placeholder "Monte seu cenário") logo após o seletor no mobile, não lá embaixo */
 @media(max-width:900px){#simulador #hint{grid-area:cfg}}
 
@@ -2032,6 +2074,12 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
       width:100%;margin:0;height:auto;object-fit:contain;display:block}
     /* máscaras: metades clicáveis que escurecem o carro NÃO selecionado (tap = selecionar) */
     .carband .carshade{display:block!important;position:absolute;top:0;bottom:0;width:50%;z-index:2}
+    /* pins (medalhas 3D): o JS move p/ dentro da .carband, então o % mira o vídeo/carro.
+       z-index acima das máscaras p/ o pin não ser escurecido. Menor que no desktop
+       (a banda é estreita) e um pouco mais alto, sobre o capô do carro. */
+    .carband .carpin{z-index:5;width:clamp(58px,15vw,104px);top:30%}
+    .carband .carpin.pinL{left:25%}
+    .carband .carpin.pinR{left:75%}
     /* abas + infos empilhados; margin-top:auto ancora no rodapé em telas altas, flui nas baixas */
     .carbottom{order:3;position:relative;inset:auto;bottom:auto;left:auto;transform:none;
       width:auto;margin:22px 0 0;padding:0 20px 26px;gap:9px}
@@ -2295,7 +2343,7 @@ window.igRefresh=(function(){
       <h2 class="stitle"><span class="line"><span>Resultados que</span></span><span class="line"><span>falam <em class="hl2">por si</em></span></span></h2>
       <p class="ssub">Uma trajetória construída com propósito, inovação e milhares de licenciados ao redor do mundo.</p>
     </div>
-    <div class="sfloat" style="top:21%;left:16%"><div class="sfnum"><i>+R$</i><b data-target="140">0</b><i>mi</i></div><span class="sflbl">de bônus distribuídos à rede</span></div>
+    <div class="sfloat" style="top:21%;left:16%"><div class="sfnum"><i>+R$</i><b data-target="150">0</b><i>mi</i></div><span class="sflbl">de bônus distribuídos à rede</span></div>
     <div class="sfloat sr" style="top:11%;right:10%"><div class="sfnum"><i>+</i><b data-target="800">0</b><i>mil</i></div><span class="sflbl">clientes conectados</span></div>
     <div class="sfloat" style="top:44%;left:8%"><div class="sfnum"><i>+</i><b data-target="35">0</b><i>mil</i></div><span class="sflbl">licenciados ativos</span></div>
     <div class="sfloat sr" style="top:44%;right:8%"><div class="sfnum"><i>+</i><b data-target="11">0</b></div><span class="sflbl">milionários formados</span></div>
@@ -2316,7 +2364,7 @@ window.igRefresh=(function(){
       <ol class="jitems">
         <li class="jitem jl"><span class="jdot"></span><span class="jphoto jp1" data-rot="-7" data-dx="90" data-dy="-150" data-off="-140"><picture><source srcset="assets/img/timeline-origem.avif" type="image/avif"><source srcset="assets/img/timeline-origem.webp" type="image/webp"><img src="assets/img/timeline-origem.png" alt="" decoding="async"></picture></span><div class="jcard">
           <span class="jyear">2021</span><span class="jname">Origem</span>
-          <span class="jdesc">Fundada por Thiago Alexander e Amanda Durante, em Minas Gerais. Nascia a iGreen — uma visão, um propósito: “Enriquecer vidas e impactar o mundo com soluções sustentáveis e inovadoras.”</span>
+          <span class="jdesc">Fundada por Thiago Alexander e Amanda Durante, em Minas Gerais. Nascia a iGreen, uma visão, um propósito: “Enriquecer vidas e impactar o mundo com soluções sustentáveis e inovadoras.”</span>
         </div></li>
         <li class="jitem jr"><span class="jdot"></span><span class="jphoto jp2" data-rot="6" data-dx="-170" data-dy="-40" data-off="160"><picture><source srcset="assets/img/timeline-comerc.avif" type="image/avif"><source srcset="assets/img/timeline-comerc.webp" type="image/webp"><img src="assets/img/timeline-comerc.png" alt="" decoding="async"></picture></span><div class="jcard">
           <span class="jyear">2023</span><span class="jname">Marco Histórico</span>
@@ -2328,7 +2376,7 @@ window.igRefresh=(function(){
         </div></li>
         <li class="jitem jr"><span class="jdot"></span><div class="jcard">
           <span class="jyear">2025</span><span class="jname">A maior do Setor</span>
-          <span class="jdesc">Mais de 450 mil clientes. A expansão se torna real — e este é apenas o começo de uma grande jornada.</span>
+          <span class="jdesc">Mais de 450 mil clientes. A expansão se torna real, e este é apenas o começo de uma grande jornada.</span>
         </div></li>
         <li class="jitem jl"><span class="jdot"></span><span class="jmedia"><span class="jphoto jp4" data-rot="0" data-dx="0" data-dy="-40" data-off="90"><picture><source srcset="assets/img/timeline-forbes.avif?v=2" type="image/avif"><source srcset="assets/img/timeline-forbes.webp?v=2" type="image/webp"><img src="assets/img/timeline-forbes.png?v=2" alt="" decoding="async"></picture></span><img class="jseal" src="assets/img/gptw-brasil.png" width="220" height="311" alt="Selo Great Place To Work Certificada Brasil" decoding="async"></span><div class="jcard">
           <span class="jyear">2026</span><span class="jname">Dominação Global</span>
@@ -2364,10 +2412,14 @@ window.igRefresh=(function(){
     </div>
   </div>
 
+  <!-- CTA-DESATIVADO: card "Assista ao vídeo institucional" oculto por pedido do dono — o video ainda nao esta pronto.
+       Reativar removendo este comentario quando o video existir (e trocar o href="#video-sede" pelo link real).
+       O JS de .hqwatch (posicionamento/thumb) tem guarda de null, entao pode ficar comentado sem quebrar nada.
   <a class="hqwatch" href="#video-sede" aria-label="Assistir ao vídeo institucional">
     <span class="hqthumb"><img alt=""><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
     <span class="hqwtxt"><b>Assista ao vídeo institucional</b></span>
   </a>
+  -->
   </div>
 </section>
 <section class="eco" id="ecossistema">
@@ -2379,12 +2431,12 @@ window.igRefresh=(function(){
       <div class="eprog" aria-hidden="true"><i></i></div>
     </div>
     <div class="etrack">
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaolivre.html"><span class="etag">[ Livre ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-livre.jpg"><source src="assets/video/conexao-livre.mp4" type="video/mp4"></video></div><h3>Conexão Livre</h3><p>Assinatura de energia limpa de usinas parceiras: até 30% de economia na conta, sem obras nem placas.</p><ul class="emods"><li>Até 30% de economia</li><li>Sem obras nem placas</li><li>Recorrência até 2% + bônus extra</li></ul></article>
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaogreen.html"><span class="etag">[ Green ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-green.jpg" data-herovid="0"></video></div><h3>Conexão Green</h3><p>Assinatura de energia solar com economia garantida para residências e empresas.</p><ul class="emods"><li>Economia sem investimento</li><li>Sem obras nem placas</li><li>Recorrência até 4% + bônus extra</li></ul></article>
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaoplacas.html"><span class="etag">[ Placas ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-placas.jpg"><source src="assets/video/conexao-placas.mp4" type="video/mp4"></video></div><h3>Conexão Placas</h3><p>Geração solar própria no imóvel do cliente: a iGreen entrega projeto, instalação e suporte técnico.</p><ul class="emods"><li>Energia solar própria</li><li>Projeto e instalação iGreen</li><li>10% por projeto</li></ul></article>
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaosolar.html"><span class="etag">[ Solar ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-solar.jpg"><source src="assets/video/conexao-solar.mp4" type="video/mp4"></video></div><h3>Conexão Solar</h3><p>A iGreen aluga o telhado e instala os painéis com capital próprio; em 5–6 anos o sistema vira do cliente.</p><ul class="emods"><li>Sem investimento inicial</li><li>Sistema do cliente em 5–6 anos</li><li>Recorrência até 2% + bônus extra</li></ul></article>
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaotelecom.html"><span class="etag">[ Telecom ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-telecom.jpg" data-herovid="1"></video></div><h3>Conexão Telecom</h3><p>Telefonia móvel com ligações e WhatsApp ilimitados, internet que acumula e a maior cobertura 5G do Brasil.</p><ul class="emods"><li>Sem fidelidade</li><li>R$10,00 na ativação chip físico</li><li>Recorrência até R$7,00 + bônus extra</li></ul></article>
-      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaoseguros.html"><span class="etag">[ Seguros ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-seguros.jpg" data-herovid="2"></video></div><h3>Conexão Seguros</h3><p>Seguro Auto sem burocracia: cobre roubo, furto e colisão, com pagamento mensal e sem fidelidade.</p><ul class="emods"><li>Carro e moto</li><li>Planos Flexíveis</li><li>Recorrência até 10% + bônus extra</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaolivre.html"><span class="etag">[ Livre ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-livre.jpg"><source src="assets/video/conexao-livre.mp4" type="video/mp4"></video></div><h3>Conexão Livre</h3><p>A solução ideal para empresas conectadas em alta tensão que desejam reduzir custos com energia.</p><ul class="emods"><li>Até 30% de economia</li><li>Sem investimentos ou obras.</li><li>Recorrência Direta - até 2% + Extra</li><li>Recorrência de Rede - até 1,5%</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaogreen.html"><span class="etag">[ Green ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-green.jpg" data-herovid="0"></video></div><h3>Conexão Green</h3><p>A solução ideal para clientes residenciais ou pequenas empresas que desejam economizar.</p><ul class="emods"><li>Economia Garantida</li><li>Sem investimento</li><li>Recorrência Direta até 4% + Extra</li><li>Recorrência Rede até 3,5%</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaoplacas.html"><span class="etag">[ Placas ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-placas.jpg"><source src="assets/video/conexao-placas.mp4" type="video/mp4"></video></div><h3>Conexão Placas</h3><p>Geração solar própria no imóvel do cliente: a iGreen entrega projeto, instalação e suporte técnico.</p><ul class="emods"><li>Energia solar própria</li><li>Projeto e instalação iGreen</li><li>Bônus Direto 10% por projeto</li><li>Bônus Rede 3,5% por projeto</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaosolar.html"><span class="etag">[ Solar ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-solar.jpg"><source src="assets/video/conexao-solar.mp4" type="video/mp4"></video></div><h3>Conexão Solar</h3><p>A solução ideal para quem deseja gerar a própria energia SEM PRECISAR INVESTIR.</p><ul class="emods"><li>Sem investimento inicial</li><li>Sistema do cliente em 5–6 anos</li><li>Recorrência Direta 2% + Extra</li><li>Recorrência Rede 1,5%</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaotelecom.html"><span class="etag">[ Telecom ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-telecom.jpg" data-herovid="1"></video></div><h3>Conexão Telecom</h3><p>A solução perfeita para clientes que buscam telefonia com planos justos e internet de alta velocidade, com a maior cobertura 5G do Brasil.</p><ul class="emods"><li>Sem fidelidade</li><li>Dados que acumulam</li><li>Recorrência direta R$7,00</li><li>Recorrência Rede R$10,00</li></ul></article>
+      <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaoseguros.html"><span class="etag">[ Seguros ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-seguros.jpg" data-herovid="2"></video></div><h3>Conexão Seguros</h3><p>A solução ideal para proteger financeiramente seu carro e você contra prejuízos causados por imprevistos de forma simples e sem burocracia.</p><ul class="emods"><li>Pagamento Mensal</li><li>Sem Fidelidade</li><li>Recorrência Direta 5% + Extra</li><li>Recorrência Rede 7%</li></ul></article>
       <article class="ecard" role="link" tabindex="0" data-pt-href="produtos/conexaoexpansao.html"><span class="etag">[ Expansão ]</span><div class="eimg"><video class="evid" muted loop playsinline preload="none" poster="assets/img/poster-expansao.jpg"><source src="assets/video/conexao-expansao.mp4" type="video/mp4"></video></div><h3>Conexão Expansão</h3><p>Plano de carreira da rede: o licenciado forma equipe e ganha em escala sobre a produção do time.</p><ul class="emods"><li>Comissões em escala</li><li>Bônus, prêmios e viagens</li><li>Forme sua equipe</li></ul></article>
     </div>
   </div>
@@ -2397,7 +2449,7 @@ window.igRefresh=(function(){
       <div class="rechead">
         <span class="skicker">Recorrência</span>
         <h2 class="rectitle">Renda que <em class="hl2">se repete</em> todo mês</h2>
-        <p class="recsub">Cada conexão ativa gera comissão recorrente: enquanto o cliente permanece na rede, o resultado se acumula e cresce — mês após mês, sem recomeçar do zero.</p>
+        <p class="recsub">Cada conexão ativa gera comissão recorrente: enquanto o cliente permanece na rede, o resultado se acumula e cresce, mês após mês, sem recomeçar do zero.</p>
       </div>
       <div class="rfloat g1">
         <img class="rimg-l" alt="Turbina eólica de energia verde" src="assets/img/rec-wind.jpg" loading="lazy" decoding="async">
@@ -2532,7 +2584,7 @@ window.igRefresh=(function(){
   <div class="orb-dl">
     <div class="dlL">
       <h3 class="dl-title">Leve a iGreen<br><em class="hl2">no bolso</em></h3>
-      <p class="dl-sub">Recorrência, clientes, carteira e Clube de Descontos — acompanhe tudo em tempo real, direto do celular.</p>
+      <p class="dl-sub">Recorrência, clientes, carteira e Clube de Descontos: acompanhe tudo em tempo real, direto do celular.</p>
       <div class="dl-btns">
         <a class="dl-btn p" href="https://apps.apple.com/br/app/igreen-connect/id6744383784" target="_blank" rel="noopener"><svg width="17" height="20" viewBox="0 0 17 20" fill="#052008"><path d="M14.2 10.6c0-2.9 2.4-4.3 2.5-4.4-1.4-2-3.5-2.3-4.2-2.3-1.8-.2-3.5 1-4.4 1-.9 0-2.3-1-3.8-1C2.4 4 .6 5.1-.3 6.9c-1.9 3.3-.5 8.1 1.4 10.8.9 1.3 2 2.8 3.4 2.7 1.4-.1 1.9-.9 3.6-.9s2.1.9 3.6.9c1.5 0 2.4-1.3 3.3-2.6 1-1.5 1.5-3 1.5-3.1-.1 0-2.9-1.1-2.9-4.1zM11.4 2.1c.8-.9 1.3-2.2 1.1-3.5-1.1 0-2.5.8-3.3 1.7-.7.8-1.4 2.1-1.2 3.4 1.3.1 2.6-.7 3.4-1.6z" transform="translate(1 1.5)"/></svg>Baixar para iPhone</a>
         <a class="dl-btn g" href="https://play.google.com/store/apps/details?id=com.br.iGreenEnergy&amp;hl=pt_BR" target="_blank" rel="noopener"><svg width="18" height="19" viewBox="0 0 24 24" fill="none" stroke="#18FF00" stroke-width="1.8" stroke-linejoin="round"><path d="M4 3.5v17c0 .4.5.7.8.4l14-8.5c.3-.2.3-.6 0-.8l-14-8.5c-.3-.3-.8 0-.8.4Z"/><path d="M14.5 8.5 18 12l-3.5 3.5"/></svg>Disponível no Android</a>
@@ -2818,10 +2870,19 @@ window.igRefresh=(function(){
     <div class="carfade ft" aria-hidden="true"></div>
     <div class="carfade fb" aria-hidden="true"></div>
     <div class="carhint" aria-hidden="true">Selecione um veículo</div>
+    <!-- pins/medalhas girando 3D acima de cada carro; aparecem ao selecionar o veículo.
+         Royal 5K -> BYD (esquerda) | Embaixador 12K -> Porsche (direita).
+         Duas faces (frente + verso) p/ o giro 360 não espelhar o logo. -->
+    <!-- width/height declarados e SEM loading="lazy" de proposito: o pin nasce invisivel
+         (visibility:hidden) e uma img lazy dentro de container escondido pode nao baixar,
+         aparecendo vazia no primeiro clique. Sao 2 arquivos pequenos (o verso reusa a MESMA
+         URL da frente -> 1 request cada). Ver aviso "lazy-sem-dimensoes" do revisar. -->
+    <div class="carpin pinL" data-car="0" aria-hidden="true"><div class="carpin-sp"><img class="pf" src="assets/pins/pin-r5.webp" alt="" width="150" height="150" decoding="async"><img class="pb" src="assets/pins/pin-r5.webp" alt="" width="150" height="150" decoding="async"></div></div>
+    <div class="carpin pinR" data-car="1" aria-hidden="true"><div class="carpin-sp"><img class="pf" src="assets/pins/pin-e12.webp" alt="" width="150" height="150" decoding="async"><img class="pb" src="assets/pins/pin-e12.webp" alt="" width="150" height="150" decoding="async"></div></div>
     <div class="carshead">
       <span class="skicker">Bonificação</span>
       <h2 class="cartitle">Aqui a iGreen te dá <em class="hl2">a chave</em></h2>
-      <p class="carsub"><b>Acionista 5K</b> e <b>Acionista 12K</b>: os dois níveis onde o reconhecimento sai do papel e estaciona na sua garagem — 100% elétricos, plotagem verde escuro alto brilho com logo iGreen no capô. Não é só um carro: é o símbolo público de que a recorrência venceu.</p>
+      <p class="carsub"><b>Acionista 5K</b> e <b>Acionista 12K</b>: os dois níveis onde o reconhecimento sai do papel e estaciona na sua garagem: 100% elétricos, plotagem verde escuro alto brilho com logo iGreen no capô. Não é só um carro: é o símbolo público de que a recorrência venceu.</p>
     </div>
     <div class="carbottom">
       <div class="carpick">
@@ -2838,7 +2899,7 @@ window.igRefresh=(function(){
             <div class="cispec"><span>Propulsão</span><b>100% EV</b></div>
             <div class="cispec"><span>Plotagem</span><b>Verde + logo</b></div>
           </div>
-          <p class="cibonus"><b>Bônus do nível Acionista Royal 5K</b> — média de ganhos de <b>R$ 200.000/mês</b>. O carro chega junto com a liberdade que ele representa.</p>
+          <p class="cibonus"><b>Bônus do nível Acionista Royal 5K</b>: média de ganhos de <b>R$ 200.000/mês</b>. O carro chega junto com a liberdade que ele representa.</p>
         </div>
         <div class="carinfo">
           <span class="cikicker">Acionista Embaixador 12K</span>
@@ -2849,7 +2910,7 @@ window.igRefresh=(function(){
             <div class="cispec"><span>Propulsão</span><b>100% EV · 0 km</b></div>
             <div class="cispec"><span>Simbolismo</span><b>Legado</b></div>
           </div>
-          <p class="cibonus"><b>Bônus do nível Acionista Embaixador 12K</b> — média de ganhos de <b>R$ 500.000/mês</b>. O topo absoluto do plano: patrimônio, história e legado.</p>
+          <p class="cibonus"><b>Bônus do nível Acionista Embaixador 12K</b>: média de ganhos de <b>R$ 500.000/mês</b>. O topo absoluto do plano: patrimônio, história e legado.</p>
         </div>
       </div>
     </div>
@@ -2865,34 +2926,38 @@ window.igRefresh=(function(){
   <i class="rcomet cv smc2" aria-hidden="true"></i>
   <div class="wrap">
     <div class="sim-head">
-      <span class="skicker">Simulador</span>
-      <h2 class="simtitle">Sua recorrência,<br>projetada em <em class="hl2">5 anos</em>.</h2>
-      <p class="simsub">Escolha a conexão e a sua graduação e veja, em tempo real, quanto você recebe de recorrência e bônus, mês a mês, por até 5 anos.</p>
+      <span class="skicker">Simulador de Recorrência</span>
+      <h2 class="simtitle">Descubra o potencial da sua <em class="hl2">renda recorrente</em> ao longo do tempo.</h2>
+      <p class="simsub">Selecione uma ou mais soluções e informe a quantidade de clientes que deseja conectar. Com base nessas informações, apresentaremos uma projeção estimada dos seus ganhos recorrentes por até 10 anos.</p>
     </div>
 <div class="v13">
   <div class="sel">
-    <div class="selsec"><div class="sidelbl">O que você vende?</div><div class="chips" id="prods">
-  <button class="chip" data-p="Green" type="button"><svg viewBox="0 0 24 24"><path d="M4 20c0-8 6-14 16-15C19 13 13 20 4 20z"/><path d="M4 20c3-6 7-9 12-11"/></svg><span>Green</span></button>
-  <button class="chip" data-p="Solar" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg><span>Solar</span></button>
-  <button class="chip" data-p="Livre" type="button"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Livre</span></button>
-  <button class="chip" data-p="Placas" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M3 10h18M9 4v12M15 4v12M12 16v4M8 20h8"/></svg><span>Placas</span></button>
-  <button class="chip" data-p="Telecom" type="button"><svg viewBox="0 0 24 24"><path d="M5 18v-4M10 18v-7M15 18v-10M20 18V6"/></svg><span>Telecom</span></button>
-  <button class="chip" data-p="Seguros" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Seguros</span></button>
-</div></div>
-    <div class="selsec"><div class="sidelbl">Qual a sua graduação?</div><div class="grads" id="grads"></div></div>
+    <div class="selsec">
+      <div class="sidelbl">Escolha as Conexões:</div>
+      <div class="chips" id="prods">
+        <button class="chip on" data-p="Green" type="button"><svg viewBox="0 0 24 24"><path d="M4 20c0-8 6-14 16-15C19 13 13 20 4 20z"/><path d="M4 20c3-6 7-9 12-11"/></svg><span>Green</span></button>
+        <button class="chip" data-p="Telecom" type="button"><svg viewBox="0 0 24 24"><path d="M5 18v-4M10 18v-7M15 18v-10M20 18V6"/></svg><span>Telecom</span></button>
+        <button class="chip" data-p="Seguros" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Seguros</span></button>
+      </div>
+      <p class="selhelp">É possível selecionar uma ou mais soluções.</p>
+    </div>
   </div>
-  <div class="hint" id="hint"><div class="hicon">Monte seu cenário</div>Escolha uma <b>conexão</b> e sua <b>graduação</b> — a simulação completa aparece aqui.</div>
-  <div id="sim" hidden>
+  <div id="sim">
     <div class="receipt">
       <div class="rtitle"><svg viewBox="0 0 24 24"><path d="M4 20V11M9.3 20V4M14.6 20v-6M20 20V8"/></svg>Resultado da simulação</div>
-      <div class="out"><div class="ot" id="oTit">Recorrência no mês 60</div><div class="ov" id="oRec">R$ 0</div><div class="os" id="oSub">por mês · enquanto os clientes ficarem ativos</div><div class="pill" id="oPill">—</div></div><div class="minis"><div class="mini"><small>Sua produção / mês</small><b id="oOwn">—</b></div><div class="mini"><small>Da equipe / mês</small><b id="oTeam">—</b></div><div class="mini"><small>Imediatos acum.</small><b id="oImed">—</b></div><div class="mini"><small>Recorrente acum.</small><b id="oAcc">—</b></div></div><div class="mini hi tot"><small>Total acumulado no período</small><b id="oTot">—</b></div><div class="equiv" id="oEq">—</div><div class="avisos" id="oWarn" hidden></div>
+      <div class="out"><div class="ot" id="oTit">Sua recorrência mensal</div><div class="ov" id="oRec">R$ 0</div><div class="os" id="oSub">com 10 clientes conectados</div></div>
+      <div class="minis">
+        <div class="mini"><small>Recorrência em 1 ano</small><b id="o1">R$ 0</b></div>
+        <div class="mini"><small>Recorrência em 5 anos</small><b id="o5">R$ 0</b></div>
+        <div class="mini hi"><small>Recorrência em 10 anos</small><b id="o10">R$ 0</b></div>
+      </div>
       <button class="sharebtn" id="shareBtn" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span id="shareTxt">Compartilhar</span></button>
     </div>
-    <div class="config"><div class="controls"><div id="dyn"></div><div class="sld"><div class="sldtop"><div class="sldtxt"><span class="sldname">Suas conexões</span><span class="sldsub">que você fecha todo mês</span></div><b class="sldval" id="vCon">10</b></div><input type="range" id="rCon" min="1" max="50" value="10"><div class="sldrange"><span>1</span><span>50</span></div></div><div class="sld"><div class="sldtop"><div class="sldtxt"><span class="sldname">Da sua equipe</span><span class="sldsub">que sua rede fecha todo mês</span></div><b class="sldval" id="vEq">0</b></div><input type="range" id="rEq" min="0" max="300" value="0"><div class="sldrange"><span>0</span><span>300</span></div></div><div class="sld"><div class="sldtop"><div class="sldtxt"><span class="sldname">Horizonte de tempo</span><span class="sldsub">período da projeção</span></div><b class="sldval" id="vHor">5 anos</b></div><div class="seg" id="hor"><button class="subchip" data-h="12" type="button">1 ano</button><button class="subchip" data-h="24" type="button">2 anos</button><button class="subchip" data-h="36" type="button">3 anos</button><button class="subchip" data-h="48" type="button">4 anos</button><button class="subchip on" data-h="60" type="button">5 anos</button></div></div><div class="sld"><div class="sldtop"><div class="sldtxt"><span class="sldname">Adimplência da base</span><span class="sldsub">clientes que pagam em dia</span></div><b class="sldval" id="vAdi">100%</b></div><input type="range" id="rAdi" min="70" max="100" value="100"><div class="sldrange"><span>70%</span><span>100%</span></div></div><div class="togs-wrap"><div class="toggle-row"><span class="tglabel">Fui PRO no mês anterior</span><button class="switch on" id="tPro" role="switch" aria-checked="true" type="button"><i></i></button></div><div id="togs"></div></div></div></div>
-    <div class="chartcard"><div class="chart"><div class="ct" id="cTit">Evolução da recorrência mensal</div><svg id="chart" viewBox="0 0 600 150" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
+    <div class="config"><div class="controls"><div class="sld"><div class="sldtop"><div class="sldtxt"><span class="sldname">Clientes conectados por mês</span><span class="sldsub">de 1 a 100 clientes</span></div><b class="sldval" id="vCon">10</b></div><input type="range" id="rCon" min="1" max="100" value="10"><div class="sldrange"><span>1</span><span>100</span></div></div></div></div>
+    <div class="chartcard"><div class="chart"><div class="ct" id="cTit">Acúmulo da recorrência · ano 1 → 10</div><svg id="chart" viewBox="0 0 600 150" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
   </div>
 </div>
-<div class="v13full" id="v13full" hidden><div class="tbl-wrap"><div class="tbl-head"><h2>A matemática, <em>mês a mês</em></h2></div><div class="tscroll"><table id="tbl"><thead><tr><th>Mês</th><th>Clientes ativos</th><th>Recorrente / mês</th><th>Imediatos acum.</th><th>Recorrente acum.</th><th>Total acum.</th></tr></thead><tbody></tbody></table></div></div><p class="note">Simulação ilustrativa baseada nas regras do Manual de Negócios (GP, GI e Royalties por produto e graduação). Os Royalties incidem sobre toda conexão realizada pela sua equipe comercial — inclusive GP e GI. A equiparação de 1º a 5º nível <b>não</b> está incluída neste cálculo. Valores podem variar por campanhas vigentes — consulte sempre a Academy.</p></div>
+<div class="v13full"><p class="note">Os valores apresentados são estimativas calculadas com base nas médias de contas com R$ 350,00 de energia (4% de comissão), R$ 300,00 de seguros (5% de comissão) e R$ 7,00 de comissão de telecom. Têm caráter meramente ilustrativo.</p></div>
 </div>
   </div>
 </section>
@@ -3772,14 +3837,22 @@ window.igRefresh=(function(){
       cvid.parentNode.insertBefore(_band,cvid);
       _band.appendChild(cvid);
       carShades.forEach(function(s){ if(s) _band.appendChild(s); });
+      /* pins entram na BANDA tambem: no mobile a .carstage e uma coluna (header + video +
+         abas), entao um pin absoluto nela mediria a secao INTEIRA e cairia longe do carro.
+         Dentro da banda (que envolve so o video) o left/top em % volta a mirar o carro,
+         igual ao desktop. Ficam DEPOIS das mascaras no DOM e com z-index maior, para nao
+         serem cobertos pelo escurecimento do carro nao-selecionado. */
+      [].slice.call(document.querySelectorAll('.carpin')).forEach(function(p){ _band.appendChild(p); });
     }
     var carBtns=[].slice.call(document.querySelectorAll('.carbtn'));
     var carInfos=[].slice.call(document.querySelectorAll('.carinfo'));
+    var carPins=[].slice.call(document.querySelectorAll('.carpin'));   /* medalhas 3D acima dos carros */
     var carSel=-1, carDone=false;
     function setCar(i){
       if(i===carSel) return; carSel=i;
       carBtns.forEach(function(b,k){ b.classList.toggle('on',k===i); });
       carShades.forEach(function(s,k){ s.classList.toggle('on',k!==i); });
+      carPins.forEach(function(p){ p.classList.toggle('on', +p.getAttribute('data-car')===i); });
       carInfos.forEach(function(p,k){
         if(k===i) gsap.fromTo(p,{autoAlpha:0,y:16},{autoAlpha:1,y:0,duration:.5,ease:'power2.out',overwrite:'auto'});
         else gsap.to(p,{autoAlpha:0,y:-8,duration:.28,ease:'power2.in',overwrite:'auto'});
@@ -4072,22 +4145,8 @@ window.igRefresh=(function(){
     /* MARGEM/DWELL - ultimo card fica centralizado e CLICAVEL antes de empilhar */
     tl.to(etr, {x:function(){return -CEN*SP;}, duration:1.2}, 5);
 
-    /* FASE 2 - empilhar: deck volta ao centro, comprime o espalhamento e ganha rotationY/z */
-    tl.to(etr, {x:0, ease:'power2.inOut', duration:2}, 6.2);
-    tl.to(cards, {
-      x:function(i){ return (i-CEN)*FAN; },
-      rotationY:-22, z:function(i){ return -i*90; }, scale:function(i){ return (1 - i*0.05)*0.83; },
-      ease:'power2.inOut', duration:2 }, 6.2);
-    tl.to(head, {y:-420, autoAlpha:0, ease:'power2.in', duration:2.2}, 6.2);
-
-    /* FASE 3 - vira nucleo: comeca a encolher AINDA durante o agrupamento (sem gap, fluido) */
-    tl.to(cards, {
-      x:0, rotationY:0, z:0, scale:0.12,
-      stagger:{ each:0.06, from:'end' }, ease:'power1.inOut', duration:2.6 }, 7.7);
-    /* conteudo some perto do fim, ja bem pequeno */
-    tl.to(cards, { autoAlpha:0, stagger:{ each:0.04, from:"end" }, ease:"power2.in", duration:0.8 }, 9.5);
-
-    /* cards colapsam e somem; o nucleo (gem fixo) nasce fora da timeline */
+    /* FASE 2/3 (empilhar + virar nucleo + descer no celular) REMOVIDAS a pedido do dono:
+       o ecossistema mantem apenas o carrossel horizontal; a timeline termina apos o dwell (~6.2). */
     return tl;
   }
 
@@ -4103,78 +4162,16 @@ window.igRefresh=(function(){
 
   var deckTL=buildTL();
   var eco2ST=ScrollTrigger.create({
-    trigger:'#ecossistema2', start:'top top', end:'+=4480',
+    trigger:'#ecossistema2', start:'top top', end:'+=2400',
     pin:true, scrub:0.8, invalidateOnRefresh:true,
     animation:deckTL,
     onRefresh:function(){ measure(); },
     onUpdate:function(self){ carouselUpdate(self.progress); }
   });
 
-  /* canvas para o ripple do nucleo */
-  var scv=document.createElement('canvas');
-  scv.className='ncanvas';
-  document.body.appendChild(scv);
-  var sctx=scv.getContext('2d');
-  function scvSize(){ scv.width=window.innerWidth; scv.height=window.innerHeight; }
-  scvSize(); window.addEventListener('resize',scvSize);
-  var shards=[], sdirty=false;
-  function ripple(x,y){
-    shards.push({type:'flash',x:x,y:y,age:0,life:.6});
-    shards.push({type:'ring',x:x,y:y,age:0,life:.85,mr:560});
-    shards.push({type:'ring',x:x,y:y,age:0,life:.7,mr:360});
-  }
-  gsap.ticker.add(function(t,dtms){
-    if(!shards.length){ if(sdirty){ sctx.clearRect(0,0,scv.width,scv.height); sdirty=false; } return; }
-    var dt=Math.min(.05,dtms/1000);
-    sctx.clearRect(0,0,scv.width,scv.height); sdirty=true;
-    for(var i=shards.length-1;i>=0;i--){
-      var q=shards[i]; q.age+=dt;
-      if(q.age>=q.life){ shards.splice(i,1); continue; }
-      var a=q.age/q.life;
-      if(q.type==='flash'){
-        sctx.fillStyle='rgba(120,255,110,'+((1-a)*.3).toFixed(3)+')';
-        sctx.shadowColor='rgba(24,255,0,.6)'; sctx.shadowBlur=80*(1-a);
-        sctx.beginPath(); sctx.arc(q.x,q.y,40+120*a,0,7); sctx.fill();
-        sctx.shadowBlur=0; continue;
-      }
-      var ea=a*a*(3-2*a);
-      sctx.strokeStyle='rgba(24,255,0,'+((1-a)*.5).toFixed(3)+')';
-      sctx.lineWidth=2.5*(1-a)+.6;
-      sctx.shadowColor='rgba(24,255,0,.5)'; sctx.shadowBlur=18*(1-a);
-      sctx.beginPath(); sctx.arc(q.x,q.y,16+ea*(q.mr||440),0,7); sctx.stroke();
-      sctx.shadowBlur=0;
-    }
-  });
-  /* nucleo unico (fixed): nasce durante o fade dos cards, desce e SOME (ripple) na base do celular, disparando a orbita */
-  var ncore=document.createElement('div');
-  ncore.className='ncorefx';
-  document.body.appendChild(ncore);
-  gsap.set(ncore,{xPercent:-50,yPercent:-50,autoAlpha:0});
-  var vanished=false;
-  function sm2f(t){ t=Math.min(1,Math.max(0,t)); return t*t*(3-2*t); }
-  ScrollTrigger.create({
-    start:function(){ return eco2ST.start + (eco2ST.end-eco2ST.start)*0.66; },
-    end:function(){ var o=ScrollTrigger.getAll().filter(function(t){return t.pin&&t.trigger&&t.trigger.id==='orbita';})[0];
-      return o ? o.start : eco2ST.end + window.innerHeight; },
-    invalidateOnRefresh:true,
-    onUpdate:function(self){
-      var hp=self.progress, vw=window.innerWidth, vh=window.innerHeight;
-      var born=sm2f((hp-0.20)/0.20);      /* cards encolhem -> nucleo cresce (transformacao) */
-      var descend=sm2f((hp-0.22)/0.64);   /* desce junto com o nascimento: forma e desce ao mesmo tempo (sem pausa) */
-      var vanish=sm2f((hp-0.86)/0.10);    /* some suave (scrubado) nos dois sentidos */
-      var sy=vh*0.595, ty=vh*0.9;
-      gsap.set(ncore,{x:vw/2, y:sy+(ty-sy)*descend, scale:(0.4+0.6*born)*(1-0.45*descend)*(1-0.5*vanish),
-        autoAlpha: born*(1-0.4*descend)*(1-vanish)});
-      if(hp>0.9 && !vanished){ vanished=true; ripple(vw/2,ty); if(window.igStartOrbita) window.igStartOrbita(); }
-      if(hp<0.86 && vanished){ vanished=false; if(window.igResetOrbita) window.igResetOrbita(); }
-    },
-    onLeave:function(){
-      if(!vanished){ vanished=true; ripple(window.innerWidth/2, window.innerHeight*0.9);
-        gsap.to(ncore,{autoAlpha:0,scale:1.5,duration:0.45,ease:'power2.out'});
-        if(window.igStartOrbita) window.igStartOrbita(); }
-    },
-    onLeaveBack:function(){ vanished=false; gsap.set(ncore,{autoAlpha:0}); if(window.igResetOrbita) window.igResetOrbita(); }
-  });
+  /* núcleo/ripple/ponte-órbita REMOVIDOS a pedido do dono: sem "juntar e descer no celular".
+     A Órbita agora inicia sozinha no próprio pin (onUpdate de #orbita, if(!played&&p>.02)),
+     por isso o deck não chama mais igStartOrbita/igResetOrbita (que seguem definidos adiante). */
 
 
 
@@ -4262,6 +4259,12 @@ window.igRefresh=(function(){
   /* CTA "Começar agora": fica ~20px abaixo do topo do celular (colide com ele
      já em 1080) e foi pedida p/ sair desta seção — escondida no desktop. */
   if(orbCta) orbCta.style.display='none';
+  /* ORB_BASE: quanto a BASE do palco do app fica ABAIXO da dobra (px). Quanto MENOR,
+     mais alto o celular sobe e mais tela do app aparece. Era 100 (bottom:-100px no CSS).
+     Baixado a pedido do dono ("subir mais o app para mostrar mais"). A escala/título
+     continuam ancorados nesse mesmo valor (fitOrbita), então não há colisão com o texto. */
+  var ORB_BASE=30;
+  appstage.style.bottom=(-ORB_BASE)+'px';
   var ORB_GAP=36;         /* folga da ESCALA: telas baixas encaixam o app 36px abaixo do texto (notebook) */
   var ORB_TITLE_GAP=146;  /* folga do TÍTULO em telas altas (mais respiro; = 36 + ~110 pedidos). Ajuste aqui. */
   var ORB_HEAD_TOP=142;   /* = .orb-head top no CSS (posição de repouso / trava superior) */
@@ -4270,7 +4273,7 @@ window.igRefresh=(function(){
     var H=window.innerHeight, W=window.innerWidth;
     var headH=orbHead.offsetHeight;                                /* altura real do texto (badge+título+desc) */
     var titleBottom=ORB_HEAD_TOP+headH;                            /* base do texto na posição de repouso */
-    var s=Math.min(1,(H+100-titleBottom-ORB_GAP)/760,W/1240);
+    var s=Math.min(1,(H+ORB_BASE-titleBottom-ORB_GAP)/760,W/1240);
     if(s<0.42) s=0.42;                                              /* piso: nunca some de vez */
     appstage.style.transform='scale('+s+')';
     /* O título ACOMPANHA o app: pousa ORB_TITLE_GAP acima do topo do celular.
@@ -4278,7 +4281,7 @@ window.igRefresh=(function(){
        A trava max(ORB_HEAD_TOP,...) impede subir acima de 142 → em telas baixas
        (notebook) cai em 142 com a folga de 36 da escala (não muda nada), e em
        monitores menores o título nunca vai parar atrás do menu. */
-    var appTop=H+100-760*s;                                        /* topo do celular (px do topo do viewport) */
+    var appTop=H+ORB_BASE-760*s;                                   /* topo do celular (px do topo do viewport) */
     orbHead.style.top=Math.round(Math.max(ORB_HEAD_TOP, appTop-ORB_TITLE_GAP-headH))+'px';
   }
   fitOrbita();
@@ -4384,8 +4387,7 @@ window.igRefresh=(function(){
     .from(rings,{scale:.6,autoAlpha:0,duration:.9,stagger:.06},.3);
   var introTw=gsap.to(ITEMS,{intro:1,duration:1.05,ease:"back.out(1.5)",delay:.55,paused:true,
     stagger:{each:.055,from:"random"}});
-  ScrollTrigger.create({trigger:"#orbita",start:"top 72%",once:true,
-    onEnter:function(){}});
+  /* (o gatilho de entrada da orbita fica mais abaixo, depois que `tl` existe — ver ORB-ENTRADA) */
   window.igStartOrbita=function(){
     if(played) return; played=true;
     tl.timeScale(1).play();
@@ -4447,6 +4449,24 @@ window.igRefresh=(function(){
     .fromTo(orbCta,{autoAlpha:0,y:18},{autoAlpha:1,y:0,duration:.7,ease:'power3.out',
       immediateRender:false,overwrite:'auto'},.22);
   /* cards: entrada e saida 100% guiadas pelo scroll (ver apply) */
+
+  /* ORB-ENTRADA — corrige o VAO PRETO entre o simulador e o app.
+     Antes, a intro (tl -> openTl) so comecava quando o PIN engatava (start:"top top", p>.02).
+     Enquanto a secao subia da base da tela, TODO o conteudo dela estava invisivel (kicker/
+     titulo/sub em autoAlpha 0 pelo .from do openTl; celular em autoAlpha 0 no tl) => uma tela
+     inteira de preto. Quanto MAIOR a altura do monitor, maior o vao (chega a 100vh de nada).
+     Agora dispara quando a secao ENTRA na tela ("top 72%", mesma convencao do resto da pagina:
+     .carshead, #simulador .sim-head). Espelha o caminho do pin (played + tl.play()); NAO usa
+     igStartOrbita de proposito, pois ela instala um onComplete que auto-scrolla p/ 0.26 e
+     sequestraria a rolagem de quem ainda esta chegando na secao.
+     Fica DEPOIS da definicao de `tl`/`played`: se a pagina abrir ja rolada, o ScrollTrigger
+     dispara onEnter na criacao — la em cima `tl` ainda seria undefined (TypeError). */
+  ScrollTrigger.create({trigger:"#orbita",start:"top 72%",once:true,
+    onEnter:function(){
+      if(played) return;
+      played=true;
+      tl.timeScale(1.6).play();
+    }});
 
   /* daqui em diante o scroll comanda: cards saem -> tela desliza -> logos */
   gsap.set(scr2,{autoAlpha:1,xPercent:100});   /* tela do clube aguardando a direita */
@@ -4628,319 +4648,67 @@ window.igRefresh=(function(){
 (function(){
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ===== graduações (PINs oficiais) ===== */
-const PINS={"sr": "assets/pins/pin-sr.webp", "gs": "assets/pins/pin-gs.webp", "ex": "assets/pins/pin-ex.webp", "di": "assets/pins/pin-di.webp", "ac": "assets/pins/pin-ac.webp", "r5": "assets/pins/pin-r5.webp", "e12": "assets/pins/pin-e12.webp"};
-const GRADS=[
- {id:'base',nm:'Início',pin:null},
- {id:'sr',nm:'Sênior',pin:'sr'},
- {id:'gs',nm:'Gestor',pin:'gs'},
- {id:'ex',nm:'Executivo',pin:'ex'},
- {id:'di',nm:'Diretor',pin:'di'},
- {id:'ac',nm:'Acionista',pin:'ac'},
- {id:'r5',nm:'Royal 5K',pin:'r5'},
- {id:'e12',nm:'Embaixador 12K',pin:'e12'}
-];
-let gradIx=null;
-const gradsEl=document.getElementById('grads');
-GRADS.forEach((g,i)=>{
-  const b=document.createElement('button');
-  b.className='grad'+(g.pin?'':' base');
-  b.innerHTML=(g.pin
-    ? `<img src="${PINS[g.pin]}" alt="PIN ${g.nm}">`
-    : `<div class="gicon">GP</div>`)
-    + `<div class="gn">${g.nm}</div><div class="gp" data-ix="${i}">—</div>`;
-  b.addEventListener('click',()=>{document.querySelectorAll('.grad').forEach(x=>x.classList.remove('on'));b.classList.add('on');gradIx=i;maybeShow();});
-  gradsEl.appendChild(b);
-});
-
-/* ===== modelo de produtos — regras oficiais (Manual de Negócios) ===== */
-const ROY_GREEN_AB=[0,0.2,0.5,0.8,1.4,1.8,1.9,2.0];
-const ROY_GREEN_CD=[0,0.1,0.25,0.4,0.7,0.9,0.95,1.0];
-const ROY_LIVRE_B =[0,0.1,0.25,0.4,0.6,0.75,0.75,0.75];
-const scaleRoy=(arr,f)=>arr.map(x=>+(x*f).toFixed(4));
-
-const PRODUCTS={
- Green:{kind:'pct',tlabel:'Fatura iGreen (ticket)',def:200,min:80,max:600,step:10,giCapExec:true,
-   tiers:{A:{gp:4,gi:1,roy:ROY_GREEN_AB},B:{gp:2,gi:0.5,roy:ROY_GREEN_AB},
-          C:{gp:1,gi:0.25,roy:ROY_GREEN_CD},D:{gp:0.4,gi:0.1,roy:ROY_GREEN_CD}},
-   tierOrder:['A','B','C','D'],tierLabels:{A:'Bônus A',B:'Bônus B',C:'Bônus C',D:'Bônus D'},
-   toggles:[{id:'faixa',label:'Campanha faixa (só Bônus A)',def:false}],
-   rules:['PRO obrigatório para receber GI e Royalties.','Cashback dividido 50/50 com o cliente.','Inadimplência: aviso em 31 dias, saída da base em 60.','GI válido até Executivo.']},
- Solar:{kind:'pct',tlabel:'Fatura / aluguel (ticket)',def:250,min:100,max:800,step:10,cap48:true,royFlat:0.75,royFlatFrom:1,
-   gp:2,gi:0.5,
-   toggles:[{id:'promo10',label:'Promo 10% do 1º aluguel',def:true}],
-   rules:['Royalty de 0,75% a partir de Sênior.','Cada contrato paga recorrência por 48 meses.','GI exige PRO no mês anterior.']},
- Livre:{kind:'pct',tlabel:'Conta líquida (ticket)',def:8000,min:1000,max:60000,step:500,
-   tiers:{B:{gp:2,gi:0.5,cap:0.75},C:{gp:1,gi:0.15,cap:0.67},D:{gp:0.4,gi:0.1,cap:0.15}},
-   tierOrder:['B','C','D'],tierLabels:{B:'Tabela B',C:'Tabela C',D:'Tabela D'},
-   toggles:[{id:'camp10',label:'Bônus campanha 10% da 1ª fatura',def:false}],
-   rules:['Comissões sobre o valor líquido da conta.','Royalty limitado ao teto da tabela (Royal/Embaixador: 0,75%).','Prazo de inatividade: 60 dias.']},
- Placas:{kind:'oneshot',tlabel:'Valor do projeto (ticket)',def:25000,min:8000,max:150000,step:1000,
-   cp:10,ci:1,roy:[0,0.3,0.5,0.8,1.2,1.5,1.5,1.5],toggles:[],
-   rules:['Comissão paga por projeto fechado — sem recorrência.','Cada projeto gera kWh ×4 (validade 12 meses).','Saque liberado em até 30 dias.']},
- Telecom:{kind:'fixo',gp:7,gi:1,giCapExec:true,roy:[0,1,2,3,5,6,6.5,7],
-   toggles:[{id:'ativ10',label:'+R$10 / ativação a partir da 6ª',def:true},{id:'ciclo300',label:'R$300 por ciclo de 5',def:true}],
-   rules:['Valores fixos por plano ativo (só portabilidade).','GI (R$1) exige PRO e vale até Executivo.','30 dias inadimplente removem 200 kWh.']},
- Seguros:{kind:'pct',tlabel:'Prêmio médio (ticket)',def:350,min:200,max:800,step:10,gp:5,gi:1,roy:[0,0.5,1.25,2,3.5,4.5,4.75,5],req5:true,
-   presets:[{n:'Moto',v:250},{n:'Auto',v:350},{n:'Pesado',v:550}],
-   toggles:[{id:'ciclo1000',label:'R$1.000 por ciclo de 5',def:true}],
-   rules:['R$1 de prêmio = 1 ponto.','Royalties só a partir de 5 clientes GP.','Inadimplente não pontua.']}
-};
-
-function rates(){
-  const P=PRODUCTS[prod];let gp,gi,royArr;
-  if(P.kind==='fixo'){gp=P.gp;gi=P.gi;royArr=P.roy;}
-  else if(prod==='Placas'){gp=P.cp;gi=P.ci;royArr=P.roy;}
-  else if(prod==='Solar'){gp=P.gp;gi=P.gi;royArr=GRADS.map((g,i)=>i>=P.royFlatFrom?P.royFlat:0);}
-  else if(prod==='Seguros'){gp=P.gp;gi=P.gi;royArr=P.roy;}
-  else if(prod==='Green'){const t=P.tiers[tier];gp=t.gp;gi=t.gi;royArr=t.roy;}
-  else if(prod==='Livre'){const t=P.tiers[tier];gp=t.gp;gi=t.gi;royArr=scaleRoy(ROY_LIVRE_B,t.cap/0.75);}
-  let roy=royArr[gradIx];
-  if(!PRO){gi=0;roy=0;}
-  if(P.giCapExec&&gradIx>3)gi=0;
-  return {gp,gi,roy,royArr};
-}
-
-/* ===== estado & controles ===== */
-let prod=null, tier='A', PRO=true, tog={};
-const dynEl=document.getElementById('dyn'), togsEl=document.getElementById('togs');
-const rC=document.getElementById('rCon'),vC=document.getElementById('vCon');
-const rEq=document.getElementById('rEq'),vEq=document.getElementById('vEq');
-const vH=document.getElementById('vHor');
-let curH=60;
-const rAdi=document.getElementById('rAdi'),vAdi=document.getElementById('vAdi');
-let rT=null;
-function fill(r){const p=(r.value-r.min)/(r.max-r.min)*100;r.style.setProperty('--fill',p+'%');}
-const setTicketLabel=()=>{const el=document.getElementById('vTicket');if(el&&rT)el.textContent='R$ '+(+rT.value).toLocaleString('pt-BR');};
-
-function buildDyn(){
-  const P=PRODUCTS[prod];
-  if(P.tierOrder&&P.tierOrder.length)tier=P.tierOrder[0];
-  let html='';
-  if(P.tierOrder&&P.tierOrder.length){
-    html+=`<div class="block"><label>Tabela de bônus</label><div class="subchips" id="tiers">`+
-      P.tierOrder.map((k,i)=>`<button class="subchip${i===0?' on':''}" data-t="${k}" type="button">${P.tierLabels[k]}</button>`).join('')+`</div></div>`;
+/* ===== Simulador de Recorrência (v3 · projeção simples por solução) =====
+   Substitui o simulador antigo (graduação/PRO/royalties/tabela). Regras informadas pelo dono:
+   Green R$14/cliente/mês (conta média R$350, 4%), Telecom R$7/cliente/mês,
+   Seguros R$15/cliente/mês (prêmio médio R$300, 5%). Recorrência mensal =
+   (soma das soluções escolhidas) × nº de clientes; acumulados em 1/5/10 anos. */
+(function(){
+  var VALUES={Green:14,Telecom:7,Seguros:15};
+  var sel={Green:true,Telecom:false,Seguros:false};
+  var rCon=document.getElementById("rCon"), vCon=document.getElementById("vCon");
+  var oRec=document.getElementById("oRec"), oTit=document.getElementById("oTit"), oSub=document.getElementById("oSub");
+  var o1=document.getElementById("o1"), o5=document.getElementById("o5"), o10=document.getElementById("o10");
+  var svg=document.getElementById("chart");
+  var chips=document.querySelectorAll("#prods .chip");
+  if(!rCon||!oRec){ return; }
+  var reduceM=!!(window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches);
+  function fmt(v){ return "R$ "+Math.round(v).toLocaleString("pt-BR"); }
+  function perClient(){ var s=0; for(var k in VALUES){ if(sel[k]) s+=VALUES[k]; } return s; }
+  function fillRange(r){ var pc=(r.value-r.min)/(r.max-r.min)*100; r.style.setProperty("--fill",pc+"%"); }
+  var animState={};
+  function animateTo(el,target){
+    if(!el) return; var key=el.id, from=animState[key]||0; animState[key]=target;
+    if(reduceM){ el.textContent=fmt(target); return; }
+    var t0=performance.now(), dur=460;
+    (function step(t){ var pr=Math.min((t-t0)/dur,1), e=1-Math.pow(1-pr,3);
+      el.textContent=fmt(from+(target-from)*e);
+      if(pr<1&&animState[key]===target) requestAnimationFrame(step); })(t0);
   }
-  if(P.kind!=='fixo'){
-    html+=`<div class="sld">`+
-      `<div class="sldtop"><div class="sldtxt"><span class="sldname">${P.tlabel}</span><span class="sldsub">${prod==='Placas'?'valor por projeto':'valor médio por conexão'}</span></div><b class="sldval" id="vTicket">R$ ${P.def.toLocaleString('pt-BR')}</b></div>`+
-      `<input type="range" id="rTicket" min="${P.min}" max="${P.max}" step="${P.step}" value="${P.def}">`+
-      `<div class="sldrange"><span>R$ ${P.min.toLocaleString('pt-BR')}</span><span>R$ ${P.max.toLocaleString('pt-BR')}</span></div>`;
-    if(P.presets)html+=`<div class="presets">`+P.presets.map(p=>`<button class="preset" data-v="${p.v}" type="button">${p.n} · R$ ${p.v}</button>`).join('')+`</div>`;
-    html+=`</div>`;
+  function draw(monthly){
+    if(!svg) return; var W=600,H=150,pad=6,n=10,gap=7;
+    var max=monthly*12*n||1, bw=(W-2*pad-gap*(n-1))/n, s="";
+    for(var y=1;y<=n;y++){
+      var val=monthly*12*y, bh=(val/max)*(H-2*pad-4), x=pad+(y-1)*(bw+gap), yy=H-pad-bh, last=(y===n);
+      s+="<rect x=\""+x.toFixed(1)+"\" y=\""+yy.toFixed(1)+"\" width=\""+bw.toFixed(1)+"\" height=\""+Math.max(bh,2).toFixed(1)+"\" rx=\"2\" fill=\""+(last?"#18FF00":"rgba(24,255,0,.45)")+"\""+(last?" style=\"filter:drop-shadow(0 0 8px #18FF00)\"":"")+"/>";
+    }
+    svg.innerHTML=s;
   }
-  if(!html)html=`<p class="dynnote">Valores fixos por plano ativo — sem ticket ajustável. GP, GI e Royalties são definidos pela graduação (veja os PINs e a taxa efetiva ao lado).</p>`;
-  dynEl.innerHTML=html;
-  rT=document.getElementById('rTicket');
-  if(rT){fill(rT);rT.addEventListener('input',()=>{fill(rT);setTicketLabel();calc(false);});}
-  document.querySelectorAll('#tiers .subchip').forEach(c=>c.addEventListener('click',()=>{
-    document.querySelectorAll('#tiers .subchip').forEach(x=>x.classList.remove('on'));c.classList.add('on');tier=c.dataset.t;calc(true);}));
-  document.querySelectorAll('.preset').forEach(c=>c.addEventListener('click',()=>{
-    rT.value=c.dataset.v;fill(rT);setTicketLabel();calc(true);}));
-  tog={};
-  togsEl.innerHTML=P.toggles.map(t=>`<div class="toggle-row"><span class="tglabel">${t.label}</span>`+
-    `<button class="switch${t.def?' on':''}" data-k="${t.id}" role="switch" aria-checked="${t.def}" type="button"><i></i></button></div>`).join('');
-  P.toggles.forEach(t=>tog[t.id]=t.def);
-  togsEl.querySelectorAll('.switch').forEach(sw=>sw.addEventListener('click',()=>{
-    const on=!sw.classList.contains('on');sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);tog[sw.dataset.k]=on;calc(true);}));
-}
-
-document.querySelectorAll('#prods .chip').forEach(c=>c.addEventListener('click',()=>{
-  document.querySelectorAll('#prods .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
-  prod=c.dataset.p;buildDyn();maybeShow();
-}));
-document.getElementById('tPro').addEventListener('click',()=>{
-  const sw=document.getElementById('tPro');const on=!sw.classList.contains('on');
-  sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);PRO=on;calc(true);
-});
-[rC,rEq,rAdi].forEach(r=>r.addEventListener('input',()=>calc(false)));
-document.querySelectorAll('#hor .subchip').forEach(c=>c.addEventListener('click',()=>{
-  document.querySelectorAll('#hor .subchip').forEach(x=>x.classList.remove('on'));c.classList.add('on');curH=+c.dataset.h;calc(true);
-}));
-
-/* ===== formatação ===== */
-const fmt=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
-const fmtK=v=>v>=1e6?'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi'
-            :v>=1e3?'R$ '+Math.round(v/1e3).toLocaleString('pt-BR')+' mil':fmt(v);
-
-/* ===== animação de números ===== */
-const animState={};
-/* tamanho do valor em destaque por faixa de dígitos — nunca quebra a linha e preserva o glow */
-function sizeOv(v){
-  const el=document.getElementById('oRec');if(!el)return;
-  const d=Math.max(1,Math.round(Math.abs(v))).toString().length;
-  el.style.fontSize =
-      d<=4 ? 'clamp(36px,5.6vw,68px)'
-    : d===5 ? 'clamp(32px,5vw,58px)'
-    : d===6 ? 'clamp(28px,4.4vw,50px)'
-    : d===7 ? 'clamp(24px,3.7vw,42px)'
-    :         'clamp(20px,3vw,34px)';
-}
-function animateTo(el,target,formatter){
-  const key=el.id;const from=animState[key]??0;animState[key]=target;
-  if(reduce){el.textContent=formatter(target);return;}
-  const t0=performance.now(),dur=520;
-  (function step(t){const p=Math.min((t-t0)/dur,1),e=1-Math.pow(1-p,3);
-    el.textContent=formatter(from+(target-from)*e);
-    if(p<1&&animState[key]===target)requestAnimationFrame(step);})(t0);
-}
-
-/* ===== helpers de formatação de taxa e rótulos ===== */
-function pctTxt(x){return (x%1?x.toLocaleString('pt-BR',{maximumFractionDigits:2}):x)+'%';}
-function faixaGreen(cl){return cl<10?4:cl<40?20:cl<100?40:cl<200?50:60;}
-
-function pillTxt(P,R){
-  if(P.kind==='fixo'){const z=R.gp+R.roy;return `Sua taxa: GP R$${R.gp} + Royalties R$${R.roy.toLocaleString('pt-BR')} = <b>R$${z.toLocaleString('pt-BR')}/plano</b>`;}
-  const base=prod==='Placas'?P.cp:R.gp, z=base+R.roy;
-  return `Sua taxa: GP ${pctTxt(base)} + Royalties ${pctTxt(R.roy)} = <b>${pctTxt(z)}</b>`;
-}
-function updateGradLabels(P,R){
-  document.querySelectorAll('.grad .gp').forEach(el=>{
-    const i=+el.dataset.ix;
-    if(i===0){el.textContent=P.kind==='fixo'?`R$${P.gp}`:pctTxt(prod==='Placas'?P.cp:R.gp);return;}
-    const r=R.royArr[i];
-    el.textContent=P.kind==='fixo'?`+R$${r.toLocaleString('pt-BR')}`:`+${pctTxt(r)}`;
+  function calc(){
+    var clients=+rCon.value, pc=perClient(), monthly=pc*clients;
+    vCon.textContent=clients; fillRange(rCon);
+    oTit.textContent = pc ? "Sua recorrência mensal" : "Selecione ao menos uma solução";
+    oSub.textContent = "com "+clients+" cliente"+(clients>1?"s":"")+(pc?" · base de "+fmt(pc)+"/mês por cliente":"");
+    animateTo(oRec, monthly);
+    animateTo(o1, monthly*12);
+    animateTo(o5, monthly*60);
+    animateTo(o10, monthly*120);
+    draw(monthly);
+  }
+  Array.prototype.forEach.call(chips,function(c){
+    c.addEventListener("click",function(){ var pp=c.dataset.p; sel[pp]=!sel[pp]; c.classList.toggle("on",sel[pp]); calc(); });
   });
-}
-function drawChart(series,H){
-  const svg=document.getElementById('chart');
-  const Wc=600,Hc=150,pad=6;
-  /* preserveAspectRatio="none" estica X e Y de forma diferente e distorce o texto.
-     kx contra-escala os textos horizontalmente p/ ficarem legíveis (sem achatar). */
-  const cw=svg.clientWidth||Wc, ch=svg.clientHeight||Hc;
-  const kx=(cw>0&&ch>0)?((ch*Wc)/(Hc*cw)):1;
-  const tx=(x,y,anchor,size,weight,fill,txt)=>
-    `<g transform="translate(${x} 0) scale(${kx.toFixed(4)} 1) translate(${-x} 0)"><text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" font-weight="${weight}" fill="${fill}" font-family="Inter,sans-serif">${txt}</text></g>`;
-  let max=0;for(let t=1;t<=H;t++)max=Math.max(max,series(t));max=max||1;
-  const px=t=>pad+(t-1)/Math.max(H-1,1)*(Wc-2*pad);
-  const py=t=>Hc-pad-(series(t)/max)*(Hc-2*pad-8);
-  let dLine='',dArea=`M ${pad} ${Hc-pad}`;
-  for(let t=1;t<=H;t++){const x=px(t),y=py(t);dLine+=(t===1?`M ${x} ${y}`:` L ${x} ${y}`);dArea+=` L ${x} ${y}`;}
-  dArea+=` L ${Wc-pad} ${Hc-pad} Z`;
-  const marks=[Math.round(H/4),Math.round(H/2),Math.round(3*H/4)].filter(t=>t>=1).map(t=>{
-    const x=px(t),y=py(t);
-    return `<circle cx="${x}" cy="${y}" r="3.4" fill="#18FF00"/>`+tx(x,y-9,'middle',9,400,'rgba(232,255,228,.6)',fmtK(series(t)));
-  }).join('');
-  svg.innerHTML=`
-    <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#18FF00" stop-opacity=".38"/><stop offset="1" stop-color="#18FF00" stop-opacity="0"/>
-    </linearGradient></defs>
-    <path d="${dArea}" fill="url(#ga)"/>
-    <path d="${dLine}" fill="none" stroke="#18FF00" stroke-width="2.4" style="filter:drop-shadow(0 0 6px rgba(24,255,0,.8))"/>
-    ${marks}
-    <circle cx="${Wc-pad}" cy="${py(H)}" r="4.5" fill="#18FF00" style="filter:drop-shadow(0 0 8px #18FF00)"/>
-    ${tx(Wc-pad-10,Math.max(py(H),14),'end',10,700,'#f2fff0',fmt(series(H)))}`;
-}
+  rCon.addEventListener("input",function(){ calc(); });
+  var sb=document.getElementById("shareBtn"), tx=document.getElementById("shareTxt");
+  if(sb) sb.addEventListener("click",function(){
+    var t="Simulador de Recorrência iGreen · "+oRec.textContent+"/mês · em 10 anos "+o10.textContent+". "+location.href;
+    if(navigator.share){ navigator.share({title:"Minha projeção iGreen",text:t,url:location.href}).catch(function(){}); return; }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t); sb.classList.add("copied"); if(tx)tx.textContent="Copiado!"; setTimeout(function(){ sb.classList.remove("copied"); if(tx)tx.textContent="Compartilhar"; },1600); }
+  });
+  fillRange(rCon); calc();
+})();
 
-/* ===== motor de cálculo (v2 · regras oficiais) ===== */
-function calc(animate){
-  const P=PRODUCTS[prod];
-  const v=+rC.value, ve=+rEq.value, H=curH, a=(+rAdi.value)/100;
-  const T=rT?+rT.value:0;
-  vC.textContent=v; vEq.textContent=ve;
-  vH.textContent=(H/12)+(H===12?' ano':' anos');
-  vAdi.textContent=(+rAdi.value)+'%';
-  fill(rC);fill(rEq);fill(rAdi);if(rT)fill(rT);
-
-  const R=rates();
-  const req5=!!P.req5, cap48=!!P.cap48;
-  const faixaOn=(prod==='Green'&&tog.faixa&&tier==='A');
-  const gate5=t=>(!req5)||(v*t>=5)?1:0;
-  const gpEff=t=>faixaOn?faixaGreen(v*t):R.gp;
-  const ownAct=t=>cap48?v*Math.min(t,48):v*t;
-  const eqAct =t=>cap48?ve*Math.min(t,48):ve*t;
-
-  /* recorrência mensal por produto */
-  let recMes;
-  if(P.kind==='oneshot')      recMes=()=>0;
-  else if(P.kind==='fixo')    recMes=t=>a*((R.gp+R.roy*gate5(t))*v*t + (R.gi+R.roy*gate5(t))*ve*t);
-  else                        recMes=t=>a*T*((gpEff(t)+R.roy*gate5(t))/100*ownAct(t) + (R.gi+R.roy*gate5(t))/100*eqAct(t));
-
-  /* imediatos acumulados até o mês t */
-  const placasMonthly = prod==='Placas' ? v*(P.cp/100+R.roy/100)*T + ve*(P.ci/100+R.roy/100)*T : 0;
-  function imedAcum(t){
-    if(prod==='Solar')   return tog.promo10 ? 0.10*T*v*t : 0;
-    if(prod==='Livre')   return tog.camp10  ? 0.10*T*v*t : 0;
-    if(prod==='Placas')  return placasMonthly*t;
-    if(prod==='Telecom'){let s=0;if(tog.ativ10)s+=10*Math.max(0,v*t-5);if(tog.ciclo300)s+=Math.floor(v*t/5)*300;return s;}
-    if(prod==='Seguros') return tog.ciclo1000 ? Math.floor(v*t/5)*1000 : 0;
-    return 0;
-  }
-
-  /* acumulados */
-  let recAcum=0;for(let t=1;t<=H;t++)recAcum+=recMes(t);
-  const imedTot=imedAcum(H);
-  const total=recAcum+imedTot;
-  const bigVal=prod==='Placas'?placasMonthly:recMes(H);
-
-  /* split você × equipe no mês H */
-  let ownH,teamH;
-  if(prod==='Placas'){ownH=v*(P.cp/100+R.roy/100)*T; teamH=ve*(P.ci/100+R.roy/100)*T;}
-  else if(P.kind==='fixo'){ownH=a*(R.gp+R.roy*gate5(H))*v*H; teamH=a*(R.gi+R.roy*gate5(H))*ve*H;}
-  else{ownH=a*T*(gpEff(H)+R.roy*gate5(H))/100*ownAct(H); teamH=a*T*(R.gi+R.roy*gate5(H))/100*eqAct(H);}
-
-  /* saídas principais */
-  document.getElementById('oTit').textContent = prod==='Placas'
-    ? `${prod} · ${GRADS[gradIx].nm} · comissão mensal (projetos)`
-    : `${prod} · ${GRADS[gradIx].nm} · recorrência no mês ${H}`;
-  document.getElementById('oSub').textContent = prod==='Placas'
-    ? 'por mês de projetos fechados · sem recorrência'
-    : (cap48?'por mês · cada contrato paga por 48 meses':'por mês · enquanto os clientes ficarem ativos');
-  sizeOv(bigVal);
-  animateTo(document.getElementById('oRec'),bigVal,fmt);
-  animateTo(document.getElementById('oOwn'),ownH,fmtK);
-  animateTo(document.getElementById('oTeam'),teamH,fmtK);
-  animateTo(document.getElementById('oImed'),imedTot,fmtK);
-  animateTo(document.getElementById('oAcc'),recAcum,fmtK);
-  animateTo(document.getElementById('oTot'),total,fmtK);
-  document.getElementById('oPill').innerHTML=pillTxt(P,R);
-  updateGradLabels(P,R);
-
-  /* equivalência CLT */
-  const clt=bigVal/5000;
-  document.getElementById('oEq').innerHTML = clt>=1
-    ? `Isso equivale a <b>${clt.toLocaleString('pt-BR',{maximumFractionDigits:1})} salários CLT</b> de R$ 5.000${prod==='Placas'?' — por mês de projetos fechados':' — recorrentes'}, com ${v} conexão(ões) suas/mês${ve?` + ${ve} da equipe`:''}.`
-    : `Cada mês de constância empilha ganho: ${prod==='Placas'?'a comissão entra a cada projeto fechado':'a recorrência não zera como um salário'} — e os bônus imediatos somam ${fmtK(imedTot)} no período.`;
-
-  /* avisos (âmbar) */
-  const w=[];
-  if(!PRO)w.push('Sem PRO no mês anterior — GI e Royalties zerados neste cenário.');
-  if(P.giCapExec&&gradIx>3&&PRO)w.push('GI vale até Executivo — acima disso, GI = 0.');
-  if(req5&&v>0){const m=Math.ceil(5/v);if(m>1)w.push(`Seguros: Royalties só a partir de 5 clientes GP — ativam no mês ${m}.`);}
-  if(cap48&&H>48)w.push('Solar: cada contrato paga recorrência por 48 meses; depois sai da base.');
-  if(faixaOn)w.push('Campanha faixa ativa (Bônus A): GP substituído pela faixa de clientes acumulados.');
-  const wEl=document.getElementById('oWarn');
-  if(w.length){wEl.hidden=false;wEl.innerHTML='<ul>'+w.map(x=>`<li>${x}</li>`).join('')+'</ul>';}else{wEl.hidden=true;wEl.innerHTML='';}
-
-  /* gráfico */
-  const series=t=>prod==='Placas'?imedAcum(t):recMes(t);
-  drawChart(series,H);
-  document.getElementById('cTit').textContent = prod==='Placas'
-    ? `Comissões acumuladas · ${GRADS[gradIx].nm}`
-    : `Evolução da recorrência mensal · ${GRADS[gradIx].nm}`;
-
-  /* tabela mês a mês */
-  const rows=[1,2,3,6,12,24,36,48,60].filter(t=>t<=H);
-  if(rows[rows.length-1]!==H)rows.push(H);
-  const tb=document.querySelector('#tbl tbody');
-  tb.innerHTML=rows.map(t=>{
-    let rAcc=0;for(let k=1;k<=t;k++)rAcc+=recMes(k);
-    const act=cap48?(v+ve)*Math.min(t,48):(v+ve)*t;
-    const im=imedAcum(t);
-    return `<tr><td class="m">Mês ${t}</td><td>${Math.round(act).toLocaleString('pt-BR')}</td>
-      <td class="rec">${prod==='Placas'?fmt(placasMonthly):fmt(recMes(t))}</td><td>${fmtK(im)}</td><td>${fmtK(rAcc)}</td><td>${fmtK(rAcc+im)}</td></tr>`;
-  }).join('');
-}
-/* revela o simulador só quando conexão E graduação estão escolhidas */
-function maybeShow(){
-  const ready = prod!==null && gradIx!==null;
-  document.getElementById('sim').hidden=!ready;
-  document.getElementById('hint').hidden=ready;
-  if(ready)calc(true);
-}
-maybeShow();
-
-document.addEventListener('pointermove',function(e){var el=e.target.closest('.chip,.grad,.card');if(!el)return;var r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');});(function(){var sim=document.getElementById('sim'),full=document.getElementById('v13full');if(sim&&full){var mo=new MutationObserver(function(){full.hidden=sim.hidden;});mo.observe(sim,{attributes:true,attributeFilter:['hidden']});full.hidden=sim.hidden;}var sb=document.getElementById('shareBtn'),tx=document.getElementById('shareTxt');if(!sb)return;sb.addEventListener('click',function(){var t='Simulador iGreen — '+document.getElementById('oTit').textContent+'. '+document.getElementById('oRec').textContent+'. Total no período: '+document.getElementById('oTot').textContent+'. '+location.href;if(navigator.share){navigator.share({title:'Minha projecao iGreen',text:t,url:location.href}).catch(function(){});return;}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);sb.classList.add('copied');if(tx)tx.textContent='Copiado!';setTimeout(function(){sb.classList.remove('copied');if(tx)tx.textContent='Compartilhar';},1600);}});})();
+document.addEventListener('pointermove',function(e){var el=e.target.closest('.chip,.grad,.card');if(!el)return;var r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px');});
 if(window.gsap&&window.ScrollTrigger){
   gsap.from("#simulador .sim-head>*",{autoAlpha:0,y:24,duration:.9,ease:"power3.out",stagger:.12,
     scrollTrigger:{trigger:"#simulador",start:"top 82%",once:true}});
@@ -5131,8 +4899,9 @@ if(window.gsap&&window.ScrollTrigger){
     trailQ.push({x:tx,y:ty,t:performance.now()});
     if(trailQ.length>150) trailQ.shift();
     if(!seen){ seen=true; if(!on&&!bOn) gsap.to(head,{autoAlpha:.85,duration:.4}); }
-    var over=e.target&&e.target.closest&&e.target.closest(".ecard");
-    if(over&&over.closest(".decking")) over=null;
+    /* cursor "+" nos cards do ecossistema DESATIVADO (pedido do dono): os cards nao
+       sao clicaveis por ora, entao a bolinha "+" nao deve aparecer ao passar o mouse. */
+    var over=null;
     if(over&&!on){ on=true;
       gsap.to(cur,{scale:1,rotation:0,autoAlpha:1,duration:.7,ease:"back.out(1.5)",overwrite:"auto"});
       gsap.to(head,{autoAlpha:0,duration:.2,overwrite:"auto"});
@@ -5721,9 +5490,38 @@ if(window.gsap&&window.ScrollTrigger){
 <style id="footer-styles">
   #rodape{ position:relative; color:var(--ink); overflow:hidden; font-family:'Inter Display',-apple-system,BlinkMacSystemFont,sans-serif;
     background:linear-gradient(180deg, var(--bg) 0%, #010301 42%, #000 72%, #000 100%); }
+  /* globo = FUNDO do footer inteiro, ATRAS do texto (z-index:0). Largura inteira e fluida;
+     quem corta nas bordas e o overflow:hidden do #rodape (largura do footer). Sem div
+     delimitadora de altura -> o "respiro" vem da altura do footer (padding-bottom da .ft-inner). */
   #rodape .ft-globe{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-  #rodape .ft-globe img{ position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:min(86vw,1560px); display:block; mix-blend-mode:screen; }
-  #rodape .ft-inner{ position:relative; z-index:2; margin:0; padding:clamp(80px,11vh,140px) max(28px,calc((100vw - 1320px)/2)) 60px; display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(36px,5vw,84px); align-items:start; box-sizing:border-box; min-height:min(53vw,920px); }
+  /* canvas COBE QUADRADO (o globo e circular; canvas nao-quadrado distorce). Preenche a largura
+     e fica centralizado; passa por tras dos links.
+     Mascara = 2 camadas (composite intersect):
+       (1) VERTICAL: opacity de cima (0, transparente) para baixo (100, solido);
+       (2) HORIZONTAL: esvanece as laterais esq/dir -> sem o "corte reto" na borda da tela. */
+  /* ANCORAGEM ROBUSTA (--gband = quanto do globo aparece, medido na PROPRIA altura dele).
+     BUG QUE ISSO CORRIGE: antes era top:160% + translateY(-50%), então o trecho visível valia
+     (0.43 x largura - 0.6 x altura) do rodapé — a diferença de dois números grandes. Em algumas
+     resoluções o resultado dava ZERO ou negativo e o planeta não aparecia; em outras dava 300px+.
+     Ancorando no fundo (top:100%) e recuando --gband da altura do GLOBO, o trecho visível passa a
+     depender só da largura: idêntico em qualquer proporção de tela, nunca zero.
+     A máscara vertical agora termina em --gband (não em 100%): o horizonte chega SÓLIDO na base do
+     rodapé. Antes o gradiente se espalhava pelo canvas inteiro (1158px) e os ~51px que apareciam
+     ficavam com ~4% de opacidade — praticamente invisíveis mesmo quando estavam no lugar certo. */
+  /* --gband = quanto do globo aparece; --gfade = onde o fade termina DENTRO dessa faixa.
+     O fade acaba antes da base (55%) de proposito: assim o limbo brilhante do planeta fica
+     SOLIDO acima da .ft-bar (a barra de copyright tem fundo 66% escuro e z-index 2 — se o
+     ponto mais claro cair atras dela, o globo "desaparece" mesmo estando no lugar). */
+  #rodape .ft-globe canvas{ --gband:26%; --gfade:calc(var(--gband) * .55);
+    position:absolute; left:51%; top:100%; transform:translate(-50%,calc(-1 * var(--gband)));
+    width:86%; aspect-ratio:1/1; height:auto; display:block; opacity:0; transition:opacity .6s ease;
+    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 var(--gfade)), linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 16%, #000 84%, rgba(0,0,0,0) 100%);
+    -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 var(--gfade)), linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 16%, #000 84%, rgba(0,0,0,0) 100%);
+    mask-composite:intersect; }
+  /* imagem estatica (fallback quando nao ha WebGL) */
+  #rodape .ft-globe img{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(120vw,1400px); display:block; mix-blend-mode:screen; }
+  #rodape .ft-inner{ position:relative; z-index:2; margin:0; padding:clamp(64px,9vh,120px) max(28px,calc((100vw - 1320px)/2)) clamp(220px,32vw,520px); display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(36px,5vw,84px); align-items:start; box-sizing:border-box; }
   #rodape .ft-logo{ display:flex; align-items:center; gap:12px; font-size:27px; font-weight:600; letter-spacing:-.01em; }
   #rodape .ft-mark{ display:block; height:40px; width:auto; filter:drop-shadow(0 0 14px rgba(24,255,0,.4)); flex:none; }
   #rodape .ft-desc{ margin-top:18px; font-size:15px; color:var(--ink-dim); line-height:1.65; max-width:44ch; }
@@ -5739,14 +5537,9 @@ if(window.gsap&&window.ScrollTrigger){
   #rodape .ft-bar{ position:relative; z-index:2; border-top:1px solid rgba(232,255,228,.08); padding:20px max(28px,calc((100vw - 1320px)/2)) 24px; display:flex; align-items:center; justify-content:space-between; gap:26px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-dim); letter-spacing:.02em; background:rgba(1,4,2,.66); backdrop-filter:blur(10px); }
   #rodape .ft-bar .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 9px var(--green); margin-right:9px; vertical-align:1px; }
   #rodape .ft-bar b{ color:var(--ink); font-weight:500; }
-  /* notebook: mundo menor e mais pra baixo (mesmo que corte), reduz altura morta do footer */
-  @media(min-width:1025px) and (max-width:1440px){
-    #rodape .ft-globe img{ width:min(70vw,1100px); bottom:-8%; }
-    #rodape .ft-inner{ min-height:min(42vw,640px); }
-  }
   @media(max-width:1024px){
     /* tudo centralizado no mobile */
-    #rodape .ft-inner{ grid-template-columns:1fr; gap:28px; padding:56px 20px 56px; min-height:0; text-align:center; }
+    #rodape .ft-inner{ grid-template-columns:1fr; gap:28px; padding:56px 20px clamp(200px,58vw,340px); min-height:0; text-align:center; }
     #rodape .ft-logo{ font-size:23px; justify-content:center; }
     #rodape .ft-desc{ font-size:14px; max-width:100%; margin:14px auto 0; }
     /* sociais: alinhados à ESQUERDA (com @handle empurrado pro fim da linha) */
@@ -5755,35 +5548,41 @@ if(window.gsap&&window.ScrollTrigger){
     #rodape .ft-soc .n{ width:30px; }
     #rodape .ft-soc .ft-h{ font-size:12px; }
     #rodape .ft-soc .arw{ display:none; }   /* sem hover no touch */
-    /* mapa do globo: discreto na base, sem criar vão vazio */
-    #rodape .ft-globe img{ width:150vw; bottom:0; opacity:.8; }
+    #rodape .ft-globe img{ width:150vw; opacity:.85; }
+    /* globo no MOBILE: mesma ancoragem robusta do desktop (top:100% + recuo de --gband da
+       altura do globo); só o tamanho e a faixa visível mudam. Faixa MAIOR (55%) porque aqui a
+       .ft-bar empilha em 3 linhas (~107px) e engolia o globo inteiro com os 26% do desktop. */
+    #rodape .ft-globe canvas{ --gband:55%; left:50%; width:142%; }
     #rodape .ft-bar{ padding:16px 20px 22px; gap:8px; font-size:11.5px; line-height:1.5;
       justify-content:center; text-align:center; }
   }
 </style>
 <footer id="rodape">
-  <div class="ft-globe" aria-hidden="true"><picture><source srcset="assets/img/map-2.avif" type="image/avif"><source srcset="assets/img/map-2.webp" type="image/webp"><img src="assets/img/map-2.png" alt="" loading="lazy" decoding="async"></picture></div>
   <div class="ft-inner">
     <div class="ft-brand">
       <div class="ft-logo" aria-label="iGreen"><img class="ft-mark" src="assets/logos/igreen-logomarca-neon.svg" alt=""></div>
-      <p class="ft-desc">O maior ecossistema de energia e serviços sustentáveis do Brasil — energia, telecom, seguros, pay e expansão em uma única plataforma, para quem quer empreender e crescer.</p>
+      <p class="ft-desc">O maior ecossistema de energia e serviços sustentáveis do Brasil: energia, telecom, seguros, pay e expansão em uma única plataforma, para quem quer empreender e crescer.</p>
     </div>
     <div>
       <span class="ft-kicker">Sociais</span>
       <ul class="ft-soc">
-        <li><a href="https://www.instagram.com/igreen.energy/" target="_blank" rel="noopener"><span class="n">001.</span>Instagram<span class="ft-h">@igreen.energy</span><span class="arw">↗</span></a></li>
-        <li><a href="https://www.linkedin.com/company/igreen.energy/" target="_blank" rel="noopener"><span class="n">002.</span>LinkedIn<span class="ft-h">@igreen.energy</span><span class="arw">↗</span></a></li>
+        <li><a href="https://www.instagram.com/igreen.academy/" target="_blank" rel="noopener"><span class="n">001.</span>Instagram Licenciado<span class="ft-h">@igreen.academy</span><span class="arw">↗</span></a></li>
+        <li><a href="https://www.instagram.com/igreen.energy/" target="_blank" rel="noopener"><span class="n">002.</span>Instagram Cliente<span class="ft-h">@igreen.energy</span><span class="arw">↗</span></a></li>
         <li><a href="https://www.youtube.com/@IgreenEnergy" target="_blank" rel="noopener"><span class="n">003.</span>YouTube<span class="ft-h">@IgreenEnergy</span><span class="arw">↗</span></a></li>
-        <li><a href="https://www.facebook.com/igreen.energy.facebook/" target="_blank" rel="noopener"><span class="n">004.</span>Facebook<span class="ft-h">@igreen.energy</span><span class="arw">↗</span></a></li>
+        <li><a href="https://escritorio.igreenenergy.com.br/" target="_blank" rel="noopener"><span class="n">004.</span>Escritório Virtual<span class="ft-h">escritorio.igreenenergy.com.br</span><span class="arw">↗</span></a></li>
+        <li><a href="https://store.igreenenergy.com.br/" target="_blank" rel="noopener"><span class="n">005.</span>iGreen Store<span class="ft-h">store.igreenenergy.com.br</span><span class="arw">↗</span></a></li>
+        <li><a href="https://whatsapp.com/channel/0029Vb7Lh8TCBtx6tec4kN1G" target="_blank" rel="noopener"><span class="n">006.</span>WhatsApp<span class="ft-h">Canal Igreen News</span><span class="arw">↗</span></a></li>
       </ul>
     </div>
   </div>
+  <div class="ft-globe" aria-hidden="true"><canvas id="ftGlobe"></canvas><picture><source srcset="assets/img/map-2.avif" type="image/avif"><source srcset="assets/img/map-2.webp" type="image/webp"><img src="assets/img/map-2.png" alt="" loading="lazy" decoding="async"></picture></div>
   <div class="ft-bar">
-    <span>© 2026 <b>iGreen Energy</b> — Todos os direitos reservados.</span>
-    <span><i class="dot"></i>Uberlândia — MG, Brasil · Atuação em todo o território nacional</span>
+    <span>© 2026 <b>iGreen Energy</b>. Todos os direitos reservados.</span>
+    <span><i class="dot"></i>Uberlândia/MG, Brasil · Atuação em todo o território nacional</span>
     <span>Desenvolvido pelo time <b>iGreen</b></span>
   </div>
 </footer>
+<script src="assets/vendor/cobe.min.js"></script>
 <script id="footer-app">
 (function(){
   var sc=document.getElementById("smooth-content");
@@ -5793,78 +5592,59 @@ if(window.gsap&&window.ScrollTrigger){
     if(st && st.parentElement!==sc) sc.appendChild(st);
     sc.appendChild(ft);   /* ultimo bloco da pagina */
   }
-  /* ---- globo de pontos (continentes) ---- */
-  var MASK="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPz/AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8//////////////////////////////////8AAAD+////////P4Dx/////////////////////w8AAADA//////8/gPAD4P///////////////////wcAABj///////8PAIAH/////////////////////38AAEDz//////8/AAAA8P///////////////////x8AAADA////////BwAAAPz//////////////////x8AAAAAAAAe4P//fwAAAMD//////////////////38AAAAAAAAAABAAeAAAAID///////////////////8DAAAAAAAAAACAewAAAADI/v////8///////////8BAAAAAAAAAAAAPwAAAAAAAADg//8//P///////wMAAAAAAAAAAAAACAAAAAAAAAAA4P8/4P//////BwAAAAAAAAAAAAAAGAAAAAAAAAAAADwAAAR4Pv4HAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAgwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADABwAAAAAAAAAAAAAAAAAAAAAAAIADAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAACAHwAAAAAAAAAAAAAAAAAAAAAABgAMAAAAAAAAAACAHwAAAAAAAAAAAAAAAAAAAAAABgAQAAAAAAAAAACAfwAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAACA/wEAAAAAAAAAAAAAAAAAAADAAgBwAAAAAAAAAACA/wMAAAAAAAAAAAAAAAAAAADgDwAQAAAAAAAAAAAA/wMAAAAAAAAAAAAAAAAAAADwDwAIAAAAAAAAAAAA/w8AAAAAAPABAAAAAAAA4Af0HwAAAAAAAAAAAAAA/x8AAAAAAPAHAAAAAAAA4B/+PwAAAAAAAAAAAAAA/z8AAAAAAPAPAAAAAAAA4P//PwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA4P//PwAAAAAAAAAAAAAA/v8AAAAAAPw/AAAAAAAA8P//PwAAAAAAAAAAAAAA/v8AAAAAAPw/AAAAAAAA8P//PwAAAAAAAAAAAAAA/v8AAAAAAPx/YAAAAAAA8P//PwAAAAAAAAAAAAAA/v8HAAAAAPz/4AAAAAAA8P//HwAAAAAAAAAAAAAA/v8fAAAAAP7/4AAAAAAA4P//D0AAAAAAAAAAAAAA/v8fAAAAAP5/wAAAAAAAgP//ByAAAAAAAAAAAAAA/v8/AAAAAP//4AEAAAAAAP7/AwAAAAAAAAAAAAAA//8/AAAAAP//4QEAAAAAAPzfAQAAAAAAAAAAAADA//8/AAAAAP//hwMAAAAAAPjHAQAAAAAAAAAAAADg//8/AAAAAP//BwEAAAAAANDHAAAAAAAAAAAAAADg//9/AAAAAP7/BwAAAAAAAICHAAAAAAAAAAAAAADw//9/AAAAAP7/BwAAAAAAAAAAAAAAAAAAAAAAAADw////AAAAAP7/BwAAAAAAAAQADAAAAAAAAAAAAAD4////AQAAAP7/AwAAAAAAHADwBgQAAAAAAAAAAAD8////AQAAAP//AwAAAADABADyAwEAAAAAAAAAAAD8////AAAAAP//AwAAAABgAADwAQAAAAAAAAAAAAD8//8/AAAAgP//BwAAAABwEBL+AAAAAAAAAAAAAAD8//8DAAAAwP//BwAAAAA4vgEaAAAAAAAAAAAAAAD8//8BAAAAwP//DwAAAAAYPiABAAAAAAAAAAAAAAD4/38AAAAAwP//HwAAAAAcficAAAAAAAAAAAAAAADw/z8AAAAAwP//fwAAAAAWfAAAAAAAAAAAAAAAAADg/z8AAAAAwP///wAAAAAbMAAAAAAAAAAAAAAAAADw/x8AAAD8+P///wAAAAAZYAAAAAAAAAAAAAAAAADw/wEAAAD//////wEAIAAIAAgAAAAAAAAAAAAAAADy/wAAAID//////wEAIAAGAAwAAAAAAAAAAAAAAADBfgAAAID//////wMAGABAAAAAAAAAAAAAAAAAAICAAgAAAMD/////HwMAGADgAAoAAAAAAAAAAAAAAMAAAAAAAOD/////PwAAHAD8AQQAAAAAAAAAAAAAAPgBAAAAAOD/////7wEAHAD+AQEAAAAAAAAAAAAAgPwAAAAAAOD/////8wcAPoD+AAEAAAAAAAAAAAAA4B8AAAAAAOD/////8x8AfoB/AAMAAAAAAAAAAAAA+DgAAwAAAOD/////+T8A/oB/AwAAAAAAAAAAAAAAfDBwAAAAAOD/////+X8A/sN/AAAAAAAAAAAAAAAAfAAIAAAAAOD//////f/A/+f/BwAAAAAAAAAAAAAAfgAAAAAAAOD//////H/A////PwEAAAAAAAAAAAAgfwAAAAAAAMD///9//jPg////fwAAAAAAAAAAAACgfwAWAAAAAMD///9//+H//////wAAAAAAAAAAAADYfwACAAAAAID///8///n//////wEAAAAAAAAAAADo/wkCAAAAAAD+//////z//////wEAAAAAAAAAAADg//8DAAAAAAD8/+///////////wEAAAAAAAAAAAD8//8DAAAAAAD8/2OA/////////4EAAAAAAAAAAAD+//8PAAAAAAD4fwAA/////////wAHAAAAAAAAAID///8fAAAAAACwfwBD/////////zA/AAAAAAAAAID///8fAAAAAABwdAD8/////////zE4AAAAAAAAAMD///8/AAAAAAD8AMT8//H/////fzggAAAAAAAAAOD///9/AAAAAAD8AGT8//H//////xpgAAAAAAAAAOD/////AAAAAAD8Aebn+fH//////z8AAAAAAAAAAOD/////AQAAAAD8g/EH8Pj////////gAAAAAAAAAOD/////EwAAAACA//wHfPz////////HAAAAAAAAAOD//////wAAAACA//9P/vj///////8PAAAAAAAAAOD/////HxAAAADA//////////////8fAAAAAAAAAPD/////Gw4AAACg//////////////8fAAAAAAAAAPj/////zwAAAAAw/v////////////+/AAAAAAAAAPj////7/wMAAADg+f////////////9/AAEAAAAAgPz////5/wcAAADs+P////////////9/AAcAAAQAAP7////5/wMAAABoQOj///////////8DAA8AACAAAP///z/gfwAAAAAwYMf///////////8PAB8AAIACgP///wPgfwAAAAAQABf///////////8fAA4AAPAB+P///wHwMwAAAAAA8A//////////////ZBgAAPzf/////wHwAwAGAAAA+M///////////////+ADAPz//////wNxDIAPAAAA8M///////////////98/AOD//////88GH8AfAAwAwJ////////////////9/GP7//////7/wJ+AfAH4AAD9++P//////////////N/D///////+Bf/D/AQAAAP7/x////v//////////A/7///8Pw56BB+D/DwAAAPz/Y+zf/f//////////APj/A0/8X4PwB/D//wAAAOA/AADh/v///////wM+A4AAAED8A/P/AOD//wEAAAAAADjg/v///z//HwCAAAAAAOBdc/MDAPj//wEAAAAAABjAwP///z9gAAAAAAAAAOAAAAAAAPz//wMAAAAAAGAAAPz/AQAAAAAAAAAAAAC8cQwBAP///wcAAAAAAIAHAMD/DwDwAAAAAAAAAAADAOAH/P///wcAAA4AAAAAAAAwAAAAAAAAAAAAAAAg3N4f/v///wcAAB8AAAAAAAA4AAAAAAAAAAAAAAAAAD/++f///w8AAPADgAEAAOADAAAAAAAAAAAAAAAAAPj/z////3EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-  var COLS=240, ROWS=120;
-  var cv=document.getElementById("ftGlobe");
-  if(cv && cv.getContext){
-    var ctx=cv.getContext("2d");
-    var bin=atob(MASK);
-    var dots=[];
-    for(var r=0;r<ROWS;r++){
-      for(var c=0;c<COLS;c++){
-        var idx=r*COLS+c;
-        if(bin.charCodeAt(idx>>3)&(1<<(idx&7))){
-          var lat=(-90+(r+.5)*180/ROWS)*Math.PI/180;
-          var lon=(-180+(c+.5)*360/COLS)*Math.PI/180;
-          dots.push([Math.cos(lat)*Math.cos(lon), Math.sin(lat), Math.cos(lat)*Math.sin(lon),
-            0.72+Math.random()*0.55, Math.random()>0.86]);   /* variacao de tamanho + dots mais claros */
-        }
-      }
+  /* ---- globo COBE (WebGL) no rodape: pontos girando ----
+     Substitui o antigo globo 2D. Lib local: assets/vendor/cobe.min.js (window.createGlobe).
+     Perf: so anima com o rodape na tela (IntersectionObserver destroi/recria o globo);
+     reduced-motion e data-perf=low nao iniciam WebGL (fica a imagem estatica);
+     e se o WebGL falhar (getContext nulo/erro), tambem cai para a imagem. */
+  (function(){
+    var cv=document.getElementById("ftGlobe");
+    var reduceM=window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var lowPerf=document.documentElement.getAttribute("data-perf")==="low";
+    var ftPic=document.querySelector("#rodape .ft-globe picture");
+    if(!cv || typeof window.createGlobe!=="function" || reduceM || lowPerf){ return; }
+    function showImg(){ if(ftPic) ftPic.style.display=""; cv.style.display="none"; }
+    var phi=0, W=0, globe=null;
+    function cssW(){ return cv.offsetWidth || (cv.parentElement&&cv.parentElement.clientWidth) || 1000; }
+    function build(){
+      if(globe) return;
+      /* o cobe cria o buffer WebGL como (largura-css do canvas x devicePixelRatio). Se passar do
+         limite do WebGL (~4096) a renderizacao FALHA e fica preto (ex.: canvas largo em tela retina).
+         Entao capamos o dpr p/ o buffer ficar ~1900px: seguro, leve e nitidez ok (canvas grande escala). */
+      var offW = cssW();
+      var dpr = Math.min(2, Math.max(0.4, 1900/offW));
+      W = Math.round(offW * dpr);   /* buffer efetivo (<= ~1900) */
+      try{
+        globe=createGlobe(cv, {
+          devicePixelRatio: dpr,
+          width: W, height: W,
+          phi: 0, theta: 0.24,
+          dark: 1, diffuse: 1.2,
+          mapSamples: 16000, mapBrightness: 7,
+          baseColor: [0.18,0.62,0.28],
+          markerColor: [0.09,1,0.0],
+          glowColor: [0.10,0.28,0.14],
+          opacity: 0.92,
+          markers: [
+            { location:[-18.9186,-48.2772], size:0.10 },
+            { location:[-23.5505,-46.6333], size:0.07 },
+            { location:[-15.7939,-47.8828], size:0.06 },
+            { location:[-8.0476,-34.8770], size:0.05 },
+            { location:[-30.0346,-51.2177], size:0.05 }
+          ],
+          onRender: function(state){ phi+=0.004; state.phi=phi; state.width=W; state.height=W; }   /* girando */
+        });
+        cv.style.opacity="1";
+        if(ftPic) ftPic.style.display="none";
+      }catch(err){ globe=null; showImg(); }
     }
-    var DPR=Math.min(1.5,window.devicePixelRatio||1);
-    function fit(){ var p=cv.parentElement; cv.width=(p.clientWidth||1200)*DPR; cv.height=(p.clientHeight||800)*DPR; }
-    fit(); window.addEventListener("resize",fit);
-    /* sprites redondos suaves (rapido: drawImage em vez de ellipse por ponto) */
-    function sprite(cor){
-      var s=document.createElement("canvas"); s.width=24; s.height=24;
-      var c=s.getContext("2d");
-      var g=c.createRadialGradient(12,12,1,12,12,11);
-      g.addColorStop(0,cor); g.addColorStop(.8,cor); g.addColorStop(1,"rgba(0,0,0,0)");
-      c.fillStyle=g; c.beginPath(); c.arc(12,12,11,0,7); c.fill();
-      return s;
-    }
-    var spG=sprite("rgba(24,230,60,1)"), spB=sprite("rgba(150,255,140,1)");
-    /* VISTA DE HORIZONTE: esfera gigante com o topo do arco dentro do footer (ref KART IQ) */
-    var rot=-1.92, last=0, running=false;   /* comeca com Africa/Americas na frente */
-    var lowPerf=document.documentElement.getAttribute('data-perf')==='low';   /* hardware fraco: globo estatico (sem rotacao continua) */
-    var tilt=-1.22, stT=Math.sin(tilt), ctT=Math.cos(tilt);
-    function frame(t){
-      if(!running) return;
-      var dt=Math.min(.05,(t-last)/1000)||0; last=t; rot+=dt*0.05;
-      var W=cv.width, H=cv.height;
-      var R=W*1.30, crest=H*0.42, cx=W/2, cy=crest+R;
-      ctx.clearRect(0,0,W,H);
-      /* glow ambiente no horizonte */
-      var g=ctx.createRadialGradient(cx,crest+R*0.02,10,cx,crest,W*0.62);
-      g.addColorStop(0,"rgba(24,255,0,.07)"); g.addColorStop(1,"rgba(24,255,0,0)");
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-      var sr=Math.sin(rot), cr=Math.cos(rot);
-      for(var i=0;i<dots.length;i++){
-        var d=dots[i];
-        var x=d[0]*cr+d[2]*sr, z=-d[0]*sr+d[2]*cr, y=d[1];
-        var y2=y*ctT-z*stT, z2=y*stT+z*ctT;
-        if(z2<-0.1) continue;
-        var px=cx+x*R, py=cy-y2*R;
-        if(py<-60||py>H+60||px<-70||px>W+70) continue;
-        var f=1-(py-crest)/(H*1.2); if(f<=0) continue;
-        f=Math.pow(f,1.15);
-        ctx.globalAlpha=Math.min(1,0.22+0.82*f);
-        var dia=R*0.0128*d[3];
-        ctx.drawImage(d[4]?spB:spG, px-dia/2, py-dia*0.44, dia, dia*0.88);
-      }
-      ctx.globalAlpha=1;
-      if(!lowPerf) requestAnimationFrame(frame);
-    }
+    function teardown(){ if(globe){ try{ globe.destroy(); }catch(e){} globe=null; cv.style.opacity="0"; } }
+    window.addEventListener("resize", function(){ if(globe){ teardown(); build(); } }, {passive:true});
     if("IntersectionObserver" in window){
-      var io=new IntersectionObserver(function(en){
-        var vis=en[0].isIntersecting;
-        if(vis && !running){ running=true; last=performance.now(); requestAnimationFrame(frame); }
-        else if(!vis) running=false;
-      },{root:null,threshold:0});
+      var io=new IntersectionObserver(function(en){ if(en[0].isIntersecting) build(); else teardown(); },{root:null,threshold:0});
       io.observe(document.getElementById("rodape"));
-    } else { running=true; requestAnimationFrame(frame); }
-  }
+    } else { build(); }
+  })();
   /* fade-in do conteudo no padrao do site */
   if(window.gsap && window.ScrollTrigger && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
     gsap.registerPlugin(ScrollTrigger);
@@ -6041,32 +5821,6 @@ if(window.gsap&&window.ScrollTrigger){
       });
       watch(mfcs.concat(mrows).concat([h2w]).concat(mdl?[mdl]:[]),0.15);
     }
-    /* simulador (mobile): barra fixa no rodapé com o valor da recorrência ao vivo,
-       visível enquanto o usuário ajusta a config e some quando o card de resultado aparece */
-    (function(){
-      var sim=document.getElementById('sim');
-      var oRec=document.getElementById('oRec'), oTit=document.getElementById('oTit');
-      var receipt=document.querySelector('#simulador .receipt');
-      var simSec=document.getElementById('simulador');
-      if(!sim||!oRec||!receipt||!simSec||!('IntersectionObserver' in window)) return;
-      var bar=document.createElement('div'); bar.className='sim-stickybar';
-      bar.innerHTML='<span class="sb-l">—</span><b class="sb-v">—</b>';
-      document.body.appendChild(bar);
-      var bl=bar.querySelector('.sb-l'), bv=bar.querySelector('.sb-v');
-      function sync(){ bl.textContent=oTit.textContent||'Recorrência'; bv.textContent=oRec.textContent||'—'; }
-      new MutationObserver(sync).observe(sim,{childList:true,characterData:true,subtree:true});
-      sync();
-      var secIn=false;
-      /* barra visível só quando o card de resultado está ABAIXO da tela (você está na config, acima dele).
-         Some ao alcançar/passar o resultado; reaparece se rolar de volta pra cima (config). */
-      function receiptBelow(){ return receipt.getBoundingClientRect().top > window.innerHeight*0.9; }
-      function upd(){ if(!sim.hidden && secIn && receiptBelow()) bar.classList.add('show'); else bar.classList.remove('show'); }
-      new IntersectionObserver(function(es){ es.forEach(function(e){ secIn=e.isIntersecting; upd(); }); },{threshold:0}).observe(simSec);
-      new MutationObserver(upd).observe(sim,{attributes:true,attributeFilter:['hidden']});
-      var stk=false;
-      window.addEventListener('scroll',function(){ if(!stk){ stk=true; requestAnimationFrame(function(){ upd(); stk=false; }); } },{passive:true});
-      upd();
-    })();
 
     /* vídeo dos carros: 1.2x. Buffer cedo (sem delay) + play SINCRONIZADO ao título
        (mesmo ponto 'top 72%' → rootMargin inferior -28%), então roda junto com o texto. */
@@ -6140,22 +5894,30 @@ if(window.gsap&&window.ScrollTrigger){
 })();
 </script>
 <script id="reorder-secoes">
-/* Reorganizacao (pedido do dono) — PASSO 1: mover #simulador p/ logo ANTES da #orbita,
-   por JS e DENTRO do #smooth-content. Feito por JS (nao por move de HTML) de proposito: a
-   #orbita e PINADA e, num move de HTML, escapa do #smooth-content e some com as secoes
-   seguintes. Aqui roda depois de todo o setup (ScrollSmoother/pins/relocacoes) e antes de a
-   apresentacao carregar. Se ja pinada, miramos o .pin-spacer da orbita (senao o insertBefore
-   colocaria o simulador dentro do spacer). */
+/* Reorganizacao (pedido do dono) — PASSO 1: mover #simulador p/ logo APOS o #ecossistema (deck),
+   por JS e DENTRO do #smooth-content. Feito por JS (nao por move de HTML) de proposito: as secoes
+   pinadas escapam do #smooth-content num move de HTML e somem com as seguintes. Aqui roda depois
+   de todo o setup (ScrollSmoother/pins/relocacoes, incl. a criacao do #ecossistema2 e seu pin) e
+   antes de a apresentacao carregar. Miramos o .pin-spacer do ecossistema (senao o insertBefore
+   colocaria o simulador DENTRO do spacer). */
 (function(){
   var sc=document.getElementById('smooth-content');
   var sim=document.getElementById('simulador');
   var orb=document.getElementById('orbita');
   if(!(sc&&sim&&orb)) return;
   var moved=false;
-  /* PASSO 1: simulador imediatamente antes da orbita (miro o pin-spacer se ja pinada) */
-  var orbTarget=orb.closest('.pin-spacer')||orb;
-  if(orbTarget.parentNode && sim!==orbTarget && sim.nextElementSibling!==orbTarget){
-    orbTarget.parentNode.insertBefore(sim, orbTarget); moved=true;
+  /* PASSO 1: simulador imediatamente APOS o ecossistema (deck). No desktop o clone VIVO e
+     #ecossistema2 e ele e PINADO -> miro o .pin-spacer dele; no mobile nao ha clone nem pin ->
+     uso #ecossistema. Fallback antigo (antes da #orbita) se nada casar. */
+  var eco=document.getElementById('ecossistema2')||document.getElementById('ecossistema');
+  var ecoTarget=eco?(eco.closest('.pin-spacer')||eco):null;
+  if(ecoTarget && ecoTarget.parentNode && sim!==ecoTarget && ecoTarget.nextElementSibling!==sim){
+    ecoTarget.parentNode.insertBefore(sim, ecoTarget.nextElementSibling); moved=true;
+  } else {
+    var orbTarget=orb.closest('.pin-spacer')||orb;
+    if(orbTarget.parentNode && sim!==orbTarget && sim.nextElementSibling!==orbTarget){
+      orbTarget.parentNode.insertBefore(sim, orbTarget); moved=true;
+    }
   }
   /* PASSO 2: ordem do final = Planos, Graduacoes, Bonificacao (antes do rodape). Nenhuma delas
      e pinada, entao insertBefore direto no smooth-content e seguro e mantem tudo dentro dele. */

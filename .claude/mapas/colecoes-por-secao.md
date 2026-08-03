@@ -62,12 +62,18 @@ Há uma constante de duração casada com a animação do deck: `CARO = 5` em `j
 
 Cada card aponta para uma `produtos/conexao*.html` — card novo precisa de página nova (base: `produtos/template.html`).
 
-⚠ Avançar por dentro deste stop **navega para a página de produto**. **Isso é INTENCIONAL** — confirmado pelo dono: a apresentação entra no produto de propósito, e quem não quiser usa a navegação **lateral** (direita/esquerda). Não "conserte" isso. Consequência prática: derruba teste automatizado (destrói o contexto), então para testar aquele trecho use as setas laterais ou salte pelos dots.
+⚠ **REVERTIDO em 2026-08-03 (pedido do dono):** os cards **NUNCA** abrem a página de produto — nem na apresentação, nem fora dela. Antes avançar por dentro do stop navegava para o produto de propósito; hoje há **duas travas pareadas**, e as duas precisam continuar existindo:
+- `js/page-transition.js` — o `click` e o `keydown` saem antes se o href contém `produtos/`. A trava é **incondicional** (antes só valia com `pmode-active`).
+- `js/presentation-mode.js` — no `goNext`, o stop de card do ecossistema só avança (`isEcoCardStop` → `goToIndex(+1)`); não chama mais `openEcoCard()`.
+
+Junto com isso, os cards deixaram de ter **qualquer** afordância de clique: o cursor "+" (`.curplus`) não aparece mais neles (o gatilho em `pointermove` foi neutralizado com `over=null`) e **nenhuma** regra de `:hover` os acende — o destaque verde (borda giratória + glow) é só do `.focus`, o card selecionado pelo carrossel. Se for religar o clique, reverta os quatro pontos, não só um.
+
+Efeito colateral bom: dá para testar o trecho com ↓/espaço/roda sem destruir o contexto.
 
 ## Resultados / "Os números não mentem" — 7 `.sfloat`
 Seção `.stats#resultados` (`.spin` como palco). Cada stat é um `.sfloat` com `.sfnum` (número + prefixo/sufixo em `<i>`, ex.: `+R$`, `mi`, `mil`, `m²`) e `.sflbl` (rótulo). O número **anima de 0 até `data-target`** — para trocar o valor exibido, troque o `data-target`, **não** o texto `0` (que é só o ponto de partida da contagem). Locale pt-BR formata milhar com ponto: `data-target="1000"` renderiza **"1.000"** (igual a "3.000 m²").
 
-Estado em 2026-07-30 (7 itens): `+R$140mi` bônus · `+800mil` clientes · `+35mil` licenciados · `+11` milionários · `3.000m²` sede · `+500` colaboradores · `+1.000` usinas solares. (O item "21 estados atendidos" foi removido a pedido do dono nesta data.)
+Estado em 2026-08-03 (7 itens): `+R$150mi` bônus · `+800mil` clientes · `+35mil` licenciados · `+11` milionários · `3.000m²` sede · `+500` colaboradores · `+1.000` usinas solares. (O item "21 estados atendidos" foi removido a pedido do dono em 2026-07-30. O bônus foi de `140` para `150` em 2026-08-03 — via `data-target`, como manda o parágrafo acima.)
 
 **Animação (nenhuma contagem fixa no JS):** desktop = timeline pinada (`.stats` `start:'top top'` `end:'+=260%'`, scrub) dirigida por `floats.length` e índice `n` — `STEP=.32`, `TOTAL=floats.length*STEP+1.1`, drift `-(60+((n*53)%90))`; some/adiciona `.sfloat` que ela recalcula sozinha. Mobile (≤1024px) = grade `auto-fit repeat(minmax(150px,1fr))` com reveal+contagem por IntersectionObserver (`.sfloat.inview`); nº ímpar de itens deixa o último sozinho na coluna esquerda (ok). Apresentação: `#resultados` tem `subs:[]` (parada única) — mexer nos itens não muda paradas.
 
@@ -88,6 +94,10 @@ Não confirmei os seletores destas — **rode o inventário** acima antes de mex
 - **Pins de graduação:** o site serve `assets/pins/grad-<nivel>.webp` (420px lossless, ~135kB cada). Os PNG de 1080×1080 são masters e ficam fora do git — eram servidos direto e, somando 5,7MB, seguravam a tela de boot por ~6,4s em toda primeira visita. Pin novo: gere o webp a 420px (dobro do tamanho de exibição, 203px) e **lossless**, porque o WebP lossy subamostra croma e mancha cor saturada.
 - **Planos** têm um alternador (mensal/anual) — plano novo precisa dos dois valores, e o card destacado usa `.plan.feat`.
 - **Graduações** têm gráfico próprio, com versão 2D simplificada no mobile. Item novo entra nos dois.
+- **Graduações na apresentação — ordens INVERTIDAS, cuidado.** O `buildStops` de `#graduacoes` gera **1 + 2N paradas** (gráfico completo, depois **pin → galeria daquele pin**, intercalado, N = nº de níveis), todas no **mesmo `y`** de scroll: quem muda a cena é a `action`, não a rolagem. As duas coleções estão em ordens **opostas** e usar o mesmo índice nas duas mostra a galeria do pin errado:
+  - as barras são criadas de trás pra frente (`for(i=DATA.length-1;i>=0;i--)` no `index.html`), então no DOM `#gradBars` a **1ª é Acionista** e a última é Sênior → barra do nível `d` = `bs[(N-1) - d]`;
+  - os dots do modal usam `data-i` = índice de `DATA`/`EVENTS` (**Sênior = 0**) → galeria do nível `d` = `gradEventGo(d)`.
+- A contagem das paradas sai das **barras**, não dos dots: o modal é montado em runtime e pode não existir quando `rebuildIndex()` roda — contar `.gm-dot` daria 0 e as paradas de galeria sumiriam sem erro nenhum. Nível novo entra nas duas coleções e o total de paradas sobe de 2.
 
 Para todas: se a seção aparece em `js/presentation-mode.js` com `subs` ou `buildStops`, a quantidade de itens afeta as paradas. Se aparece com `frame`, não afeta.
 

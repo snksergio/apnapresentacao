@@ -104,7 +104,13 @@
         }
         return out;
       } },
-    { label:'Recorrência',  sel:'#recorrencia',  subs:[], on:true,
+    { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
+      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
+      buildStops:function(st, node){
+        var head = node.querySelector('.sim-head') || node;
+        return [ curY() + head.getBoundingClientRect().top - 88 ];
+      } },
+    { label:'Recorrência',  sel:'#recorrencia',  subs:[], on:false,   /* #recorrencia oculto (display:none) — parada morta, fora da apresentacao */
       /* transições mais suaves (entrada e beat1↔beat2) */
       dur:2.6,
       /* 2 subcategorias: (1) texto central + cards convergindo (fim do scrub radial,
@@ -129,12 +135,6 @@
           out.push(curY() + r.top - off);                                                  // beat 2
         }
         return out;
-      } },
-    { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
-      /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
-      buildStops:function(st, node){
-        var head = node.querySelector('.sim-head') || node;
-        return [ curY() + head.getBoundingClientRect().top - 88 ];
       } },
     { label:'Órbita',       sel:'#orbita',       on:true,
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
@@ -194,20 +194,33 @@
       } },
     { label:'Graduações',   sel:'#graduacoes',   subs:[], on:true, trig:'#gradSection', dur:2.8,
       onLeave:function(){ gradEventsClose(); gradClear(); },
-      /* 1º passo: gráfico completo. Depois um passo por barra (hover do nível).
-         Por fim, abre o modal "Nossos Eventos" e navega os slides — tudo na mesma
-         posição de scroll, com as mesmas setas; fecha ao sair da seção. */
+      /* 1º passo: gráfico completo. Depois, INTERCALADO por nível (pedido do dono):
+         pin no gráfico → galeria daquele pin → pin do próximo → galeria dele → ...
+         Antes vinham em dois blocos (os 5 pins, e só então as 5 galerias), o que não
+         casava o pin com as fotos dele. Tudo na mesma posição de scroll, com as mesmas
+         setas; a galeria fecha sozinha ao avançar pro pin seguinte (gradEventsClose no
+         passo do pin) e ao sair da seção (onLeave).
+           ÍNDICES (cuidado, são ordens OPOSTAS):
+           - as barras são criadas de trás pra frente (index.html: for(i=DATA.length-1;i>=0;i--)),
+             então no DOM #gradBars a 1ª é Acionista e a última é Sênior
+             => barra do nível d  =  bs[(n-1) - d]
+           - os dots da galeria usam data-i = índice de DATA/EVENTS (Sênior=0 … Acionista=4)
+             => galeria do nível d = gradEventGo(d)
+         A contagem vem das BARRAS, não dos dots: o modal é montado em runtime e pode ainda
+         não existir quando rebuildIndex() roda — contar dots daria 0 e as paradas de galeria
+         simplesmente não existiriam. As barras já estão no DOM aqui. */
       buildStops:function(st, node){
         if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
         var y = st.start + (st.end - st.start) * 0.9;
         var bs = document.querySelectorAll('#gradBars .bar-group');
+        var n = bs.length;
         var out = [{ y:y, action:function(){ gradEventsClose(); gradClear(); } }];   // gráfico completo
-        for (var i = bs.length - 1; i >= 0; i--){                                    // Sênior → ... → Acionista
-          (function(idx){ out.push({ y:y, action:function(){ gradEventsClose(); gradHover(idx); } }); })(i);
-        }
-        var dots = document.querySelectorAll('#gradEventsModal .gm-dot');            // "Nossos Eventos": 1 passo por slide
-        for (var j = 0; j < dots.length; j++){
-          (function(slide){ out.push({ y:y, action:function(){ gradClear(); gradEventsOpen(); gradEventGo(slide); } }); })(j);
+        for (var d = 0; d < n; d++){                                                 // Sênior → ... → Acionista
+          (function(lvl){
+            var barIdx = n - 1 - lvl;                                                // DOM invertido
+            out.push({ y:y, action:function(){ gradEventsClose(); gradHover(barIdx); } });                    // pin no gráfico
+            out.push({ y:y, action:function(){ gradClear(); gradEventsOpen(); gradEventGo(lvl); } });         // galeria do pin
+          })(d);
         }
         return out;
       } },
