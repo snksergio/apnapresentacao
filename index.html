@@ -2412,14 +2412,15 @@ window.igRefresh=(function(){
     </div>
   </div>
 
-  <!-- CTA-DESATIVADO: card "Assista ao vídeo institucional" oculto por pedido do dono — o video ainda nao esta pronto.
-       Reativar removendo este comentario quando o video existir (e trocar o href="#video-sede" pelo link real).
-       O JS de .hqwatch (posicionamento/thumb) tem guarda de null, entao pode ficar comentado sem quebrar nada.
-  <a class="hqwatch" href="#video-sede" aria-label="Assistir ao vídeo institucional">
+  <!-- RELIGADO (pedido do dono, 2026-08-03): card "Assista ao vídeo institucional".
+       O href aponta HOJE para o canal do YouTube da iGreen (o mesmo do rodapé) — é um destino
+       real, e não a âncora morta "#video-sede" de antes. TROCAR pelo link do vídeo específico
+       quando o dono passar a URL: basta o href abaixo.
+       Externo => target="_blank" rel="noopener" (padrão do projeto). -->
+  <a class="hqwatch" href="https://www.youtube.com/@IgreenEnergy" target="_blank" rel="noopener" aria-label="Assistir ao vídeo institucional no YouTube">
     <span class="hqthumb"><img alt=""><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
     <span class="hqwtxt"><b>Assista ao vídeo institucional</b></span>
   </a>
-  -->
   </div>
 </section>
 <section class="eco" id="ecossistema">
@@ -3008,6 +3009,15 @@ window.igRefresh=(function(){
   #graduacoes .tooltip .t-perk-badge{ margin-top:12px; display:none; align-items:center; justify-content:center; gap:6px; padding:8px 12px; border-radius:9px; font-size:12px; font-weight:700; letter-spacing:.04em; color:#0a140c; box-shadow:0 4px 16px rgba(0,0,0,.3); }
   @media (prefers-reduced-motion: reduce){ #graduacoes .scroll-cue::after{ animation:none; } }
   /* botao Nossos Eventos (padrao .aio-cta) */
+  /* BOTAO-EVENTOS-DESATIVADO (pedido do dono, 2026-08-03): "Nossos Eventos" ficou sem utilidade
+     depois que a apresentacao passou a entrar pin -> galeria -> sai -> proximo pin sozinha.
+     OCULTO por CSS, NAO removido do HTML de proposito: ele e o UNICO gatilho que abre o modal
+     (o listener openM esta nele). Quem depende de um btn.click() nele:
+       - js/presentation-mode.js -> gradEventsOpen()  (as paradas de galeria da apresentacao)
+       - index.html -> openEvents()                    (clicar no pin, fora da apresentacao)
+     Clique programatico funciona em elemento display:none, entao os dois seguem OK (validado no
+     Chrome). Se for remover o botao de vez, mova o listener openM p/ outro lugar antes. */
+  #graduacoes .grad-cta{ display:none!important; }
   #graduacoes .grad-cta{ margin-top:28px; pointer-events:auto; display:inline-flex; align-items:center; gap:9px; font-family:'Inter Display',sans-serif; font-size:15px; font-weight:600; letter-spacing:.01em; color:#052008; border:none; border-radius:999px; padding:15px 28px; cursor:pointer; background:linear-gradient(180deg,#3dff2a,#0ecb00); box-shadow:0 14px 40px rgba(24,255,0,.28),inset 0 1px 0 rgba(255,255,255,.35); transition:transform .25s, box-shadow .25s; }
   #graduacoes .grad-cta:hover{ transform:translateY(-2px); box-shadow:0 18px 52px rgba(24,255,0,.4),inset 0 1px 0 rgba(255,255,255,.35); }
   #graduacoes .grad-cta svg{ width:17px; height:17px; }
