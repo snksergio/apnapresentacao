@@ -38,7 +38,8 @@ Ao religar: descomente o bloco e **dê um destino real**. Se for âncora, confir
 
 ## Sem destino, a decidir
 
-- **`Começar agora`** (home) — único CTA visível que ainda não leva a lugar nenhum.
+- **`Começar agora`** (home) — CTA visível que ainda não leva a lugar nenhum.
+- ~~`Garanta o seu ingresso` (A Rede)~~ — **deixou de existir em 2026-08-03.** A faixa verde da base do card virou o **rótulo do nível** (`EMBAIXADOR` / `ROYAL`), a pedido do dono. Trocado de `<button>` para `<span>` no mesmo passo: é rótulo, não ação — então saiu da conta de CTA morto e parou de anunciar clique para teclado/leitor de tela. Se um dia existir fluxo de ingresso, o botão volta no `innerHTML` do card dentro do `rede-app` (um lugar só, os 15 cards são gerados de lá).
 - Um `href="#"` sem texto por volta da linha 2156 do `index.html` — verificar o que é antes de mexer.
 
 ## Outros blocos desativados por marcador (2026-08-03)

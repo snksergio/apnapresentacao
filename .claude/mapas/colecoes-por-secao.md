@@ -39,10 +39,18 @@ Quatro coisas que só se descobrem mexendo:
 O carrossel do hero também é o motivo pelo qual `.kpi` e `.kpis` ficam **excluídos** do comparador de
 geometria: o KPI ativo expande de 72 para ~300px sozinho, gerando diferença sem mudança de código.
 
-## Trajetória — 6 `.jitem`
+## Trajetória — 7 `.jitem`
+Estado em 2026-08-03: Origem (2021) · Marco Histórico (2023) · Expansão e Telecom (2024) · A maior do Setor (2025) · Dominação Global (2026) · **Expansão Internacional (2026)** · **Parceria Estratégica (2026)** — os dois últimos entraram nesta data. **Três cards marcam 2026**: o dono não informou o ano dos dois novos e a linha já terminava em 2026; confirmar com ele.
+
+O lado **alterna** por item via `.jl`/`.jr` (esq/dir). Ao inserir no fim, continue a alternância — não há JS que corrija isso.
+
+**Foto é OPCIONAL**: o `jcheck()` guarda com `if(ph)`, então item sem `.jphoto` aparece normal (é o caso de "A maior do Setor" e dos dois novos). Mas o **`.jyear` NÃO é opcional**: no mobile o `placeDots()` alinha o ponto da linha pela altura dele (`if(dot&&year)`) — item sem ano fica com o ponto solto no topo do card, sem erro nenhum.
+
+A **curva SVG se estende sozinha**: `buildCurve()` gera o `d` amostrando uma senoide a cada 12px pela ALTURA do `.jwrap`, e os pontos derivam da posição real de cada item. Medido ao passar de 5 para 7 itens: caminho foi para 2569px de comprimento e cobre o último ponto (dot em Y 1940, fim em Y 2484). Não há lista de coordenadas para manter.
+
 Cada item tem `.jcard`, `.jphoto` e `.jspark`. As fotos têm efeito CRT aplicado por JS que envolve a `<img>` (usa `img.closest('picture') || img` — se você trocar por `<picture>`, o efeito precisa continuar achando o elemento certo).
 
-**Apresentação:** usa `trig:'.jwrap'` com `buildStops` que faz **busca binária ao longo do caminho SVG** (`fill.getPointAtLength`) para achar o progresso em que cada ponto aparece. Ou seja: as paradas **derivam do desenho**, não de uma lista fixa. Adicionar um ponto tende a funcionar sozinho — mas **valide**, porque o caminho SVG e o número de itens precisam continuar casados.
+**Apresentação:** usa `trig:'.jwrap'` com `buildStops` que faz **busca binária ao longo do caminho SVG** (`fill.getPointAtLength`) para achar o progresso em que cada ponto aparece. Ou seja: as paradas **derivam do desenho**, não de uma lista fixa. Adicionar um ponto tende a funcionar sozinho — mas **valide**, porque o caminho SVG e o número de itens precisam continuar casados. Confirmado na prática em 2026-08-03: ao ir de 5 para 7 itens as paradas foram de 5 para 7 sem tocar em nada, e cada parada revela exatamente um card a mais.
 
 Ao adicionar: o ponto no caminho SVG, o `.jitem` correspondente, e a foto tratada (`ativos-guardian`).
 
@@ -86,6 +94,34 @@ No mobile, o palco é escalado (`.recwrap` com altura fixa 1680px + `zoom:.52`) 
 4 `.hqbadge` visíveis, revelados por cascata de CSS com `nth-child(1)` a `(4)` e `transition-delay` escalonado (~80ms). **Um quinto badge nasce invisível** — a regra do índice 5 não existe. O botão entra por último (`.hqwatch`, delay .62s).
 
 A seção tem folga de pin de `+=75%` (só respiro para o snap encaixar, não coreografa nada) e o vídeo toca em loop com play/pause por visibilidade real.
+
+## A Rede — 15 `.rcard` (baralho 3D)
+Seção `#rede`, entre Graduações e Bonificação. Porte do material "Depth Rail" (React+Tailwind+Framer Motion) para o stack daqui. Tudo vem de **um array `P` no `<script id="rede-app">`** — o HTML dos cards e os dots são gerados em runtime, então **pessoa nova = uma entrada no array**, nada de HTML.
+
+Estado em 2026-08-03: **2 Embaixadores + 13 Royais**, nomes reais passados pelo dono. `first` sai no accent e `last` na linha branca; em casal a 2ª linha começa com "e ..." (ex.: `first:"David Willian"`, `last:"e Aline Moura"`).
+
+**O nível aparece em 3 lugares no card, todos vindos do mesmo `lvl`** — mudar o `lvl` de uma pessoa muda os três de uma vez:
+1. `[ EMBAIXADOR ]` / `[ ROYAL ]` no topo (`.rc-tag`);
+2. o **pin exato** (`.rc-pin`) — `EMBAIXADOR` → `assets/pins/pin-e12.webp`, `ROYAL` → `assets/pins/pin-r5.webp`, os mesmos arquivos das graduações. Antes era um selo desenhado em CSS (conic-gradient); foi removido. Nível novo = entrada nova no objeto `PIN`, senão o card sai sem pin;
+3. a **faixa verde da base** (`.rc-cta`) — era o botão "Garanta o seu ingresso" do material e virou o rótulo do nível. É `<span>`, **não** `<button>`: rótulo, não ação.
+
+O `hl` de quem não tem texto próprio também deriva do nível ("Acionista Royal 5K" / "Acionista Embaixador 12K"), então o nível repete de propósito — foi o pedido do dono.
+
+**Texto por pessoa é OPCIONAL e isso é deliberado.** Só 5 têm `pill`/`hl`/`body` (os que vieram com texto no material: Lucas, David, Evandro, Gabriel, João Paulo). Para os outros **não** se inventa conquista, cidade nem número — são pessoas reais; o card mostra nome + nível (`Acionista Royal 5K` / `Acionista Embaixador 12K`) e o `hl` cai nesse rótulo sozinho. Ao receber o texto, preencha `pill`/`hl`/`body` e o card se completa sem mexer em CSS.
+
+**A quantidade muda a altura da seção:** `#rede` tem `height = N * VH_CARD vh`, com `VH_CARD=70` no `rede-app` (o material usava 90 com 8 pessoas; com 15 isso daria 1350vh, então baixou para 70 = **1050vh**). Somar uma pessoa **alonga a página em 70vh** e desloca Bonificação e Rodapé — acione o `scroll-guardian`.
+
+**Apresentação:** uma parada por pessoa (`buildStops` de `#rede` em `js/presentation-mode.js`), e o `y` de cada parada usa a **mesma fórmula** do `goTo()` do `rede-app` — se mexer numa, mexa na outra, senão a apresentação e as setas da seção discordam.
+
+Duas adaptações que **não** são escolha de estilo, não "conserte" para o que estava no material:
+- **`position:sticky` virou pin do ScrollTrigger.** Sticky não gruda dentro de ancestral transformado, e o ScrollSmoother move o `#smooth-content` por transform. O projeto já tinha batido nisso (ver o sticky do resultado do simulador).
+- **O pin fica no filho `.rede-pin`, não na section.** Por isso o `.pin-spacer` nasce **dentro** de `#rede` e a section pode ser movida à vontade pelo `#reorder-secoes` (é o que permite ela entrar antes da Bonificação sem o cuidado extra que o simulador exige no PASSO 1).
+
+**Fotos — requisito de conteúdo, não capricho:** uma foto por pessoa, com dominante **distinta das vizinhas**. A mesma foto do card ativo é reaproveitada como backdrop borrado (blur 95px) e o crossfade entre elas é o efeito de ambiente da seção; reciclar imagem faz a troca acontecer sem ninguém perceber. Ficam em `assets/img/rede/`. As entradas marcadas `ph:true` no array são **placeholder de evento** esperando a foto real (hoje: Lucas, Gabriel, Mariana, Camila, Diego).
+
+**Backdrop:** duas `<img>` em ping-pong. Nunca troque o `src` da mesma tag nem remonte o elemento — repintar um blur desse tamanho a cada quadro trava o scroll.
+
+**Mobile (≤1024px):** sem pin e sem 3D — carrossel horizontal nativo com `scroll-snap`. Deliberado: pinar 8 × 90vh no celular seria 720vh de rolagem forçada, e o ScrollSmoother não existe abaixo de 1025px. A troca de faixa (girar o aparelho) faz `location.reload()` de propósito, para não ficar num meio-estado entre pin e carrossel.
 
 ## Carros, Graduações, Eventos, Planos, Bonificação, Simulador
 Não confirmei os seletores destas — **rode o inventário** acima antes de mexer. O que valida para todas:

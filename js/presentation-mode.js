@@ -224,6 +224,33 @@
         }
         return out;
       } },
+    { label:'A Rede',       sel:'#rede',         subs:[], on:true, trig:'#rede', dur:1.1,
+      /* Uma parada por pessoa. Diferente das graduações (que agem por `action` na MESMA
+         posição), aqui cada parada é uma posição de scroll DE VERDADE: a própria seção é
+         pinada com scrub e o baralho lê o progresso do pin, então basta pousar no y de cada
+         card e o site anima sozinho — do mesmo jeito que o ecossistema faz por card.
+         O y de cada card usa a mesma fórmula do goTo() do rede-app, para a apresentação e os
+         controles da seção nunca discordarem. */
+      buildStops:function(st, node){
+        var n = document.querySelectorAll('#rede .rcard').length;
+        if (n < 2) return null;
+        var ini, fim;
+        if (st){ ini = st.start; fim = st.end; }
+        else if (node){
+          /* SEM o ScrollTrigger em mãos, cai na geometria da própria seção — a mesma fórmula
+             do brief. Isto NAO é perfeccionismo: se aqui retornasse null, a seção viraria UMA
+             parada só e um único toque em "passar" sairia dela direto para a Bonificação —
+             exatamente o sintoma relatado pelo dono. Com o fallback, as 8 paradas existem
+             mesmo que o trigger ainda não esteja registrado quando o índice é montado. */
+          var top = 0, el = node;
+          while (el){ top += el.offsetTop || 0; el = el.offsetParent; }
+          ini = top; fim = top + (node.offsetHeight - window.innerHeight);
+        } else return null;
+        if (!(fim > ini)) return null;
+        var out = [];
+        for (var i = 0; i < n; i++) out.push(ini + (i / (n - 1)) * (fim - ini));
+        return out;
+      } },
     { label:'Bonificação',  sel:'#bonificacao',  subs:[], on:true,
       /* seção de enquadramento (sem scrub): o vídeo dos carros toca sozinho ao
          entrar. Pelo dot (teleporte) o reveal once pode não disparar, então damos
