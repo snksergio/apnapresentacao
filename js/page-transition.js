@@ -101,10 +101,10 @@
     var href = el.getAttribute('data-pt-href') || el.getAttribute('href');
     if (!href || href.charAt(0) === '#') return;
     e.preventDefault();
-    /* TRAVA modo apresentacao (pedido do dono): nao entra nas paginas de produto (os 7 servicos,
-       em produtos/...). O resto passa normal (ex.: voltar pro index). Pareado com a trava do
+    /* TRAVA (pedido do dono): NUNCA entra nas paginas de produto (os 7 servicos, em produtos/...),
+       em qualquer modo. O resto passa normal (ex.: voltar pro index). Pareado com a trava do
        goNext em presentation-mode.js. */
-    if (html.classList.contains('pmode-active') && href.indexOf('produtos/') !== -1) return;
+    if (href.indexOf('produtos/') !== -1) return;
     go(href, el);
   }, false);
 
@@ -114,7 +114,7 @@
     if (!el) return;
     e.preventDefault();
     var kh = el.getAttribute('data-pt-href');
-    if (html.classList.contains('pmode-active') && kh && kh.indexOf('produtos/') !== -1) return;
+    if (kh && kh.indexOf('produtos/') !== -1) return;
     go(kh, el);
   });
 
