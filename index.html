@@ -246,7 +246,25 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .jtitle.jtitle-frase{font-size:clamp(28px,3.1vw,46px);letter-spacing:.01em;text-wrap:balance;
     text-transform:none}
   .jhint{margin-top:16px;font-size:14.5px;color:var(--ink-dim)}
-  .jwrap{position:relative;padding:24px 0 320px}
+  /* RABICHO DA TIMELINE 320 -> 620 (2026-08-03). Sintoma do dono: no modo apresentacao o ultimo
+     marco ("Parceria Estrategica") "aparece rapidamente e ja vai para a proxima secao", sem dar
+     tempo de ler, e o video da Sede aparecia antes de ele clicar na seta.
+     CAUSA (nao e avanco automatico — e ENQUADRAMENTO): o stop do marco nasce do buildStops da
+     Trajetoria, que faz busca binaria pelo p em que o traco verde alcanca o .jdot e ainda soma
+     +0.05 de margem. Para o ULTIMO marco isso da p ~0.89, e o proximo irmao no DOM e a section
+     #sede, que abre com o video .hqbg. Estimativa pelo CSS (7 .jitem + margin 150 +
+     este padding): .jwrap ~2294px, range do scrub ~2370px, logo a borda de baixo da .jwrap pousa
+     a ~844px numa tela de 946 -> ~100px do video ja na tela.
+     POR QUE MEXER AQUI E NAO NO STOP: o card do marco SO e revelado quando o traco chega nele
+     (mesmo limiar do jcheck). Parar antes desse p esconderia justamente o card que ele quer ler
+     — os dois estao amarrados. Alongar o rabicho desamarra: o dot sobe no percurso do traco (p
+     cai para ~0.79) e a Sede desce no documento, entao no mesmo gesto o card revela E o video
+     fica fora da tela (~190px de folga pelo calculo).
+     O rabicho e espaco vazio DEPOIS do ultimo marco, entao nao mexe em nenhum card.
+     Mobile nao e afetado: a media query <=1024px redefine .jwrap para padding:6px 0 0.
+     E um numero so: se sobrar buraco demais no scroll normal, 520px ainda deve segurar; se o
+     video ainda espiar, sobe para 700px. */
+  .jwrap{position:relative;padding:24px 0 620px}
   .jsvg{position:absolute;left:50%;top:0;height:100%;width:220px;margin-left:-110px;overflow:visible}
   .jtrackp{fill:none;stroke:rgba(232,255,228,.10);stroke-width:3;stroke-linecap:round}
   .jfillp{fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;
@@ -660,8 +678,10 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .carstage{position:relative;height:100vh;overflow:hidden}
   .carvid,.carstill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .carstill{opacity:0;visibility:hidden}
+  /* brightness .20 (era .32) a pedido do dono: o carro NAO selecionado escurece mais. Isso
+     tambem faz o card do trilho de pessoas, que vive justo sobre essa metade, destacar melhor. */
   .carshade{position:absolute;top:0;bottom:0;width:50%;opacity:0;cursor:pointer;z-index:2;
-    backdrop-filter:grayscale(1) brightness(.32);-webkit-backdrop-filter:grayscale(1) brightness(.32);
+    backdrop-filter:grayscale(1) brightness(.20);-webkit-backdrop-filter:grayscale(1) brightness(.20);
     transition:opacity .55s ease}
   .carshade.sL{left:0;-webkit-mask-image:linear-gradient(90deg,#000 76%,transparent);
     mask-image:linear-gradient(90deg,#000 76%,transparent)}
@@ -2121,6 +2141,10 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .cispecs{margin-top:16px;gap:7px}
     .cispec b{font-size:13px}
     .cibonus{font-size:12px;margin-top:12px}
+    /* o trilho de pessoas (order:4, depois das abas) tem as regras de mobile no proprio
+       #carsrail-styles, mais abaixo no arquivo. Media query NAO soma especificidade: se elas
+       morassem aqui, as regras de desktop do trilho — declaradas depois — ganhariam delas.
+       Foi exatamente assim que a logo da Trajetoria foi para o lado errado. */
 
     /* ---- Simulador: título/descrição padronizados + cards de graduação horizontais ---- */
     #simulador{padding:76px 0 36px}   /* bottom menor: aproxima de Qualificações */
@@ -2487,17 +2511,126 @@ window.igRefresh=(function(){
     </div>
   </div>
 
-  <!-- RELIGADO (pedido do dono, 2026-08-03): card "Assista ao vídeo institucional".
-       O href aponta HOJE para o canal do YouTube da iGreen (o mesmo do rodapé) — é um destino
-       real, e não a âncora morta "#video-sede" de antes. TROCAR pelo link do vídeo específico
-       quando o dono passar a URL: basta o href abaixo.
-       Externo => target="_blank" rel="noopener" (padrão do projeto). -->
-  <a class="hqwatch" href="https://www.youtube.com/@IgreenEnergy" target="_blank" rel="noopener" aria-label="Assistir ao vídeo institucional no YouTube">
+  <!-- Card "Assista ao vídeo institucional". O dono passou a URL do vídeo (2026-08-03) e pediu
+       que ele abra em POPUP dentro do site, não em nova aba. Quem faz isso é o #vmodal-app,
+       logo depois desta seção.
+       O href continua apontando para o vídeo de verdade, com target="_blank": é a rede de
+       segurança para o caso de o JS não rodar — aí o clique ainda leva a algum lugar útil em vez
+       de virar um botão morto. Com o JS ativo o popup dá preventDefault e o href nunca é usado. -->
+  <a class="hqwatch" href="https://youtu.be/qdeblguZdGc" target="_blank" rel="noopener" aria-label="Assistir ao vídeo institucional">
     <span class="hqthumb"><img alt=""><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
     <span class="hqwtxt"><b>Assista ao vídeo institucional</b></span>
   </a>
   </div>
 </section>
+
+<!-- ===== POPUP DO VIDEO INSTITUCIONAL (card .hqwatch da Sede) ===== -->
+<style id="vmodal-styles">
+  /* Mesmo padrao do modal de eventos das graduacoes: o no e criado em runtime e pendurado no
+     <body> — FORA do #smooth-content. Dentro dele o position:fixed passaria a medir o ancestral
+     transformado pelo ScrollSmoother e o popup sairia de lugar (armadilha conhecida do projeto). */
+  .vmodal{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;
+    opacity:0;visibility:hidden;transition:opacity .3s}
+  .vmodal.open{opacity:1;visibility:visible}
+  .vmodal .vm-backdrop{position:absolute;inset:0;background:rgba(2,5,3,.88);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  /* a largura sai do MENOR entre 1180px, 92vw e o que 86vh permite em 16:9. Sem esse terceiro
+     termo, num notebook baixo (600px de altura util) o aspect-ratio brigava com o max-height e o
+     painel saia mais largo que o video, com tarja preta dos dois lados. */
+  .vmodal .vm-panel{position:relative;z-index:1;
+    width:min(1180px,92vw,calc(86vh * 16 / 9));aspect-ratio:16/9;
+    border-radius:18px;overflow:hidden;background:#000;border:1px solid rgba(24,255,0,.28);
+    box-shadow:0 40px 130px rgba(0,0,0,.72),0 0 60px rgba(24,255,0,.10);
+    transform:translateY(18px) scale(.99);transition:transform .38s cubic-bezier(.16,1,.3,1)}
+  .vmodal.open .vm-panel{transform:none}
+  .vmodal .vm-panel iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  /* fechar no canto da TELA, nao do painel: no canto do painel encavalaria os controles do
+     proprio player do YouTube, que aparecem no topo ao passar o mouse. */
+  .vmodal .vm-close{position:absolute;top:18px;right:22px;z-index:3;width:42px;height:42px;
+    border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.45);color:#fff;
+    font-size:15px;cursor:pointer;transition:background .2s,border-color .2s;
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .vmodal .vm-close:hover{background:rgba(0,0,0,.78);border-color:rgba(24,255,0,.42)}
+  .vmodal .vm-close:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+  @media (max-width:1024px){
+    .vmodal .vm-panel{width:min(94vw,calc(80vh * 16 / 9));border-radius:14px}
+    .vmodal .vm-close{top:12px;right:14px}
+  }
+  @media (prefers-reduced-motion:reduce){ .vmodal,.vmodal .vm-panel{transition:none} }
+</style>
+<script id="vmodal-app">
+/* O card "Assista ao vídeo institucional" abria o canal do YouTube em nova aba; o dono passou a
+   URL do vídeo e pediu popup DENTRO do site.
+   Três decisões que valem registro:
+   1) O <iframe> só nasce no CLIQUE e é DESTRUÍDO ao fechar. Nascer no clique mantém o custo do
+      carregamento da página em zero (nenhum request de terceiro no boot, que é o orçamento que
+      este projeto defende); destruir ao fechar é o que realmente PARA o vídeo — só esconder o
+      iframe deixaria o áudio tocando atrás do site.
+   2) youtube-nocookie.com: o mesmo player, sem cookie de rastreio antes do play.
+   3) Pausa o vídeo de fundo da Sede enquanto o popup está aberto. Dois vídeos decodificando ao
+      mesmo tempo é justamente o "trabalho por quadro" que engasga o notebook do dono. Ao fechar,
+      volta a tocar só se estava tocando (o video-inview.js não reage a isso: ele só age quando a
+      visibilidade muda, e ela não muda aqui). */
+(function(){
+  var link=document.querySelector('.hqwatch');
+  if(!link) return;
+  var ID='qdeblguZdGc';
+  /* ABRINDO O ARQUIVO DIRETO (file://) O EMBED NAO EXISTE — e nao e culpa do video.
+     O player do YouTube exige uma origem valida; em file:// a origem e a string "null" e ele
+     devolve a tela cinza "Erro 153 — erro de configuracao do player de video". Isso vale para
+     QUALQUER site, nao e uma configuracao deste video: servido por http o mesmo embed toca
+     (verificado). Antes disso aqui existir, o dono abriu o index no navegador e recebeu a tela de
+     erro dentro do popup.
+     Entao: fora de http/https nem montamos o popup — o clique leva ao YouTube em nova aba, que e
+     o unico caminho que funciona nessa condicao. Em producao (https) o popup e o normal. */
+  var podeEmbed=(location.protocol==='http:'||location.protocol==='https:');
+  if(!podeEmbed) return;   /* o proprio href do card (target="_blank") ja resolve o clique */
+  var modal=document.createElement('div');
+  modal.className='vmodal'; modal.id='videoModal'; modal.setAttribute('aria-hidden','true');
+  modal.innerHTML='<div class="vm-backdrop"></div>'
+    +'<button class="vm-close" type="button" aria-label="Fechar o vídeo">&#10005;</button>'
+    +'<div class="vm-panel" role="dialog" aria-modal="true" aria-label="Vídeo institucional iGreen"></div>';
+  document.body.appendChild(modal);
+  var panel=modal.querySelector('.vm-panel');
+  var closeBtn=modal.querySelector('.vm-close');
+  var bg=document.querySelector('.hqbg');       /* vídeo de fundo da Sede */
+  var bgTocava=false;
+  function sm(){ return (window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null; }
+  function abrir(){
+    if(modal.classList.contains('open')) return;
+    var f=document.createElement('iframe');
+    /* &origin explicito: e exatamente o parametro que o YouTube cobra no erro 153. Aqui ele nunca
+       pode divergir (sai de location.origin) e so chegamos neste ponto em http/https. */
+    f.src='https://www.youtube-nocookie.com/embed/'+ID
+      +'?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin='+encodeURIComponent(location.origin);
+    f.title='Vídeo institucional iGreen';
+    f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.setAttribute('allowfullscreen','');
+    f.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+    panel.appendChild(f);
+    modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+    var s=sm(); if(s) s.paused(true); else document.body.style.overflow='hidden';
+    if(bg){ bgTocava=!bg.paused; try{ bg.pause(); }catch(e){} }
+    try{ closeBtn.focus(); }catch(e){}
+  }
+  function fechar(){
+    if(!modal.classList.contains('open')) return;
+    modal.classList.remove('open'); modal.setAttribute('aria-hidden','true');
+    panel.innerHTML='';
+    var s=sm(); if(s) s.paused(false); else document.body.style.overflow='';
+    if(bg&&bgTocava){ var p=bg.play(); if(p&&p.catch) p.catch(function(){}); }
+    try{ link.focus(); }catch(e){}
+  }
+  link.addEventListener('click',function(e){ e.preventDefault(); abrir(); });
+  closeBtn.addEventListener('click',fechar);
+  modal.querySelector('.vm-backdrop').addEventListener('click',fechar);
+  document.addEventListener('keydown',function(e){
+    if(!modal.classList.contains('open')) return;
+    if(e.key==='Escape'||e.keyCode===27) fechar();
+  });
+})();
+</script>
+
 <section class="eco" id="ecossistema">
   <div class="ewrap">
     <div class="ehead">
@@ -2950,6 +3083,15 @@ window.igRefresh=(function(){
      zIndex, mesmo snap com tween de 1150ms na cubic-bezier(.65,0,.35,1), mesma mascara de
      dissolucao da foto, mesmo backdrop de 2 camadas em ping-pong. -->
 <style id="rede-styles">
+  /* REDE-DESATIVADO (pedido do dono, 2026-08-03): a vitrine de licenciados saiu de seção
+     própria e passou a viver DENTRO da Bonificação (o trilho que aparece na metade escurecida
+     quando um carro é selecionado — ver #carsrail-app). Com isso "as qualificações vão direto
+     para a bonificação", como ele pediu.
+     OCULTA por CSS, NAO removida: os 15 nomes, as fotos, os pins e o baralho 3D continuam aqui,
+     e é DESTA seção que o trilho tira os dados (window.REDE_DATA) — apagar o bloco levaria as 15
+     pessoas embora. Para reativar a seção: tire o display:none abaixo, devolva 'rede' ao array do
+     #reorder-secoes e troque on:false por on:true na entrada 'A Rede' do presentation-mode.js. */
+  #rede{ display:none!important; }
   #rede{ --rede-accent:#2EFF7B; --rede-surface:#070A08;
     --cardw:330px; --cardh:520px; --gapx:148px; --headh:52px;
     position:relative; background:var(--rede-surface); }
@@ -3010,58 +3152,71 @@ window.igRefresh=(function(){
 
   /* ---- baralho 3D ---- */
   #rede .rede-deck{ position:relative; flex:1 1 0; height:600px; perspective:1500px; }
+
+  /* ================= CARTAO DE PESSOA — VISUAL COMPARTILHADO ==================
+     Cada regra daqui em diante vale para DOIS baralhos: o desta secao (#rede, hoje oculta) e o
+     trilho dentro da Bonificacao (qualquer container com a classe .rdeck). O seletor e duplicado
+     em vez de o CSS ser copiado: um dia alguem ajusta o tamanho do nome e o outro baralho tem de
+     acompanhar sozinho. As MEDIDAS ficam nas variaveis, entao cada host escolhe as suas.
+     O HTML do card tambem e unico — vem do cardHtml() publicado em window.REDE_DATA. */
+  .rdeck{ --rede-accent:#2EFF7B; --rede-surface:#070A08;
+    --cardw:330px; --cardh:520px; --gapx:148px; --headh:52px;
+    position:relative; }
   /* cards centralizados por posicionamento absoluto + margem negativa (NAO flex: o brief
      avisa que flex briga com o posicionamento e amassa os cards) */
-  #rede .rcard{ position:absolute; top:50%; left:50%; width:var(--cardw); height:var(--cardh);
+  #rede .rcard,.rdeck .rcard{ position:absolute; top:50%; left:50%; width:var(--cardw); height:var(--cardh);
     margin-left:calc(var(--cardw) / -2); margin-top:calc(var(--cardh) / -2);
     transform-style:preserve-3d; border-radius:18px; overflow:hidden;
     background:var(--rede-surface); border:1px solid rgba(46,255,123,.18);
     transition:border-color .9s ease, box-shadow .9s ease;
     will-change:transform,opacity,filter; }
-  #rede .rcard.on{ border-color:rgba(46,255,123,.5);
+  #rede .rcard.on,.rdeck .rcard.on{ border-color:rgba(46,255,123,.5);
     box-shadow:0 0 60px rgba(46,255,123,.16), inset 0 0 60px rgba(46,255,123,.04); }
 
   /* foto: comeca depois da faixa do header e dissolve no fundo (sem borda reta) */
-  #rede .rcard .rc-ph{ position:absolute; top:var(--headh); left:0; right:0; height:68%; }
-  #rede .rcard .rc-ph img{ display:block; width:100%; height:100%; object-fit:cover;
+  #rede .rcard .rc-ph,.rdeck .rcard .rc-ph{ position:absolute; top:var(--headh); left:0; right:0; height:68%; }
+  #rede .rcard .rc-ph img,.rdeck .rcard .rc-ph img{ display:block; width:100%; height:100%; object-fit:cover;
     -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 0%,rgba(0,0,0,1) 38%,rgba(0,0,0,.55) 58%,rgba(0,0,0,.12) 72%,rgba(0,0,0,0) 82%);
     mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 0%,rgba(0,0,0,1) 38%,rgba(0,0,0,.55) 58%,rgba(0,0,0,.12) 72%,rgba(0,0,0,0) 82%); }
-  #rede .rcard .rc-ph::after{ content:''; position:absolute; inset:0; pointer-events:none;
+  #rede .rcard .rc-ph::after,.rdeck .rcard .rc-ph::after{ content:''; position:absolute; inset:0; pointer-events:none;
     background:linear-gradient(to bottom, rgba(7,10,8,.9) 0%, rgba(7,10,8,.3) 14%, rgba(7,10,8,0) 34%); }
 
   /* faixa reservada do topo: rotulo + selo, sem foto por baixo */
-  #rede .rcard .rc-head{ position:absolute; left:14px; right:14px; top:14px; z-index:4;
+  #rede .rcard .rc-head,.rdeck .rcard .rc-head{ position:absolute; left:14px; right:14px; top:14px; z-index:4;
     display:flex; align-items:flex-start; justify-content:space-between; }
-  #rede .rcard .rc-tag{ font-size:10px; font-weight:700; letter-spacing:.16em;
+  #rede .rcard .rc-tag,.rdeck .rcard .rc-tag{ font-size:10px; font-weight:700; letter-spacing:.16em;
     color:var(--rede-accent); }
   /* PIN EXATO do nível (pedido do dono): a mesma arte das graduações, com alpha. Substituiu o
      selo que era desenhado em CSS. Sem fundo/borda — a medalha já tem a própria moldura. */
   /* 52px (o selo do material tinha 42): a medalha real tem anel de texto, e abaixo disso o
      detalhe vira borrão. Passa um pouco da faixa de 52px do header, mas a foto tem gradiente
      escuro no topo justamente aí, então segue legível. */
-  #rede .rc-pin{ width:52px; height:52px; flex:none; display:block; object-fit:contain;
+  #rede .rc-pin,.rdeck .rc-pin{ width:var(--pinsz,52px); height:var(--pinsz,52px); flex:none; display:block; object-fit:contain;
     filter:drop-shadow(0 0 10px rgba(46,255,123,.35)) drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
 
   /* conteudo ancorado na base, sobre a parte esmaecida da foto */
-  #rede .rcard .rc-body{ position:absolute; left:0; right:0; bottom:0; z-index:3; padding:0 16px 16px; }
+  #rede .rcard .rc-body,.rdeck .rcard .rc-body{ position:absolute; left:0; right:0; bottom:0; z-index:3; padding:0 16px 16px; }
   /* nomes: os reais sao de CASAL e ficam bem mais longos que os do material ("Luiz Carlos (Pit)",
      "e Valquíria Ferreira"). Fonte um pouco menor, line-height que aceita quebra e
      text-wrap:balance para a quebra cair em ponto legivel em vez de deixar orfao. */
-  #rede .rcard .rc-name{ margin:0; line-height:1.06; text-wrap:balance; }
-  #rede .rcard .rc-name b{ display:block; font-size:25px; font-weight:700; letter-spacing:-.025em;
+  #rede .rcard .rc-name,.rdeck .rcard .rc-name{ margin:0; line-height:1.06; text-wrap:balance; }
+  #rede .rcard .rc-name b,.rdeck .rcard .rc-name b{ display:block; font-size:var(--namefs,25px); font-weight:700; letter-spacing:-.025em;
     color:var(--rede-accent); }
-  #rede .rcard .rc-name i{ display:block; font-size:25px; font-weight:400; font-style:normal;
+  #rede .rcard .rc-name i,.rdeck .rcard .rc-name i{ display:block; font-size:var(--namefs,25px); font-weight:400; font-style:normal;
     letter-spacing:-.025em; color:#fff; }
-  #rede .rcard .rc-pill{ display:inline-block; margin-top:10px; padding:3px 10px; border-radius:999px;
+  #rede .rcard .rc-pill,.rdeck .rcard .rc-pill{ display:inline-block; margin-top:10px; padding:3px 10px; border-radius:999px;
     border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.1);
     font-size:9.5px; color:#e4e9e6; }
-  #rede .rcard .rc-hl{ margin:12px 0 0; font-size:19px; font-weight:600; line-height:1.16;
+  #rede .rcard .rc-hl,.rdeck .rcard .rc-hl{ margin:12px 0 0; font-size:19px; font-weight:600; line-height:1.16;
     color:var(--rede-accent); }
-  #rede .rcard .rc-txt{ margin:10px 0 0; font-size:11.5px; line-height:1.6; color:#A7AFAB; }
-  #rede .rcard .rc-txt b{ font-weight:600; color:var(--rede-accent); }
+  #rede .rcard .rc-txt,.rdeck .rcard .rc-txt{ margin:10px 0 0; font-size:11.5px; line-height:1.6; color:#A7AFAB; }
+  #rede .rcard .rc-txt b,.rdeck .rcard .rc-txt b{ font-weight:600; color:var(--rede-accent); }
   /* faixa do NIVEL na base (era o botão "Garanta o seu ingresso"). Rótulo, não botão:
-     sem cursor:pointer, para não prometer clique. */
-  #rede .rcard .rc-cta{ display:block; margin-top:14px; width:100%; text-align:center;
+     sem cursor:pointer, para não prometer clique.
+     ⚠ SEM USO desde 2026-08-03: o dono pediu o nível só no canto superior esquerdo (.rc-tag) mais
+     o pin, então o cardHtml() parou de emitir .rc-cta. A regra fica para o caso de a faixa voltar
+     — reativar é só devolver o <span> no cardHtml(), nada de CSS. */
+  #rede .rcard .rc-cta,.rdeck .rcard .rc-cta{ display:block; margin-top:14px; width:100%; text-align:center;
     padding:10px 0; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.14em;
     background:var(--rede-accent); color:#05170C; }
 
@@ -3150,6 +3305,112 @@ window.igRefresh=(function(){
   </div>
 </section>
 
+<!-- ===== TRILHO DE PESSOAS DENTRO DA BONIFICACAO =====
+     Pedido do dono (2026-08-03): "quando selecionar o Royal 5K, no lado direito, onde tiver o
+     carro NAO selecionado, aparece esse carrossel, vai passando as imagens das pessoas, e quando
+     chegar no final ela sai de cena e fica sem nada". A vitrine que era a secao #rede virou este
+     trilho; a #rede saiu (REDE-DESATIVADO).
+
+     PORQUE A CENA CEDE ESPACO (isto foi MEDIDO, nao deduzido):
+     na metade escurecida nao existe espaco livre para um card de ~470px de altura. Medido com a
+     cena montada, [esquerda,topo,direita,base]:
+       1920x946 -> .carshead [490,205,1430,394] · .carbottom [520,583,1400,903] · .carpick [778,583,1142,633]
+       1229x600 -> .carshead [145, 44,1085,208] · .carbottom [175,264,1055,579] · .carpick [433,264, 797,315]
+     A copy central ocupa 940px dos 1229 do notebook: a unica coluna livre a direita tinha ~145px,
+     e a 1025px de largura ela zera. Por isso, DURANTE o trilho: o titulo e o bloco de infos do
+     carro desaparecem, e as duas abas (.carpick) escorregam 25vw para o lado oposto ao trilho —
+     continuam clicaveis, o dono nao perde a troca de carro.
+     A aba anda por `translate` (propriedade separada), NAO por `transform`: o GSAP escreve
+     transform inline na .carbottom no reveal, e inline ganha da folha de estilo — a armadilha que
+     ja tinha derrubado o esmaecimento dos cards do ecossistema. -->
+<style id="carsrail-styles">
+  /* centro do trilho = centro da metade escurecida (50% + 25vw). Anda por transform, sem tocar
+     em `left`, para nao pedir layout a cada quadro da transicao. */
+  .carsrail{position:absolute;top:50%;left:50%;z-index:5;--railside:25vw;
+    transform:translate(calc(-50% + var(--railside)),-50%);
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    opacity:0;visibility:hidden;pointer-events:none;   /* nunca rouba o clique das metades */
+    transition:opacity .55s ease,transform .6s cubic-bezier(.16,1,.3,1),visibility 0s linear .55s}
+  .carsrail.rail-left{--railside:-25vw}
+  .carstage.rail-on .carsrail{opacity:1;visibility:visible;
+    transition:opacity .55s ease,transform .6s cubic-bezier(.16,1,.3,1)}
+  /* a cena cede o palco enquanto o trilho roda (ver o comentario grande acima) */
+  .carstage.rail-on .carshead,.carstage.rail-on .carinfos{opacity:0;transition:opacity .5s ease}
+  .carshead,.carinfos{transition:opacity .5s ease}
+  /* quem escorrega e a .carpick (as duas abas), NAO a .carbottom.
+     Duas tentativas anteriores morreram no inline do GSAP: ele anima a .carbottom no reveal e
+     escreve `transform: translate(-50%,0%); translate:none; rotate:none; scale:none` inline —
+     inline ganha da folha de estilo, tanto no transform quanto na propriedade `translate`
+     separada (medido: computed translate voltava "none"). A .carpick nao e animada por ninguem,
+     e mover um item de flex por transform nao reposiciona os irmaos. */
+  .carpick{transform:translateX(var(--copyshift,0px));
+    transition:transform .6s cubic-bezier(.16,1,.3,1)}
+  .carstage.rail-on{--copyshift:-25vw}
+  .carstage.rail-on.rail-l{--copyshift:25vw}
+
+  /* o card sai do MENOR entre a largura disponivel e o que a ALTURA da tela permite: num notebook
+     de 600px uteis um card de 480 nao caberia junto do kicker e do contador. */
+  .carsrail .cr-deck{
+    --cardw:min(clamp(232px,17.5vw,306px),calc((100vh - 210px) / 1.575));
+    --cardh:calc(var(--cardw) * 1.575);
+    --headh:calc(var(--cardw) * .158);
+    --namefs:calc(var(--cardw) * .076);
+    --pinsz:calc(var(--cardw) * .158);
+    --rede-accent:var(--green);        /* dentro da cena dos carros o verde e o do site */
+    --rede-surface:#050c06;
+    width:var(--cardw);height:var(--cardh);perspective:1500px}
+  .carsrail .cr-kicker{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--green);text-shadow:0 2px 14px rgba(3,6,3,.92)}
+  .carsrail .cr-meter{display:flex;align-items:center;gap:12px}
+  /* as setas sao a UNICA parte do trilho que recebe clique (o container e pointer-events:none) */
+  .carsrail .cr-arrows{display:flex;align-items:center;gap:4px;padding:4px;border-radius:999px;
+    border:1px solid rgba(24,255,0,.22);background:rgba(5,14,8,.62);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto}
+  .carsrail .cr-arrows button{appearance:none;border:0;background:transparent;cursor:pointer;
+    width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--ink);transition:color .3s,background .3s}
+  .carsrail .cr-arrows button:hover:not(:disabled){background:rgba(24,255,0,.16);color:var(--green)}
+  .carsrail .cr-arrows button:disabled{color:rgba(232,255,228,.28);cursor:default}
+  .carsrail .cr-arrows button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+  .carsrail .cr-arrows svg{width:15px;height:15px}
+  .carsrail .cr-bar{width:110px;height:2px;background:rgba(255,255,255,.14)}
+  .carsrail .cr-bar i{display:block;height:2px;width:5%;background:var(--green);
+    transition:width .9s ease-out}
+  .carsrail .cr-count{font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-dim);
+    text-shadow:0 2px 14px rgba(3,6,3,.92)}
+  @media (max-height:640px){ .carsrail .cr-kicker{display:none} }
+
+  /* ---- mobile/tablet (<=1024px): sem pin, sem 3D, sem "sair de cena" ----
+     Carrossel nativo com snap, DEPOIS das abas (order:4) na coluna da .carstage — a mesma
+     convencao que a #rede usava aqui. Pinar 15 cards no celular seria centenas de vh de rolagem
+     forcada. Fica sempre visivel: no mobile a cena e uma coluna, ninguem escurece metade nenhuma,
+     entao nao existe "metade livre" para o trilho ocupar nem motivo para ele sumir. */
+  @media (max-width:1024px){
+    .carsrail{order:4;position:relative;top:auto;left:auto;transform:none;translate:none;
+      opacity:1;visibility:visible;transition:none;width:100%;padding:2px 0 26px;gap:12px;
+      align-items:stretch}
+    .carsrail .cr-kicker,.carsrail .cr-meter{padding:0 20px}
+    .carsrail .cr-deck{--cardw:clamp(268px,78vw,320px);
+      width:100%;height:auto;perspective:none;
+      display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;
+      padding:4px calc(50% - var(--cardw) / 2) 10px}
+    .carsrail .cr-deck::-webkit-scrollbar{display:none}
+    .carsrail .cr-deck .rcard{position:relative;top:auto;left:auto;margin:0;flex:0 0 var(--cardw);
+      height:calc(var(--cardw) * 1.575);scroll-snap-align:center;
+      transform:none!important;opacity:1!important;filter:none!important}
+    /* o JS so poe rail-on no desktop, mas se algum dia puser aqui a copy nao pode desaparecer:
+       no mobile ela e o conteudo, nao moldura. E as abas nao escorregam. */
+    .carstage.rail-on .carshead,.carstage.rail-on .carinfos{opacity:1}
+    .carstage.rail-on{--copyshift:0px}
+    .carpick{transform:none;transition:none}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .carsrail,.carbottom,.carshead,.carinfos,.carsrail .cr-bar i{transition:none}
+  }
+</style>
+
 <section class="cars" id="bonificacao">
   <div class="carstage">
     <video class="carvid" muted playsinline preload="metadata"><source src="assets/video/cars-drivein.mp4" type="video/mp4"></video>
@@ -3159,6 +3420,28 @@ window.igRefresh=(function(){
     <div class="carfade ft" aria-hidden="true"></div>
     <div class="carfade fb" aria-hidden="true"></div>
     <div class="carhint" aria-hidden="true">Selecione um veículo</div>
+    <!-- trilho de pessoas. Os 15 cards sao montados pelo #carsrail-app com o MESMO HTML da
+         seccao #rede (window.REDE_DATA.cardHtml) — nao existe segunda copia dos dados. -->
+    <div class="carsrail" id="carsRail" aria-hidden="true">
+      <span class="cr-kicker">A Rede</span>
+      <div class="cr-deck rdeck" id="carsRailDeck"></div>
+      <div class="cr-meter">
+        <!-- SETAS (pedido do dono): sem elas nao havia como passar as fotos no site fora da
+             apresentacao — clicar em cima do card cai na metade escurecida e SELECIONA o carro de
+             tras, porque o trilho todo e pointer-events:none justamente para nao roubar esse tap.
+             So estes dois botoes voltam a receber clique. -->
+        <div class="cr-arrows">
+          <button type="button" id="carsRailPrev" aria-label="Pessoa anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button type="button" id="carsRailNext" aria-label="Próxima pessoa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="cr-bar"><i id="carsRailBar"></i></div>
+        <span class="cr-count" id="carsRailCount">01 / 13</span>
+      </div>
+    </div>
     <!-- pins/medalhas girando 3D acima de cada carro; aparecem ao selecionar o veículo.
          Royal 5K -> BYD (esquerda) | Embaixador 12K -> Porsche (direita).
          Duas faces (frente + verso) p/ o giro 360 não espelhar o logo. -->
@@ -4155,6 +4438,11 @@ window.igRefresh=(function(){
         if(k===i) gsap.fromTo(p,{autoAlpha:0,y:16},{autoAlpha:1,y:0,duration:.5,ease:'power2.out',overwrite:'auto'});
         else gsap.to(p,{autoAlpha:0,y:-8,duration:.28,ease:'power2.in',overwrite:'auto'});
       });
+      /* avisa quem esta de fora. Hoje quem escuta e o #carsrail-app: o trilho de pessoas vive na
+         metade ESCURECIDA, entao ele precisa saber qual carro foi escolhido para trocar de lado.
+         Evento em vez de variavel global: setCar tambem e chamado por carsFinish() (sem clique),
+         e ouvir o clique das abas deixaria esse caso de fora. */
+      try{ document.dispatchEvent(new CustomEvent('cars:select',{detail:{i:i}})); }catch(e){}
     }
     function carsFinish(){
       if(carDone) return; carDone=true;
@@ -4170,7 +4458,11 @@ window.igRefresh=(function(){
     cvid.addEventListener('ended',carsFinish);
     cvid.addEventListener('error',carsFinish);
     var carsMobile=window.matchMedia('(max-width:1024px)').matches;
-    ScrollTrigger.create({trigger:'.carstage',start:carsMobile?'top 90%':'top 72%',once:true,
+    /* gatilho na SECTION (.cars), nao na .carstage: a .carstage agora e o elemento PINADO do
+       trilho de pessoas, e ScrollTrigger mede a caixa NATURAL de um elemento pinado — a mesma
+       armadilha que ja pausava o video da sede no meio do caminho (ver video-inview.js). O
+       momento e o mesmo (topo da secao a 72% da tela), so o alvo e estavel. */
+    ScrollTrigger.create({trigger:'.cars',start:carsMobile?'top 90%':'top 72%',once:true,
       onEnter:function(){
         var p=cvid.play();
         if(p&&p.catch) p.catch(function(){ carsFinish(); });   /* autoplay bloqueado -> libera na hora */
@@ -6214,8 +6506,8 @@ if(window.gsap&&window.ScrollTrigger){
 
   /* ATENCAO ao trocar fotos: o brief exige UMA foto por pessoa, com dominante distinta das
      vizinhas — o backdrop borrado e o crossfade dependem disso. Reciclar imagem faz a troca
-     acontecer sem ninguem perceber. As 3 primeiras sao as fotos que vieram no material; as 5
-     ultimas sao PLACEHOLDER de evento (marcadas com ph:true) esperando a foto real. */
+     acontecer sem ninguem perceber. Desde 2026-08-03 as 15 pessoas tem foto real em
+     assets/img/rede/ — nao existe mais PLACEHOLDER (ph:true) nesta lista. */
   /* NIVEL -> pin EXATO (pedido do dono). Sao as mesmas artes das graduacoes, com alpha:
      Embaixador 12K = pin-e12.webp | Royal 5K = pin-r5.webp. Nada de selo desenhado em CSS. */
   var PIN={ EMBAIXADOR:"assets/pins/pin-e12.webp", ROYAL:"assets/pins/pin-r5.webp" };
@@ -6228,23 +6520,25 @@ if(window.gsap&&window.ScrollTrigger){
      ja esta pronto para receber o texto (basta preencher pill/hl/body). */
   var P=[
     /* ---------- EMBAIXADORES ---------- */
+    /* fotos reais enviadas pelo dono (posters 1080x1350 "Embaixador - Post"). Recortadas na
+       proporcao EXATA da caixa do card (330:353) para o object-fit:cover nao cortar nada, e
+       enquadradas fora do texto do poster — o nome e o nivel ja sao escritos pelo card. */
     { first:"Fellipe e Andréa", last:"Morais", lvl:"EMBAIXADOR",
-      img:"assets/img/eventos/treinamento-1.webp", ph:true },
+      img:"assets/img/rede/fellipe-andrea.jpg" },
     { first:"Sanzio e Soraia", last:"Morvan", lvl:"EMBAIXADOR",
-      img:"assets/img/eventos/experience-2.webp", ph:true },
-    /* ---------- ROYAIS ---------- */
+      img:"assets/img/rede/sanzio-soraia.jpg" },
+    /* ---------- ROYAIS (13) ----------
+       A ORDEM AQUI E A ORDEM DO TRILHO. O dono passou a lista completa em 2026-08-03 (2a rodada),
+       em ordem alfabetica de primeiro nome, e ela substituiu a anterior. Quatro nomes mudaram:
+         - "André Maluf"        -> "André Maluf e Beatriz Guimarães"
+         - "Fillipe Souza"      -> "Fillipe Souza e Stela Souza"   (o nome vinha CORTADO antes)
+         - "Joel Pletsch"       -> "Joel e Fabiana Lisboa"          (sobrenome era outro)
+         - "Orlando Ferreira"   -> "Orlando Ferreira e Florence Gentil"
+       E "Luiz Carlos (Pit)" perdeu os parenteses. */
     { first:"Anderson Gessler", last:"e Débora Rodrigues", lvl:"ROYAL",
-      img:"assets/img/eventos/cruzeiro-3.webp", ph:true },
-    { first:"André", last:"Maluf", lvl:"ROYAL",
-      img:"assets/img/eventos/america-latina-4.webp", ph:true },
-    { first:"Lucas", last:"Battistoni", lvl:"ROYAL",
-      pill:"Já conquistou mais de:", hl:"80 Milhões",
-      body:["Na indústria e em apenas ",{h:"5 meses de iGreen"},
-        " ocupa a graduação de Royal. Estará em ",{h:"Porto Alegre"},
-        " para te ensinar como conquistar grandes resultados."],
-      img:"assets/img/eventos/mundo-5.webp", ph:true },
-    { first:"Orlando", last:"Ferreira", lvl:"ROYAL",
-      img:"assets/img/eventos/treinamento-6.webp", ph:true },
+      img:"assets/img/rede/anderson-gessler.jpg" },
+    { first:"André Maluf", last:"e Beatriz Guimarães", lvl:"ROYAL",
+      img:"assets/img/rede/andre-maluf.jpg" },
     { first:"David Willian", last:"e Aline Moura", lvl:"ROYAL",
       pill:"Um dos primeiros licenciados iGreen", hl:"Acionista Royal",
       body:["Acabou de conquistar um ",{h:"carro"}," com a iGreen, uma das ",
@@ -6252,34 +6546,40 @@ if(window.gsap&&window.ScrollTrigger){
         {h:"Rio de Janeiro"}," para dividir sua experiência no mercado."],
       img:"assets/img/rede/david-willian.jpg" },
     { first:"Eduardo Martins", last:"e Ana Paula", lvl:"ROYAL",
-      img:"assets/img/eventos/experience-7.webp", ph:true },
+      img:"assets/img/rede/eduardo-martins.jpg" },
     { first:"Evandro", last:"Martinez", lvl:"ROYAL",
       pill:"Com 4 anos de operação já faz parte do:", hl:"Clube de Milionários",
       body:["Acumula mais de ",{h:"4 milhões em ganhos"},
         " com a iGreen, foi o primeiro licenciado a ganhar um ",{h:"carro"},
         " da companhia e vai estar em ",{h:"Goiânia"}," para te ensinar a impulsionar o seu negócio."],
       img:"assets/img/rede/evandro-martinez.jpg" },
+    { first:"Fillipe Souza", last:"e Stela Souza", lvl:"ROYAL",
+      img:"assets/img/rede/fillipe-souza.jpg" },
     { first:"Gabriel Martins", last:"e Marcelle Moura", lvl:"ROYAL",
       pill:"Com 25 anos de experiência de mercado", hl:"35 Milhões de kWh",
       body:["Se tornou ",{h:"milionário aos 26 anos"},
         " e está na iGreen desde o começo da operação, com presença em ",
         {h:"todo território nacional, EUA e Europa"},". Estará em Natal."],
-      img:"assets/img/eventos/cruzeiro-5.webp", ph:true },
+      img:"assets/img/rede/gabriel-martins.jpg" },
     { first:"João Paulo", last:"e Gabriella", lvl:"ROYAL",
       pill:"Já captou mais de:", hl:"130 milhões de kWh",
       body:["Com mais de ",{h:"4 anos de operação"}," tem mais de 450.000 clientes conectados. Já formou mais de ",
         {h:"10 milionários"}," em sua rede e estará em ",{h:"Belo Horizonte"},"."],
       img:"assets/img/rede/joao-paulo.jpg" },
-    { first:"Joel", last:"Pletsch", lvl:"ROYAL",
-      img:"assets/img/eventos/mundo-2.webp", ph:true },
-    { first:"Luiz Carlos (Pit)", last:"e Valquíria Ferreira", lvl:"ROYAL",
-      img:"assets/img/eventos/america-latina-6.webp", ph:true },
+    { first:"Joel", last:"e Fabiana Lisboa", lvl:"ROYAL",
+      img:"assets/img/rede/joel-lisboa.jpg" },
+    { first:"Lucas", last:"Battistoni", lvl:"ROYAL",
+      pill:"Já conquistou mais de:", hl:"80 Milhões",
+      body:["Na indústria e em apenas ",{h:"5 meses de iGreen"},
+        " ocupa a graduação de Royal. Estará em ",{h:"Porto Alegre"},
+        " para te ensinar como conquistar grandes resultados."],
+      img:"assets/img/rede/lucas-battistoni.jpg" },
+    { first:"Luiz Carlos Pit", last:"e Valquíria Ferreira", lvl:"ROYAL",
+      img:"assets/img/rede/luiz-carlos-pit.jpg" },
+    { first:"Orlando Ferreira", last:"e Florence Gentil", lvl:"ROYAL",
+      img:"assets/img/rede/orlando-ferreira.jpg" },
     { first:"Renato e Jéssica", last:"Cardoso", lvl:"ROYAL",
-      img:"assets/img/eventos/treinamento-4.webp", ph:true },
-    /* o dono enviou "Fillipe Souza e " — o nome da dupla veio cortado. Fica so o dele ate
-       a confirmacao; completar em `last` quando vier. */
-    { first:"Fillipe", last:"Souza", lvl:"ROYAL",
-      img:"assets/img/eventos/experience-5.webp", ph:true }
+      img:"assets/img/rede/renato-cardoso.jpg" }
   ];
   var N=P.length;
 
@@ -6293,16 +6593,22 @@ if(window.gsap&&window.ScrollTrigger){
     return out;
   }
 
-  /* monta os cards e os dots */
-  var cards=[], dots=[];
-  P.forEach(function(p,i){
-    var a=document.createElement("article");
-    a.className="rcard";
-    /* sem texto proprio: o titulo passa a ser o NIVEL (dado que veio do dono), e pill/corpo
-       simplesmente nao entram — card limpo em vez de espaco vazio ou texto inventado. */
-    var nivel=(p.lvl==="EMBAIXADOR")?"Acionista Embaixador 12K":"Acionista Royal 5K";
-    a.innerHTML=
-      '<div class="rc-ph"><img src="'+p.img+'" alt="'+esc(p.first+" "+p.last)+'"'
+  /* HTML de UM card. Virou funcao propria porque agora existem DOIS consumidores: esta secao
+     (oculta) e o trilho dentro da #bonificacao. Duplicar este HTML seria criar o "gemeo
+     escondido" que este projeto ja aprendeu a evitar — um dia alguem troca o texto de um e
+     esquece o outro. Fonte unica aqui, publicada em window.REDE_DATA logo abaixo. */
+  function cardHtml(p){
+    /* O NIVEL aparece em DOIS lugares, e nao mais em quatro (pedido do dono, 2026-08-03 2a
+       rodada: "tire o acionista royal 5k. e o royal lado esquerdo acima. e o pin continua"):
+         1. "[ ROYAL ]" / "[ EMBAIXADOR ]" no canto superior ESQUERDO  (.rc-tag)
+         2. o PIN exato do nivel no canto superior direito              (.rc-pin)
+       SAIRAM:
+         - a faixa verde da base (.rc-cta), que repetia o nivel em caixa alta;
+         - a linha "Acionista Royal 5K" / "Acionista Embaixador 12K" (.rc-hl de reserva).
+       O .rc-hl continua existindo para quem TEM destaque proprio no material ("80 Milhões",
+       "Clube de Milionários"): agora ele so entra se houver `hl`. Quem nao tem texto mostra
+       nome + tag + pin, e nada de nivel repetido tres vezes. */
+    return '<div class="rc-ph"><img src="'+p.img+'" alt="'+esc(p.first+" "+p.last)+'"'
         +' width="330" height="353" loading="lazy" decoding="async"></div>'
       +'<div class="rc-head"><span class="rc-tag">[ '+esc(p.lvl)+' ]</span>'
         +'<img class="rc-pin" src="'+PIN[p.lvl]+'" alt="" width="46" height="46"'
@@ -6310,14 +6616,26 @@ if(window.gsap&&window.ScrollTrigger){
       +'<div class="rc-body">'
         +'<h3 class="rc-name"><b>'+esc(p.first)+'</b><i>'+esc(p.last)+'</i></h3>'
         +(p.pill?'<span class="rc-pill">'+esc(p.pill)+'</span>':'')
-        +'<p class="rc-hl">'+esc(p.hl||nivel)+'</p>'
+        +(p.hl?'<p class="rc-hl">'+esc(p.hl)+'</p>':'')
         +(p.body?'<p class="rc-txt">'+bodyHtml(p.body)+'</p>':'')
-        /* A faixa verde da base agora e o NIVEL (pedido do dono), no lugar do
-           "Garanta o seu ingresso" que veio no material. Virou <span>, nao <button>:
-           e rotulo, nao acao. Assim para de ser um CTA morto (o projeto rastreia esses) e
-           deixa de anunciar clique para quem usa teclado ou leitor de tela. */
-        +'<span class="rc-cta">'+esc(p.lvl)+'</span>'
       +'</div>';
+  }
+
+  /* fonte unica dos dados das pessoas. Quem consome hoje: o #carsrail-app (trilho dentro da
+     Bonificacao). Publicar ANTES do guard de secao oculta e o que faz o trilho funcionar com a
+     #rede desativada. */
+  window.REDE_DATA={ PIN:PIN, P:P, cardHtml:cardHtml, bez:bez };
+
+  /* REDE-DESATIVADO: com a secao oculta, para tudo aqui. Nao monta os 15 cards (30 imagens que
+     ninguem veria), nao cria pin nem ScrollTrigger, nao mede altura de elemento sem caixa. */
+  if(getComputedStyle(sec).display==="none") return;
+
+  /* monta os cards e os dots */
+  var cards=[], dots=[];
+  P.forEach(function(p,i){
+    var a=document.createElement("article");
+    a.className="rcard";
+    a.innerHTML=cardHtml(p);
     deck.appendChild(a); cards.push(a);
 
     var d=document.createElement("button");
@@ -6461,6 +6779,311 @@ if(window.gsap&&window.ScrollTrigger){
 })();
 </script>
 
+<script id="carsrail-app">
+/* TRILHO DE PESSOAS DENTRO DA BONIFICACAO — ver o comentario grande no #carsrail-styles.
+   Precisa rodar DEPOIS do #rede-app (de quem vem window.REDE_DATA: as 15 pessoas, o HTML do card
+   e o easing) e ANTES do #reorder-secoes (que move a #bonificacao e da o ScrollTrigger.refresh()
+   final — o pin precisa existir para ser reposicionado).
+
+   O QUE MUDA NA SECAO: ela deixa de ter 1 tela e passa a ser PINADA com curso de rolagem. O pin
+   mora no FILHO (.carstage), nao na section: assim o .pin-spacer nasce dentro da section e ela
+   continua podendo ser relocada pelo #reorder-secoes (mover secao pinada por HTML quebra o pin).
+
+   DOIS GRUPOS, na ordem do plano de carreira (pedido do dono, 2026-08-03, 2a rodada):
+     1) Royal 5K selecionado (BYD acesa) -> so os ROYAIS, a direita, sobre a Porsche escurecida;
+     2) passados todos, o carro troca SOZINHO para Embaixador 12K (Taycan) e entram so os
+        EMBAIXADORES, a esquerda;
+     3) um passo depois, sai da secao.
+   Na 1a versao o trilho misturava os 15 numa fila unica e mostrava card de ROYAL com o carro do
+   Embaixador selecionado — lia errado. Agora o grupo e o carro sao a MESMA informacao.
+
+   CURSO FIXO, de proposito: cabeca -> Royais -> ponte -> Embaixadores -> cauda. A distancia NAO
+   depende de clique. Se dependesse, um clique nas abas mudaria a altura da pagina no meio da
+   navegacao e daria pulo — e as paradas do modo apresentacao, montadas UMA vez, apontariam para o
+   lugar errado. Por isso o clique nas abas nao muda o curso: ele SALTA para o trecho do grupo. */
+(function(){
+  "use strict";
+  var sec=document.getElementById('bonificacao');
+  var stage=sec&&sec.querySelector('.carstage');
+  var rail=document.getElementById('carsRail');
+  var deck=document.getElementById('carsRailDeck');
+  var D=window.REDE_DATA;
+  if(!(sec&&stage&&rail&&deck&&D&&D.P&&D.P.length>1)) return;
+
+  var P=D.P, N=P.length;
+  var bar=document.getElementById('carsRailBar'), countEl=document.getElementById('carsRailCount');
+  var kicker=rail.querySelector('.cr-kicker');
+  var prevBtn=document.getElementById('carsRailPrev'), nextBtn=document.getElementById('carsRailNext');
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var cards=[];
+  P.forEach(function(p){
+    var a=document.createElement('article');
+    a.className='rcard';
+    a.innerHTML=D.cardHtml(p);          /* HTML unico, compartilhado com a #rede */
+    deck.appendChild(a); cards.push(a);
+  });
+
+  /* Os grupos seguem a ORDEM DAS ABAS, nao a ordem do array P (onde os Embaixadores vem antes):
+     G[0] casa com data-car="0" (Royal 5K / BYD) e G[1] com data-car="1" (Embaixador 12K / Taycan).
+     Trocar o `lvl` de alguem no array P move a pessoa de grupo sozinho — e o mesmo `lvl` que
+     escolhe o pin e o rotulo do card, entao os quatro nunca discordam. */
+  var G=[
+    { lvl:'ROYAL',      rotulo:'A Rede · Acionistas Royal 5K',      idx:[] },
+    { lvl:'EMBAIXADOR', rotulo:'A Rede · Acionistas Embaixador 12K', idx:[] }
+  ];
+  P.forEach(function(p,i){ (p.lvl==='EMBAIXADOR'?G[1]:G[0]).idx.push(i); });
+  if(!(G[0].idx.length && G[1].idx.length)) return;   /* sem os dois grupos nao ha coreografia */
+  /* mapa "este card pertence a este grupo?" pronto — o apply() roda por quadro e um indexOf()
+     dentro de laco daria 15x13 comparacoes a cada um deles. */
+  G.forEach(function(g){ g.tem=new Array(N); g.idx.forEach(function(i){ g.tem[i]=true; }); });
+
+  /* GAPX sai da largura REAL do card, nao de getPropertyValue('--gapx'): aqui --cardw e um
+     min()/clamp() e uma custom property com calc() volta como string nao resolvida ("calc(...)"),
+     o parseFloat daria NaN e o baralho empilharia tudo no mesmo lugar. */
+  var GAPX=0;
+  function medeGap(){ GAPX=(cards[0].offsetWidth||280)*0.42; }
+
+  var state={p:0}, grupo=0, active=-1, tw=null;
+  var EASE=(D.bez?D.bez(.65,0,.35,1):function(x){return x;});
+  /* cada modo (pin no desktop, scroll nativo no mobile) instala o seu; o setActive so chama */
+  var atualizaSetas=function(){};
+
+  function setActive(i){
+    var n=G[grupo].idx.length;
+    if(i===active) return; active=i;
+    if(countEl) countEl.textContent=String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+    if(bar) bar.style.width=(n<2?100:Math.max(5,(i/(n-1))*100))+'%';
+    atualizaSetas();
+  }
+  /* mesmas formulas do baralho da #rede, aplicadas APENAS ao grupo no ar; os cards do outro grupo
+     ficam estacionados (invisiveis e fora do caminho). Sem pointerEvents: o trilho e decorativo e o
+     container tem pointer-events:none — os cards NAO podem reabilitar o clique, senao roubariam o
+     tap das metades que seleciona o carro (auto no filho volta a receber evento mesmo com o pai
+     em none). */
+  function apply(){
+    var pos=state.p, viv=G[grupo].idx, tem=G[grupo].tem, k;
+    for(k=0;k<N;k++){
+      if(tem[k]) continue;
+      var fora=cards[k];
+      if(fora.style.opacity!=='0'){
+        fora.style.opacity='0'; fora.style.visibility='hidden';
+        /* tirar o .on tambem, e nao so a opacidade: sem isto o card do grupo ANTERIOR seguia
+           sendo o `.rcard.on` do documento depois da troca de grupo (medido — na 1a parada dos
+           Embaixadores o destacado ainda era "Fillipe Souza"). */
+        fora.classList.remove('on');
+      }
+    }
+    for(k=0;k<viv.length;k++){
+      var off=k-pos, ab=Math.abs(off), el=cards[viv[k]];
+      el.style.visibility='visible';
+      el.style.transform='translateX('+(off*GAPX).toFixed(2)+'px) scale('
+        +Math.max(.68,1-ab*.13).toFixed(4)+') rotateY('+(off*-10).toFixed(2)+'deg)';
+      el.style.opacity=Math.max(0,1-ab*.48).toFixed(3);
+      el.style.filter='blur('+Math.min(7,ab*3.2).toFixed(2)+'px) brightness('
+        +Math.max(.4,1-ab*.26).toFixed(3)+')';
+      el.style.zIndex=String(Math.round(100-ab*10));
+      el.classList.toggle('on',ab<.45);
+    }
+    setActive(Math.round(pos));
+  }
+
+  /* lado do trilho = metade ESCURECIDA = a do carro NAO selecionado.
+     Royal 5K (data-car 0) e a BYD, a ESQUERDA -> trilho na direita.
+     Embaixador 12K (data-car 1) e a Porsche, a DIREITA -> trilho na esquerda. */
+  function setSide(i){
+    var esq=(i===1);
+    rail.classList.toggle('rail-left',esq);
+    stage.classList.toggle('rail-l',esq);
+  }
+  function carroAtual(){
+    var b=document.querySelector('.carbtn.on');
+    return b?+b.getAttribute('data-car'):0;
+  }
+  document.addEventListener('cars:select',function(e){ setSide(e.detail&&e.detail.i); });
+
+  var isDesk=window.matchMedia('(min-width:1025px)').matches;
+
+  if(isDesk && window.gsap && window.ScrollTrigger){
+    gsap.registerPlugin(ScrollTrigger);
+    var NR=G[0].idx.length, NE=G[1].idx.length;    /* 13 Royais e 2 Embaixadores hoje */
+    /* tudo em TELAS (vh). PONTE = o intervalo em que o trilho sai, o carro troca e o trilho volta
+       do outro lado; e a unica parte do curso sem card, e ela existe para a troca nao acontecer
+       com um card na tela deslizando de um lado para o outro. */
+    var CABECA=55, PASSO=40, PONTE=40, CAUDA=45;
+    var yR0=CABECA,        yRn=CABECA+(NR-1)*PASSO;
+    var yE0=yRn+PONTE,     yEn=yE0+(NE-1)*PASSO;
+    var CURSO=yEn+CAUDA;                            /* 660vh com 13+2 */
+    sec.style.height=(100+CURSO)+'vh';
+
+    /* FOLGA nas pontas de cada trecho, e ela nao e enfeite: a parada da ultima pessoa cai
+       EXATAMENTE no fim do trecho e a posicao em que o tween pousa erra por fracao de pixel.
+       Medido na 1a versao: progresso 0.8978390 contra o limite 0.8978102 — 28 milionesimos para
+       fora, e o trilho aparecia VAZIO justo na ultima pessoa. Com a folga a fronteira deixa de ser
+       um empate, e de brinde o trilho entra e sai com respiro. */
+    var FOLGA=9;
+    var vh=function(p){ return p*CURSO; };          /* progresso -> posicao em vh do curso */
+    var pTroca=(yRn+PONTE/2)/CURSO;                 /* meio da ponte: onde o carro troca */
+
+    function grupoDe(v){ return v<vh(pTroca)?0:1; }
+    function ligadoEm(v){
+      return (v>=yR0-FOLGA && v<=yRn+FOLGA) || (v>=yE0-FOLGA && v<=yEn+FOLGA);
+    }
+    function localEm(v,g){
+      var a=(g===0?yR0:yE0), n=(g===0?NR:NE);
+      if(n<2) return 0;
+      return Math.min(1,Math.max(0,(v-a)/((n-1)*PASSO)));
+    }
+
+    var ligado=false, target=-1, euTroquei=false;
+    function garanteCarro(i){
+      if(carroAtual()===i) return;
+      euTroquei=true;                               /* marca a troca como MINHA (ver o clique) */
+      var b=document.querySelector('.carbtn[data-car="'+i+'"]');
+      if(b) try{ b.click(); }catch(e){}
+      euTroquei=false;
+    }
+
+    var st=ScrollTrigger.create({
+      trigger:sec, start:'top top', end:'bottom bottom',
+      pin:stage, pinSpacing:false, anticipatePin:1,
+      onUpdate:function(self){
+        var v=vh(self.progress);
+        var g=grupoDe(v), dentro=ligadoEm(v);
+
+        /* o carro segue o SCROLL — e isto que faz "passou todos os Royais, entra o Taycan
+           sozinho". A troca cai no meio da ponte, com o trilho invisivel. */
+        garanteCarro(g);
+        if(g!==grupo){
+          grupo=g;
+          if(tw) tw.kill();
+          /* a troca de grupo NAO se atravessa com tween. O baralho novo tem outra contagem, e
+             deixar o tween varrer de p=12 (ultimo Royal) para p=0 fazia o apply() rodar com
+             indices que nao existem nos 2 Embaixadores — medido: contador em "03 / 02". Salto
+             seco, e como a troca cai no meio da ponte (trilho invisivel) ninguem ve. */
+          target=Math.round(localEm(v,g)*((g===0?NR:NE)-1));
+          state.p=target; active=-1; apply();
+        }
+
+        if(dentro!==ligado){
+          ligado=dentro;
+          stage.classList.toggle('rail-on',dentro);
+          rail.setAttribute('aria-hidden',dentro?'false':'true');
+          if(dentro){
+            /* a dica "Selecione um veiculo" nao pode piscar por cima do trilho, e as abas/foto
+               final precisam estar montadas: quem rolou ate aqui ja decidiu, entao se o video
+               ainda estiver rodando forcamos o estado final (mesmo caminho da apresentacao). */
+            document.body.classList.add('cars-picked');
+            gsap.to('.carhint',{autoAlpha:0,duration:.4,ease:'power1.out',overwrite:'auto'});
+            if(!document.body.classList.contains('cars-ready')){
+              var vid=document.querySelector('.carvid');
+              if(vid) try{ vid.dispatchEvent(new Event('ended')); }catch(e){}
+            }
+          }
+        }
+        if(!dentro) return;
+        if(kicker && kicker.textContent!==G[grupo].rotulo) kicker.textContent=G[grupo].rotulo;
+        var snapped=Math.round(localEm(v,grupo)*((grupo===0?NR:NE)-1));
+        if(snapped===target) return;
+        target=snapped;
+        if(tw) tw.kill();
+        if(reduce){ state.p=snapped; apply(); return; }
+        /* snap com tween: o card nunca para no meio do caminho e o movimento tem aceleracao
+           propria, nao acorrentada ao pixel (o detalhe que separa o resultado bom do ruim) */
+        tw=gsap.to(state,{p:snapped,duration:1.15,ease:EASE,onUpdate:apply,overwrite:true});
+      }
+    });
+
+    /* CLIQUE NAS ABAS (ou na metade escurecida) DENTRO DO TRILHO = SALTO para o trecho do grupo.
+       Aqui quem manda na selecao e a POSICAO DO SCROLL. Se o clique so trocasse o carro, ficava um
+       estado impossivel — medido: aba em "Embaixador 12K" com os cards dos Royais na tela, porque o
+       scroll continuava no trecho dos Royais. Dar posse explicita a uma das duas mecanicas e a licao
+       que este projeto ja aprendeu com o snap brigando com auto-scroll.
+       A unica trava e "o grupo discorda do scroll" (+ o euTroquei, para a troca que EU faco por
+       scroll nao voltar como salto). De proposito NAO uso `isTrusted`: qualquer coisa que selecione
+       um carro fora do trecho dele precisa levar o scroll junto, venha de clique humano ou de
+       codigo. E inofensivo para a apresentacao — o carSelect(0) dela roda na 1a parada, que ja esta
+       no grupo 0, e portanto nao salta. Sem risco de laco: o salto muda o scroll, o onUpdate ve o
+       grupo JA correto e nao clica em nada. */
+    function irParaGrupo(g){
+      var alvo=st.start+((g===0?yR0:yE0)/CURSO)*(st.end-st.start);
+      var sm=(window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null;
+      if(sm) sm.scrollTo(alvo,!reduce); else window.scrollTo({top:alvo,behavior:reduce?'auto':'smooth'});
+    }
+    function saltoSePreciso(g){
+      if(euTroquei) return;
+      if(!st.isActive) return;                       /* fora do pin, o clique e so clique */
+      if(grupoDe(vh(st.progress))===g) return;
+      irParaGrupo(g);
+    }
+    [].slice.call(document.querySelectorAll('.carbtn')).forEach(function(b){
+      b.addEventListener('click',function(){ saltoSePreciso(+b.getAttribute('data-car')); });
+    });
+    [document.querySelector('.carshade.sL'),document.querySelector('.carshade.sR')]
+      .forEach(function(s,k){ if(s) s.addEventListener('click',function(){ saltoSePreciso(k); }); });
+
+    /* AS 15 POSICOES do trilho (fracao do curso), na ordem Royais -> Embaixadores. Servem as SETAS
+       e vao publicadas para o modo apresentacao — uma fonte so para os dois. Publicar a lista pronta
+       em vez dos 55/40/40/45 evita o "gemeo escondido" deste projeto: numero repetido em dois
+       arquivos, muda-se um e o outro passa a apontar para o lugar errado, sem erro no console. */
+    var paradas=[];
+    for(var i=0;i<NR;i++) paradas.push((yR0+i*PASSO)/CURSO);
+    for(var j=0;j<NE;j++) paradas.push((yE0+j*PASSO)/CURSO);
+    window.CARSRAIL={ n:N, nRoyal:NR, nEmb:NE, paradas:paradas, st:st };
+
+    /* SETAS. Elas andam pela LISTA GLOBAL das 15 paradas, nao pelo grupo: no ultimo Royal o "proximo"
+       atravessa a ponte e cai no 1o Embaixador (o carro troca sozinho, porque quem manda no carro e
+       a posicao do scroll). Assim da para percorrer as 15 pessoas so clicando. */
+    function idxGlobal(){ return (grupo===0?0:NR)+Math.max(0,active); }
+    function irParaParada(k){
+      k=Math.min(paradas.length-1,Math.max(0,k));
+      var alvo=st.start+paradas[k]*(st.end-st.start);
+      var sm=(window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null;
+      if(sm) sm.scrollTo(alvo,!reduce); else window.scrollTo({top:alvo,behavior:reduce?'auto':'smooth'});
+    }
+    atualizaSetas=function(){
+      var k=idxGlobal();
+      if(prevBtn) prevBtn.disabled=(k<=0);
+      if(nextBtn) nextBtn.disabled=(k>=paradas.length-1);
+    };
+    if(prevBtn) prevBtn.addEventListener('click',function(){ irParaParada(idxGlobal()-1); });
+    if(nextBtn) nextBtn.addEventListener('click',function(){ irParaParada(idxGlobal()+1); });
+
+    medeGap(); apply(); atualizaSetas();
+    /* redimensionar no desktop muda --cardw (clamp em vw e min por vh) -> o GAPX muda com ele */
+    window.addEventListener('resize',function(){ medeGap(); apply(); },{passive:true});
+  } else {
+    /* mobile: sem pin e sem grupos — os 15 numa tira so, na ordem do array. Quem manda e o scroll
+       horizontal do proprio deck. A coreografia de grupo existe porque no desktop metade da cena
+       fica escurecida; no celular a cena e uma coluna e nao ha metade nenhuma para ocupar. */
+    if(kicker) kicker.textContent='A Rede';
+    var raf=null;
+    deck.addEventListener('scroll',function(){
+      if(raf) return;
+      raf=requestAnimationFrame(function(){
+        raf=null;
+        var mid=deck.scrollLeft+deck.clientWidth/2, best=0, bd=Infinity;
+        for(var i=0;i<N;i++){
+          var c=cards[i], cc=c.offsetLeft+c.offsetWidth/2, d=Math.abs(cc-mid);
+          if(d<bd){ bd=d; best=i; }
+        }
+        if(countEl) countEl.textContent=String(best+1).padStart(2,'0')+' / '+String(N).padStart(2,'0');
+        if(bar) bar.style.width=Math.max(5,(best/(N-1))*100)+'%';
+      });
+    },{passive:true});
+    if(countEl) countEl.textContent='01 / '+String(N).padStart(2,'0');
+  }
+
+  /* troca de faixa (girar o celular / redimensionar cruzando 1025px): remonta no modo certo */
+  var eraDesk=isDesk;
+  window.addEventListener('resize',function(){
+    var agora=window.matchMedia('(min-width:1025px)').matches;
+    if(agora===eraDesk) return;
+    eraDesk=agora; location.reload();
+  },{passive:true});
+})();
+</script>
+
 <script id="reorder-secoes">
 /* Reorganizacao (pedido do dono) — PASSO 1: mover #simulador p/ logo APOS o #ecossistema (deck),
    por JS e DENTRO do #smooth-content. Feito por JS (nao por move de HTML) de proposito: as secoes
@@ -6487,14 +7110,19 @@ if(window.gsap&&window.ScrollTrigger){
       orbTarget.parentNode.insertBefore(sim, orbTarget); moved=true;
     }
   }
-  /* PASSO 2: ordem do final = Planos, Graduacoes, A Rede, Bonificacao (antes do rodape).
+  /* PASSO 2: ordem do final = Planos, Graduacoes, Bonificacao (antes do rodape).
      insertBefore direto no smooth-content e seguro aqui e mantem tudo dentro dele.
-     Sobre a #rede, que E pinada: o pin dela mora no FILHO (.rede-pin), nao na section, entao o
-     .pin-spacer nasce DENTRO da section e viaja junto no move — diferente do simulador do PASSO 1,
-     onde era o alvo que estava dentro de um spacer. O ScrollTrigger.refresh() no fim reposiciona. */
+     A #rede SAIU desta lista (REDE-DESATIVADO): esta oculta e a vitrine dela virou o trilho
+     dentro da #bonificacao. Mover uma secao display:none nao faz mal, mas listar aqui daria a
+     entender que ela ainda participa da ordem — devolver 'rede' antes de 'bonificacao' e o que
+     reverte.
+     Sobre a #bonificacao, que agora E pinada: o pin mora no FILHO (.carstage), nao na section,
+     entao o .pin-spacer nasce DENTRO da section e viaja junto no move — diferente do simulador do
+     PASSO 1, onde era o alvo que estava dentro de um spacer. O ScrollTrigger.refresh() no fim
+     reposiciona. */
   var rod=document.getElementById('rodape');
   if(rod && rod.parentNode){
-    ['planos','graduacoes','rede','bonificacao'].forEach(function(id){
+    ['planos','graduacoes','bonificacao'].forEach(function(id){
       var el=document.getElementById(id);
       if(el && el!==rod){ rod.parentNode.insertBefore(el, rod); moved=true; }
     });

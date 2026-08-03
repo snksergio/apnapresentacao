@@ -96,34 +96,144 @@ No mobile, o palco é escalado (`.recwrap` com altura fixa 1680px + `zoom:.52`) 
 A seção tem folga de pin de `+=75%` (só respiro para o snap encaixar, não coreografa nada) e o vídeo toca em loop com play/pause por visibilidade real.
 
 ## A Rede — 15 `.rcard` (baralho 3D)
+
+> ⚠ **A SEÇÃO `#rede` ESTÁ OCULTA desde 2026-08-03** (marcador `REDE-DESATIVADO`, `display:none` no
+> topo do `<style id="rede-styles">`). O dono pediu que a vitrine saísse de seção própria e passasse
+> a viver **dentro da Bonificação**, como o trilho que aparece na metade escurecida quando um carro
+> é selecionado — e que "as qualificações vão direto para a bonificação". Ver **Bonificação** logo
+> abaixo.
+>
+> **O que continua valendo desta seção:** tudo sobre o array `P`, os níveis, os pins e as fotos. O
+> `<script id="rede-app">` continua sendo o **dono dos dados**: ele monta `P`, `PIN` e `cardHtml()` e
+> publica em `window.REDE_DATA` **antes** de parar no guard de seção oculta. É de lá que o trilho da
+> Bonificação tira as 15 pessoas. **Não apague o bloco `#rede`** — apagar leva as 15 pessoas embora.
+>
+> **O que NÃO vale mais:** a altura de 1050vh, o pin em `.rede-pin`, a parada por pessoa da
+> apresentação (`on:false` na entrada 'A Rede') e o carrossel mobile próprio. Para reativar a seção:
+> tirar o `display:none`, devolver `'rede'` ao array do `#reorder-secoes` e trocar `on:false` por
+> `on:true` no `presentation-mode.js`.
+
 Seção `#rede`, entre Graduações e Bonificação. Porte do material "Depth Rail" (React+Tailwind+Framer Motion) para o stack daqui. Tudo vem de **um array `P` no `<script id="rede-app">`** — o HTML dos cards e os dots são gerados em runtime, então **pessoa nova = uma entrada no array**, nada de HTML.
+
+**O HTML do card é COMPARTILHADO e o CSS também.** `cardHtml(p)` é uma função só, consumida por esta seção e pelo trilho da Bonificação. No CSS, cada regra do cartão tem **dois seletores** (`#rede .rcard, .rdeck .rcard`): quem tem a classe `.rdeck` no container do baralho usa a mesma declaração. As **medidas** saem de variáveis (`--cardw`, `--cardh`, `--headh`, `--namefs`, `--pinsz`), então cada host escolhe o seu tamanho sem copiar CSS. Mexer no visual do card = mexer **num** lugar; os dois baralhos acompanham.
 
 Estado em 2026-08-03: **2 Embaixadores + 13 Royais**, nomes reais passados pelo dono. `first` sai no accent e `last` na linha branca; em casal a 2ª linha começa com "e ..." (ex.: `first:"David Willian"`, `last:"e Aline Moura"`).
 
-**O nível aparece em 3 lugares no card, todos vindos do mesmo `lvl`** — mudar o `lvl` de uma pessoa muda os três de uma vez:
-1. `[ EMBAIXADOR ]` / `[ ROYAL ]` no topo (`.rc-tag`);
-2. o **pin exato** (`.rc-pin`) — `EMBAIXADOR` → `assets/pins/pin-e12.webp`, `ROYAL` → `assets/pins/pin-r5.webp`, os mesmos arquivos das graduações. Antes era um selo desenhado em CSS (conic-gradient); foi removido. Nível novo = entrada nova no objeto `PIN`, senão o card sai sem pin;
-3. a **faixa verde da base** (`.rc-cta`) — era o botão "Garanta o seu ingresso" do material e virou o rótulo do nível. É `<span>`, **não** `<button>`: rótulo, não ação.
+**A lista dos Royais foi trocada na 2ª rodada de 2026-08-03** e a ordem do array **é a ordem do trilho** (alfabética por primeiro nome, como o dono mandou). Quatro nomes mudaram e valem conferência se algum dia baterem os registros: `André Maluf` → `André Maluf e Beatriz Guimarães`; `Fillipe Souza` → `Fillipe Souza e Stela Souza` (antes o nome vinha **cortado** no material); `Joel Pletsch` → **`Joel e Fabiana Lisboa`** (sobrenome era outro); `Orlando Ferreira` → `Orlando Ferreira e Florence Gentil`. E `Luiz Carlos (Pit)` perdeu os parênteses.
 
-O `hl` de quem não tem texto próprio também deriva do nível ("Acionista Royal 5K" / "Acionista Embaixador 12K"), então o nível repete de propósito — foi o pedido do dono.
+**O nível aparece em 2 lugares no card, ambos vindos do mesmo `lvl`** — mudar o `lvl` de uma pessoa muda os dois de uma vez, e move a pessoa de grupo no trilho:
+1. `[ EMBAIXADOR ]` / `[ ROYAL ]` no canto superior **esquerdo** (`.rc-tag`);
+2. o **pin exato** no canto superior direito (`.rc-pin`) — `EMBAIXADOR` → `assets/pins/pin-e12.webp`, `ROYAL` → `assets/pins/pin-r5.webp`, os mesmos arquivos das graduações. Antes era um selo desenhado em CSS (conic-gradient); foi removido. Nível novo = entrada nova no objeto `PIN`, senão o card sai sem pin.
+
+**Eram 4 lugares até 2026-08-03 (2ª rodada).** O dono pediu "tire o acionista royal 5k. e o royal lado esquerdo acima. e o pin continua". Saíram: a **faixa verde da base** (`.rc-cta`, que era o botão "Garanta o seu ingresso" do material e tinha virado rótulo do nível) e a **linha de reserva do `.rc-hl`**, que repetia "Acionista Royal 5K" / "Acionista Embaixador 12K" para quem não tinha destaque próprio. O `.rc-hl` continua para quem **tem** destaque no material ("80 Milhões", "Clube de Milionários"): hoje ele só entra se houver `hl`. A regra CSS do `.rc-cta` ficou no arquivo, marcada como sem uso — devolver a faixa é só devolver o `<span>` no `cardHtml()`.
+
+⚠ **David Willian tem `hl:"Acionista Royal"`** — esse texto veio do material do dono, não é a linha de reserva, então continua aparecendo. Se ele quiser tirar também, é só apagar o `hl` dessa entrada.
 
 **Texto por pessoa é OPCIONAL e isso é deliberado.** Só 5 têm `pill`/`hl`/`body` (os que vieram com texto no material: Lucas, David, Evandro, Gabriel, João Paulo). Para os outros **não** se inventa conquista, cidade nem número — são pessoas reais; o card mostra nome + nível (`Acionista Royal 5K` / `Acionista Embaixador 12K`) e o `hl` cai nesse rótulo sozinho. Ao receber o texto, preencha `pill`/`hl`/`body` e o card se completa sem mexer em CSS.
 
-**A quantidade muda a altura da seção:** `#rede` tem `height = N * VH_CARD vh`, com `VH_CARD=70` no `rede-app` (o material usava 90 com 8 pessoas; com 15 isso daria 1350vh, então baixou para 70 = **1050vh**). Somar uma pessoa **alonga a página em 70vh** e desloca Bonificação e Rodapé — acione o `scroll-guardian`.
+**A quantidade muda a altura da seção** — mas hoje a seção afetada é a **Bonificação**, não esta. Com `#rede` oculta, somar uma pessoa ao array `P` alonga a **Bonificação em 40vh** e desloca só o Rodapé. Ver a tabela em Bonificação. (Enquanto `#rede` esteve visível era `height = N * 70vh` = 1050vh.)
 
-**Apresentação:** uma parada por pessoa (`buildStops` de `#rede` em `js/presentation-mode.js`), e o `y` de cada parada usa a **mesma fórmula** do `goTo()` do `rede-app` — se mexer numa, mexa na outra, senão a apresentação e as setas da seção discordam.
+**Apresentação:** a entrada `'A Rede'` está `on:false` (parada morta, mesmo tratamento do `#recorrencia` oculto). Quem tem uma parada por pessoa agora é a **Bonificação**.
 
 Duas adaptações que **não** são escolha de estilo, não "conserte" para o que estava no material:
 - **`position:sticky` virou pin do ScrollTrigger.** Sticky não gruda dentro de ancestral transformado, e o ScrollSmoother move o `#smooth-content` por transform. O projeto já tinha batido nisso (ver o sticky do resultado do simulador).
 - **O pin fica no filho `.rede-pin`, não na section.** Por isso o `.pin-spacer` nasce **dentro** de `#rede` e a section pode ser movida à vontade pelo `#reorder-secoes` (é o que permite ela entrar antes da Bonificação sem o cuidado extra que o simulador exige no PASSO 1).
 
-**Fotos — requisito de conteúdo, não capricho:** uma foto por pessoa, com dominante **distinta das vizinhas**. A mesma foto do card ativo é reaproveitada como backdrop borrado (blur 95px) e o crossfade entre elas é o efeito de ambiente da seção; reciclar imagem faz a troca acontecer sem ninguém perceber. Ficam em `assets/img/rede/`. As entradas marcadas `ph:true` no array são **placeholder de evento** esperando a foto real (hoje: Lucas, Gabriel, Mariana, Camila, Diego).
+**Fotos — requisito de conteúdo, não capricho:** uma foto por pessoa, com dominante **distinta das vizinhas**. Enquanto a seção esteve visível, a foto do card ativo virava backdrop borrado (blur 95px) e o crossfade entre elas era o efeito de ambiente; reciclar imagem fazia a troca passar em branco. No trilho da Bonificação não há backdrop, mas a exigência de foto distinta continua: são cards vizinhos no baralho. Ficam em `assets/img/rede/`.
+
+**`ph:true` = placeholder de evento esperando a foto real. Hoje não existe mais nenhum:** as **15 pessoas têm foto real** em `assets/img/rede/`, uma por pessoa, com o nome-slug do campo `first` (`André Maluf` → `andre-maluf.jpg`). A última a entrar foi **André Maluf e Beatriz Guimarães** (`andre-maluf.jpg`, 660×706) em 2026-08-03 — ela ocupava o placeholder `assets/img/eventos/america-latina-4.webp`, e era a 2ª parada dos Royais no trilho. Ver a especificação da foto abaixo antes de pedir arquivo novo.
+
+### Especificação da foto do card — o que pedir ao dono
+Medido em 2026-08-03 na cena real (não deduzido):
+
+| | valor |
+|---|---|
+| `<img>` declarado | **330 × 353** px → proporção **0,935** (≈ 15:16, um tico mais alta que quadrada) |
+| caixa renderizada, desktop 1920×946 | 304 × 326 CSS px (card 306 × 482) |
+| caixa renderizada, mobile 390×844 dpr3 | 302 × 324 CSS px = **907 × 973 px reais** |
+| **pedir ao dono** | **990 × 1059 px** (3×, cobre o mobile retina). Aceitável 660 × 706. Mínimo 330 × 353 |
+
+**Enquadramento importa mais que a resolução.** A foto tem `mask-image`: opaca até **38%** da altura, e **totalmente transparente a partir de 82%** — o terço de baixo dissolve no card e é ali que entra o nome. Então: **rostos no primeiro 55%**, e nada de importante abaixo de 80%.
+
+**Proporção 330:353, não 3:4.** As 3 primeiras fotos são 3:4 (240×320) e o `object-fit:cover` **corta ~10% em cima e ~10% embaixo** — em foto com pouca folga acima da cabeça, isso decepa o topo. As duas dos Embaixadores foram recortadas na proporção da caixa (495×530), então nada é cortado.
+
+**Os posters "… - Embaixador - Post" que o dono manda são 1080×1350 com o nome e o pill impressos na arte** — recorte fora do texto (o card já escreve nome e nível; duplicar fica feio e briga com o `text-wrap`). Serve como fonte: dá para tirar um 520×556 limpo da região do casal.
 
 **Backdrop:** duas `<img>` em ping-pong. Nunca troque o `src` da mesma tag nem remonte o elemento — repintar um blur desse tamanho a cada quadro trava o scroll.
 
 **Mobile (≤1024px):** sem pin e sem 3D — carrossel horizontal nativo com `scroll-snap`. Deliberado: pinar 8 × 90vh no celular seria 720vh de rolagem forçada, e o ScrollSmoother não existe abaixo de 1025px. A troca de faixa (girar o aparelho) faz `location.reload()` de propósito, para não ficar num meio-estado entre pin e carrossel.
 
-## Carros, Graduações, Eventos, Planos, Bonificação, Simulador
+## Bonificação (carros) — seção PINADA + trilho das 15 pessoas
+Seção `#bonificacao`, a última antes do Rodapé. **Mudou de natureza em 2026-08-03:** era 1 tela fixa (`.carstage{height:100vh}`, sem pin e sem scrub) e passou a ser **pinada com curso de rolagem**, porque recebeu o trilho de pessoas que era a seção A Rede. Blocos: `<style id="carsrail-styles">`, o `<div class="carsrail">` dentro da `.carstage`, e o `<script id="carsrail-app">`.
+
+### Dois grupos, na ordem do plano de carreira
+O trilho **não** é uma fila única com as 15 pessoas. São **dois grupos, e o grupo é a mesma informação que o carro selecionado** (pedido do dono, 2ª rodada de 2026-08-03):
+
+1. **Royal 5K** selecionado (BYD acesa, à esquerda) → só os **13 Royais**, à direita;
+2. passados todos, o carro troca **sozinho** para **Embaixador 12K** (Taycan) e entram só os **2 Embaixadores**, à esquerda;
+3. um passo depois, sai da seção.
+
+Na 1ª versão o trilho misturava os 15 e mostrava card `[ ROYAL ]` com o Embaixador selecionado — lia errado. Os grupos saem do `lvl` de cada pessoa no array `P`, o **mesmo campo** que escolhe o pin e o rótulo do card: trocar o `lvl` de alguém move a pessoa de grupo sozinho, e os quatro nunca discordam. `G[0]` casa com `data-car="0"` e `G[1]` com `data-car="1"` — a ordem é a **das abas**, não a do array `P` (onde os Embaixadores vêm primeiro).
+
+**O curso é FIXO e tem cinco trechos** (constantes em vh no `carsrail-app`):
+
+| trecho | vh | o que acontece |
+|---|---|---|
+| cabeça | `CABECA=55` | cena limpa: o vídeo toca e as abas aparecem |
+| Royais | `PASSO=40` × (N_R−1) = 480 | uma parada por Royal, trilho à direita |
+| ponte | `PONTE=40` | trilho sai, o carro troca no **meio** da ponte, trilho volta do outro lado |
+| Embaixadores | `PASSO=40` × (N_E−1) = 40 | uma parada por Embaixador, trilho à esquerda |
+| cauda | `CAUDA=45` | o trilho sai de cena e a seção fica limpa outra vez |
+
+Altura da section = `100 + 55 + 480 + 40 + 40 + 45` = **760vh** com 13+2. **Royal novo alonga a Bonificação em 40vh**; Embaixador novo, idem. Só o Rodapé se desloca.
+
+**Por que fixo:** se a distância dependesse do carro selecionado, um clique nas abas mudaria a altura da página no meio da navegação (pulo visível) e as paradas da apresentação — montadas **uma vez** — apontariam para o lugar errado.
+
+**FOLGA de 9vh nas pontas de cada trecho, e não é enfeite:** a parada da última pessoa cai **exatamente** no fim do trecho e a posição em que o tween pousa erra por fração de pixel — medido na 1ª versão, progresso `0.8978390` contra o limite `0.8978102`, 28 milionésimos para fora, e o trilho aparecia **vazio justo na última pessoa**.
+
+**A troca de grupo é um salto seco, não um tween.** O baralho novo tem outra contagem; deixar o tween varrer de `p=12` (último Royal) para `p=0` fazia o `apply()` rodar com índices que não existem nos 2 Embaixadores — medido: contador em `03 / 02`. E ao estacionar os cards do grupo que sai é preciso **remover o `.on`**, não só zerar a opacidade: sem isso o `.rcard.on` do documento continuava sendo o do grupo anterior (medido: na 1ª parada dos Embaixadores o destacado ainda era "Fillipe Souza"). O salto cai no meio da ponte, com o trilho invisível, então ninguém vê.
+
+**Clicar numa aba dentro do trilho SALTA para o trecho daquele grupo.** Quem manda na seleção aqui é a **posição do scroll**; se o clique só trocasse o carro, ficava um estado impossível — medido: aba em "Embaixador 12K" com os cards dos Royais na tela. Posse explícita a uma das duas mecânicas é a lição que este projeto já aprendeu com o snap brigando com auto-scroll. A trava do salto é "o grupo discorda do scroll" (+ um flag para a troca feita **pelo** scroll não voltar como salto) — **de propósito não usa `isTrusted`**: qualquer coisa que selecione um carro fora do trecho dele precisa levar o scroll junto, venha de clique humano ou de código. Sem risco de laço: o salto muda o scroll, o `onUpdate` vê o grupo já correto e não clica em nada.
+
+**O kicker do trilho diz de quem é a vez** (`A Rede · Acionistas Royal 5K` / `... Embaixador 12K`) — é o que amarra o baralho ao carro aceso ao lado. No mobile ele volta a ser só `A Rede`.
+
+**A cena cede o palco enquanto o trilho roda** (`.carstage.rail-on`) — isto foi **medido**, não deduzido. Na metade escurecida não existe espaço para um card de ~470px:
+
+| viewport | `.carshead` | `.carbottom` | `.carpick` |
+|---|---|---|---|
+| 1920×946 | 490–1430 × 205–394 | 520–1400 × 583–903 | 778–1142 × 583–633 |
+| 1229×600 | 145–1085 × 44–208 | 175–1055 × 264–579 | 433–797 × 264–315 |
+
+A copy central ocupa 940px dos 1229 do notebook: sobravam ~145px à direita, e **a 1025px de largura sobra zero**. Então, com `rail-on`: `.carshead` e `.carinfos` vão a `opacity:0`, e a `.carpick` escorrega **25vw** para o lado oposto ao trilho (continua clicável — a troca de carro não se perde).
+
+**⚠ Quem escorrega é a `.carpick`, NÃO a `.carbottom`.** Duas tentativas morreram no inline do GSAP: ele anima a `.carbottom` no reveal e escreve `transform: translate(-50%,0%); translate:none; rotate:none; scale:none` **inline**, e inline ganha da folha de estilo — inclusive na propriedade `translate` separada (medido: computed voltava `none`). A `.carpick` não é animada por ninguém.
+
+**Lado do trilho = metade escurecida = carro NÃO selecionado.** Royal 5K (`data-car="0"`) é a BYD, à **esquerda** → trilho à direita (padrão). Embaixador 12K é a Porsche, à **direita** → trilho à esquerda (`.rail-left` + `.rail-l`). Quem avisa é o evento `cars:select`, disparado dentro do `setCar` — evento e não variável global porque `setCar` também é chamado por `carsFinish()` **sem clique**, e ouvir só o clique das abas deixaria esse caso de fora.
+
+**PENDENTE (2026-08-03):** o dono vai mandar um **formato de slide diferente** para o lado do Embaixador 12K. Hoje os 2 Embaixadores usam o mesmo card dos Royais, só do outro lado. Quando o formato chegar, muda **só o conteúdo do grupo `G[1]`** — geometria, curso e paradas ficam.
+
+**Apresentação: 16 paradas onde antes eram 2.**
+
+| parada | o que aparece |
+|---|---|
+| 1 | **cena limpa**: título "Aqui a iGreen te dá a chave", os dois carros, as abas e a ficha da BYD. O vídeo dos carros toca aqui, como no site |
+| 2 – 14 | os 13 Royais, trilho à direita, Royal 5K aceso |
+| 15 – 16 | o carro troca sozinho para Embaixador 12K e entram os 2 Embaixadores, trilho à esquerda |
+| +1 toque | próxima seção |
+
+As posições das pessoas vêm de **`window.CARSRAIL.paradas`** (lista de frações já pronta, publicada pelo `carsrail-app`): **não repita os 55/40/40/45 no `presentation-mode.js`** — número repetido em dois arquivos é o gêmeo escondido deste projeto, e o sintoma seria a apresentação pousando entre dois cards sem erro nenhum no console. A troca de carro **não** é papel da apresentação: ela só pousa no `y`, e é o trilho que troca o carro pelo scroll.
+
+Duas ações, e a diferença entre elas é proposital: a **1ª parada** usa `carSelectRaw(0)` para **não** forçar o fim do vídeo (o dono quer ver a animação dos carros chegando); a **1ª pessoa** usa `carSelect(0)`, que **força** o estado final — se o dono avançar antes de o vídeo acabar, as abas e a foto precisam estar no lugar antes de o card entrar.
+
+Existe um caminho de exceção (sem `window.CARSRAIL`) que volta às 2 paradas antigas, para a seção nunca cair para 1 parada — com 1 parada, um único toque em "passar" sai dela direto, sintoma que o dono já relatou.
+
+**O pin fica no filho `.carstage`, não na section** — por isso o `.pin-spacer` nasce dentro de `#bonificacao` e a section continua podendo ser movida pelo `#reorder-secoes`. E o gatilho do vídeo mudou de `.carstage` para `.cars`: o ScrollTrigger mede a caixa **natural** de um elemento pinado (a mesma armadilha que já pausava o vídeo da sede no meio do caminho).
+
+**Mobile (≤1024px):** sem pin **e sem grupos** — os 15 numa tira só, na ordem do array, carrossel nativo com `scroll-snap`, `order:4` na coluna da `.carstage` (depois das abas), sempre visível. A coreografia de grupo existe porque no desktop metade da cena fica escurecida; no celular a cena é uma coluna e não há metade nenhuma para ocupar. As regras mobile do trilho ficam **dentro do `#carsrail-styles`**, não no bloco mobile geral: media query **não soma especificidade**, e lá elas perderiam para as regras de desktop do trilho, declaradas depois (foi assim que a logo da Trajetória foi para o lado errado).
+
+**Geometria conferida (2026-08-03), antes → depois:** altura da página 33.727 → **30.037px**; ScrollTriggers 24 → 24 e pins 7 → 7 (o pin de `.rede-pin` saiu, o de `.carstage` entrou); paradas da apresentação 51 → 49; âncoras acima da Bonificação **sem deslocamento nenhum** (simulador 12165, órbita 13325, planos 16542, graduações 17817); 217 imagens, 0 falhas; fração visível do globo do rodapé 0,26 (o mesmo valor de quando ele foi consertado). ⚠ **Conte os triggers em carga LIMPA:** varrer a página antes de contar mata os 8 gatilhos `once:true` e a contagem cai para 16 — foi exatamente o falso alarme que apareceu aqui.
+
+## Carros, Graduações, Eventos, Planos, Simulador
 Não confirmei os seletores destas — **rode o inventário** acima antes de mexer. O que valida para todas:
 
 - **Eventos** ficam num modal construído por JS (`buildEventsModal`), a partir de um array `EVENTS` com uma entrada por evento e uma chave `gal:` que casa com o prefixo dos arquivos em `assets/img/eventos/`. Adicionar evento = entrada no array + fotos nomeadas no padrão `<gal>-1..8` + `<gal>-qrcode`, todas tratadas (`ativos-guardian`). Os masters ficam fora do git. **O modal libera o `loading="lazy"` de todas as fotos visíveis quando abre** — sem isso, só a galeria do slide ativo carrega (ver o achado corrigido no fim deste arquivo). Foto nova entra nesse mecanismo sozinha, mas se você mudar a estrutura dos slides, confirme que `liberaFotos()` ainda alcança as novas.

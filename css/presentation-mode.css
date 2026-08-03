@@ -86,6 +86,10 @@ html.pmode-active .pmode-rail{
   display:flex; flex-direction:column; align-items:center; gap:12px;
 }
 .pmode-dots li{ display:flex; }
+/* dot de secao desligada (on:false) sai do rail. Precisa ser explicito: o `display:flex` da
+   regra acima VENCE o display:none que o atributo [hidden] traz do user-agent, entao sem esta
+   linha o `li.hidden = true` do renderDotsState nao esconderia nada. */
+.pmode-dots li[hidden]{ display:none; }
 .pmode-dot{
   position:relative; width:11px; height:11px; padding:0; flex:none;
   border:1px solid var(--ink-dim); border-radius:50%;

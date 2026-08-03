@@ -140,9 +140,16 @@
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
          Ao ir pela seta a ponte eco2→órbita dispara o igStartOrbita; ao ir pelo dot
          disparamos o intro na mão e garantimos o smoother ativo. */
-      /* entrada pela seta é LENTA: cobre o colapso dos cards no núcleo + a descida
-         até o celular (era rápido demais pra ver). Não afeta os passos internos. */
-      enterDur:6,
+      /* entrada pela seta é a varredura MAIS LONGA da apresentação: cobre o colapso dos cards
+         no núcleo + a descida até o celular (com o valor padrão era rápido demais pra ver).
+         Não afeta os passos internos da órbita.
+         6 -> 3.2 em 2026-08-03: o dono relatou que sair do Simulador estava "lento". A ponte é
+         justamente Simulador -> Órbita (Recorrência fica no meio, mas está `on:false`), então
+         quem mandava no tempo era este enterDur, não o cálculo por distância. 3.2 ainda mostra
+         o colapso dos cards; a suavidade não vem daqui e sim do ease `power1.inOut` que o
+         goToIndex aplica sempre que enterDur existe — por isso ficou mais rápido sem ficar seco.
+         É um número só: se ainda parecer arrastado, baixe para ~2.4. */
+      enterDur:3.2,
       onEnter:function(){
         try{ var s=(window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null; if(s) s.paused(false); }catch(e){}
         if (window.igStartOrbita) window.igStartOrbita();
@@ -224,7 +231,11 @@
         }
         return out;
       } },
-    { label:'A Rede',       sel:'#rede',         subs:[], on:true, trig:'#rede', dur:1.1,
+    /* REDE-DESATIVADO (2026-08-03): a seção está display:none e a vitrine dela virou o trilho
+       dentro da Bonificação. on:false é o mesmo tratamento dado ao #recorrencia oculto — parada
+       morta, fora da apresentação, com o mapa preservado para reativar (on:true) se a seção
+       voltar. É por isso que Graduações agora avança direto para a Bonificação. */
+    { label:'A Rede',       sel:'#rede',         subs:[], on:false, trig:'#rede', dur:1.1,
       /* Uma parada por pessoa. Diferente das graduações (que agem por `action` na MESMA
          posição), aqui cada parada é uma posição de scroll DE VERDADE: a própria seção é
          pinada com scrub e o baralho lê o progresso do pin, então basta pousar no y de cada
@@ -251,23 +262,59 @@
         for (var i = 0; i < n; i++) out.push(ini + (i / (n - 1)) * (fim - ini));
         return out;
       } },
-    { label:'Bonificação',  sel:'#bonificacao',  subs:[], on:true,
-      /* seção de enquadramento (sem scrub): o vídeo dos carros toca sozinho ao
-         entrar. Pelo dot (teleporte) o reveal once pode não disparar, então damos
-         play na mão; ao terminar, o próprio site revela as abas de carro. */
-      /* telas altas: sobe um pouco (-72). telas baixas (notebook ~700-768px): 0,
-         senão o título encavala na navbar. */
+    { label:'Bonificação',  sel:'#bonificacao',  subs:[], on:true, dur:1.1,
+      /* DE ENQUADRAMENTO PARA PINADA (2026-08-03). Antes esta seção tinha 1 tela e 2 paradas na
+         MESMA posição (enquadra + troca de carro). Agora ela é pinada e leva o trilho das pessoas
+         da rede dentro dela (REDE-DESATIVADO: a seção A Rede saiu e virou este trilho).
+         Sequência pedida pelo dono (2ª rodada de 2026-08-03, ele mandou o print da tela 1):
+           1ª parada  — a CENA LIMPA: título "Aqui a iGreen te dá a chave", os dois carros, as abas
+                        e a ficha da BYD. O vídeo dos carros toca aqui, como no site;
+           2ª a 14ª   — os 13 Royais, trilho à direita, Royal 5K aceso;
+           15ª e 16ª  — o carro troca sozinho para o Embaixador 12K e entram os 2 Embaixadores,
+                        trilho à esquerda;
+           um passo depois, próxima seção.
+         São 16 paradas onde antes eram 2: é o preço de trazer as pessoas para cá.
+         O vídeo dos carros toca sozinho ao entrar; pelo dot (teleporte) o reveal `once` pode não
+         disparar, então damos play na mão. */
+      /* frameOff só é usado no CAMINHO DE EXCEÇÃO abaixo (sem trilho): telas altas sobem um
+         pouco (-72), telas baixas (notebook ~700-768px) ficam em 0, senão o título encavala
+         na navbar. Com o pin ativo o enquadramento é o próprio start do pin. */
       frameOff:function(){ return window.innerHeight < 900 ? 0 : -72; },
       onEnter:function(){ var v=document.querySelector('.carvid'); if (v){ var p=v.play(); if (p&&p.catch) p.catch(function(){}); } },
-      /* 2 passos na mesma posição: (1) enquadra (BYD Royal 5K é o padrão); (2) troca
-         para o Porsche Taycan (Embaixador 12K). Volta ao passo 1 reverte pro BYD. */
       buildStops:function(st, node){
-        var off = (typeof this.frameOff === 'function') ? this.frameOff() : (this.frameOff != null ? this.frameOff : 90);
-        var y = curY() + node.getBoundingClientRect().top - off;
-        return [
-          { y:y, action:function(){ if (document.body.classList.contains('cars-ready')) carSelectRaw(0); } },
-          { y:y, action:function(){ carSelect(1); } }
-        ];
+        /* as frações vêm do próprio trilho (window.CARSRAIL, publicado pelo #carsrail-app).
+           NÃO repetir aqui os 55/40/70vh dele: número repetido em dois arquivos é o gêmeo
+           escondido deste projeto — muda-se um e a apresentação passa a pousar entre dois cards
+           sem erro nenhum no console. */
+        var R = window.CARSRAIL;
+        var pin = (R && R.st) ? R.st : st;
+        if (!(R && pin && R.paradas && R.paradas.length > 1 && pin.end > pin.start)){
+          /* sem trilho (GSAP ausente, ou o trilho não montou): volta ao comportamento antigo de
+             2 paradas no mesmo y. Melhor uma seção pobre do que uma seção com 1 parada, que faria
+             um único toque em "passar" sair dela direto — o sintoma que o dono já relatou. */
+          var off = (typeof this.frameOff === 'function') ? this.frameOff() : (this.frameOff != null ? this.frameOff : 90);
+          var y = curY() + node.getBoundingClientRect().top - off;
+          return [
+            { y:y, action:function(){ if (document.body.classList.contains('cars-ready')) carSelectRaw(0); } },
+            { y:y, action:function(){ carSelect(1); } }
+          ];
+        }
+        var ini = pin.start, L = pin.end - pin.start;
+        var out = [];
+        /* 1) CENA LIMPA (progresso 0 do pin): título + os dois carros + abas. O trilho ainda não
+              entrou — ele começa depois dos 55vh de cabeça. Aqui NÃO forçamos o fim do vídeo
+              (`carSelectRaw`, não `carSelect`): o dono quer ver a animação dos carros chegando,
+              como no site. Se o vídeo ainda não terminou, o site revela as abas sozinho. */
+        out.push({ y:ini, action:function(){ if (document.body.classList.contains('cars-ready')) carSelectRaw(0); } });
+        /* 2) uma parada por pessoa, na ordem Royais → Embaixadores. São posições de scroll DE
+              VERDADE: a seção é pinada com scrub, o trilho lê o progresso do pin e é ELE que troca
+              o carro no meio do caminho — a apresentação não manda em nada, só pousa no y certo.
+              A 1ª pessoa é a única com ação: `carSelect(0)` (e não `carSelectRaw`) porque, se o
+              dono avançar antes de o vídeo acabar, é preciso forçar o estado final — abas e foto
+              no lugar — antes de o card aparecer. */
+        out.push({ y:ini + R.paradas[0] * L, action:function(){ carSelect(0); } });
+        for (var i = 1; i < R.paradas.length; i++) out.push(ini + R.paradas[i] * L);
+        return out;
       } },
   ];
 
@@ -648,9 +695,19 @@
   function renderDotsState(){
     var activeSi = (curIdx >= 0 && activeStops[curIdx]) ? activeStops[curIdx].si : -1;
     dots.forEach(function(d, i){
-      var on = !!(sections[i] && sections[i].on);
+      /* DOT FANTASMA (2026-08-03): o dot e criado para TODA entrada de SECTIONS (map na
+         construcao do rail), e as desligadas so ganhavam `is-disabled` — ficavam no rail com
+         opacidade .26. Resultado medido: 12 bolinhas para 10 secoes navegaveis, porque
+         #recorrencia e #rede estao `on:false` (as duas ocultas com display:none). Agora a <li>
+         sai do rail. Nao filtramos o array `dots` de proposito: renderDotsState e o
+         data-section mapeiam por INDICE em SECTIONS, e reindexar quebraria os dois.
+         O fallback para SECTIONS[i].on importa: `sections` comeca vazio e so e preenchido no
+         rebuildIndex, entao sem ele o primeiro render esconderia TODAS as bolinhas. */
+      var entry = sections[i];
+      var on = entry ? !!entry.on : !!(SECTIONS[i] && SECTIONS[i].on);
       d.disabled = !on;
       d.classList.toggle('is-disabled', !on);
+      if (d.parentNode) d.parentNode.hidden = !on;
       d.classList.toggle('is-active', i === activeSi);
       d.setAttribute('aria-current', i === activeSi ? 'true' : 'false');
       if (on && activeSi >= 0 && i < activeSi) d.classList.add('is-visited');
