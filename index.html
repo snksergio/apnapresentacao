@@ -3928,11 +3928,11 @@ window.igRefresh=(function(){
     .grad-modal .gm-nav{ width:38px; height:38px; font-size:20px; top:auto; bottom:8px; transform:none; }
     .grad-modal .gm-prev{ left:12px; } .grad-modal .gm-next{ right:12px; }
     .grad-modal .gm-badge{ top:18px; font-size:11px; }
-    /* copy do sub sem "passe o mouse" (não há hover no touch).
-       max-width:none obrigatório: 46ch com font-size:0 colapsa a largura */
-    #graduacoes .grad-sub{ font-size:0; max-width:none; }
-    #graduacoes .grad-sub::after{ content:"Cinco níveis, cada um com sua cor e sua medalha.";
-      font-size:14px; line-height:1.6; display:block; }
+    /* O sub tinha aqui uma SEGUNDA versão do texto (font-size:0 no <p> + `content` no ::after),
+       porque a copy do desktop terminava em "Passe o mouse para ver os detalhes" e no touch não
+       existe hover. Com a copy nova do dono (2026-08-04) essa frase saiu, então o mesmo texto
+       serve para os dois e o truque foi removido — era um texto duplicado a mais para esquecer de
+       atualizar, e ele já tinha ficado defasado uma vez. */
   }
 </style>
 <section id="graduacoes">
@@ -3940,7 +3940,7 @@ window.igRefresh=(function(){
     <div class="grad-head">
       <span class="grad-kicker">Qualificações</span>
       <h2 class="grad-title"><span>Suba de nível e conquiste</span><span>prêmios, viagens e</span><span><em>reconhecimento</em>.</span></h2>
-      <p class="grad-sub">Cinco níveis, cada um com sua cor e sua medalha. Passe o mouse para ver os detalhes.</p>
+      <p class="grad-sub">Avance de nível, desbloqueie benefícios exclusivos e conquiste qualificações que reconhecem a sua evolução.</p>
       <button class="grad-cta" type="button" id="gradEventsBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         Nossos Eventos
@@ -5996,8 +5996,12 @@ if(window.gsap&&window.ScrollTrigger){
     function openEvents(){
       if(document.documentElement.classList.contains("pmode-active")) return;
       if(b.state.h < b.d.H*0.85) return;
-      var dot=document.querySelector('#gradEventsModal .gm-dot[data-i="'+b.i+'"]');
-      if(dot) dot.click();                              // seleciona o slide dessa qualificacao
+      var dot=document.querySelector('#gradEventsModal .gm-dot[data-lvl="'+b.i+'"]');
+      /* data-lvl, nao data-i: b.i e o nivel na escada, e data-i e a posicao do slide.
+         Sem dot = nivel sem galeria (Senior). Precisa SAIR aqui: abrir o modal sem selecionar o
+         slide mostraria a galeria de OUTRO nivel, que e pior que nao abrir nada. */
+      if(!dot) return;
+      dot.click();                                      // seleciona o slide dessa qualificacao
       var btn=document.getElementById("gradEventsBtn");
       if(btn) btn.click();                              // abre o modal (openM)
     }
@@ -6106,10 +6110,13 @@ if(window.gsap&&window.ScrollTrigger){
     [].slice.call(mwrap.querySelectorAll(".gb")).forEach(function(col){
       col.addEventListener("click",function(){
         var i=+col.getAttribute("data-i");
+        /* confere o dot ANTES de abrir: sem galeria (Senior) nao abre nada. Se abrisse primeiro,
+           o modal apareceria no slide de outro nivel — o mesmo erro que a ordem inversa causava. */
+        var dot=document.querySelector('#gradEventsModal .gm-dot[data-lvl="'+i+'"]');
+        if(!dot) return;
         var btn=document.getElementById("gradEventsBtn");
         if(btn) try{ btn.click(); }catch(e){}
-        var dot=document.querySelector('#gradEventsModal .gm-dot[data-i="'+i+'"]');
-        if(dot) try{ dot.click(); }catch(e){}
+        try{ dot.click(); }catch(e){}
         mhint.classList.add("used");   /* a dica de "toque numa barra" cumpriu o papel */
       });
     });
@@ -6166,18 +6173,34 @@ if(window.gsap&&window.ScrollTrigger){
     function evLogo(base,cls,alt){ var f=EV+base;
       return '<picture><source srcset="'+f+'.webp" type="image/webp">'
         +'<img class="ev-logo '+cls+'" src="'+f+'.png" alt="'+alt+'" loading="lazy" decoding="async"></picture>'; }
+    /* O `lvl` é o índice da pessoa no array DATA da escada (Sênior=0 … Acionista=4) e é ele que vai
+       para o `data-i` do dot — NÃO a posição dentro deste array.
+       Isso existe porque o SÊNIOR NÃO TEM GALERIA (pedido do dono, 2026-08-04: "Senior não tem
+       pop-up, retira esse que tá aparecendo treinamentos"). Sem o `lvl`, tirar a 1ª entrada daqui
+       deslocaria todos os índices e os TRÊS lugares que abrem a galeria por nível passariam a abrir
+       a galeria errada em silêncio: o clique na barra (desktop), o toque na barra (mobile) e a
+       apresentação. Com o `lvl` explícito, os três continuam falando em nível e o Sênior
+       simplesmente não encontra dot — nada abre, que é o comportamento pedido.
+       As fotos de `treinamento-*` ficam no repositório, sem uso: religar o Sênior é devolver a
+       entrada aqui com `lvl:0`. */
     var EVENTS=[
-      { name:"Sênior", color:"#22c55e", rgb:"34,197,94", pin:"assets/pins/grad-senior.webp", gal:"treinamento",
-        logo:'<span class="ev-sm">iGreen</span><span class="ev-lg">TREINAMENTOS</span><span class="ev-tag">& Eventos</span>' },
-      { name:"Gestor", color:"#f97316", rgb:"249,115,22", pin:"assets/pins/grad-gestor.webp", gal:"experience",
+      { lvl:1, name:"Gestor", color:"#f97316", rgb:"249,115,22", pin:"assets/pins/grad-gestor.webp", gal:"experience",
         logo:evLogo("experience-logo","ev-wide","iGreen Experience") },
-      { name:"Executivo", color:"#38bdf8", rgb:"56,189,248", pin:"assets/pins/grad-executivo.webp", gal:"cruzeiro",
+      { lvl:2, name:"Executivo", color:"#38bdf8", rgb:"56,189,248", pin:"assets/pins/grad-executivo.webp", gal:"cruzeiro",
         logo:evLogo("cruzeiro-logo","ev-tall","Let’s Go Cruzeiro iGreen") },
-      { name:"Diretor", color:"#cbd5e1", rgb:"203,213,225", pin:"assets/pins/grad-diretor.webp", gal:"america-latina",
+      /* Diretor = as fotos de NEVE (esqui, montanha, trem na neve). O nome da pasta é
+         "america-latina" por herança; o conteúdo é a viagem da neve — conferido foto por foto. */
+      { lvl:3, name:"Diretor", color:"#cbd5e1", rgb:"203,213,225", pin:"assets/pins/grad-diretor.webp", gal:"america-latina",
         logo:'<span class="ev-sm">iGreen</span><span class="ev-lg">VIAGEM</span><span class="ev-tag">Internacional</span>' },
-      { name:"Acionista", color:"#f5c542", rgb:"245,197,66", pin:"assets/pins/grad-acionista.webp", gal:"mundo",
+      /* Acionista = as fotos da EUROPA (Coliseu, Paris, Veneza, Pisa, Santorini, Londres). O dono
+         pediu Dubai "mas pode mesclar com Europa" — não existe foto de Dubai no projeto, então
+         fica a Europa até ele mandar as de Dubai. Mesma coisa do Caribe no Diretor. */
+      { lvl:4, name:"Acionista", color:"#f5c542", rgb:"245,197,66", pin:"assets/pins/grad-acionista.webp", gal:"mundo",
         logo:'<span class="ev-sm">iGreen</span><span class="ev-lg">VIAGEM</span><span class="ev-tag">Internacional</span>' }
     ];
+    /* quais níveis TÊM galeria — lido pelo presentation-mode.js para não criar uma parada morta no
+       Sênior (um clique que não faz nada). Publicado aqui porque é aqui que a verdade mora. */
+    window.GRAD_GAL_LEVELS = EVENTS.map(function(e){ return e.lvl; });
     /* preenche os slots com as 4 fotos de eventos, ciclando (duplica nos 2 lados).
        O filtro/tint da cor de cada qualificacao vem do .gm-photo::after (via --acc). */
     /* cada evento tem 8 fotos proprias: 1-4 no lado esquerdo, 5-8 no direito (no mobile o
@@ -6207,7 +6230,15 @@ if(window.gsap&&window.ScrollTrigger){
         +'<div class="gm-qr"><div class="gm-qr-code">'+evQr(ev.gal)+'</div><p>Veja em nosso<br>Canal do YouTube</p></div></div>'
         +'<div class="gm-side gm-right">'+photos(ev.gal,5,8)+'</div></div>';
     }).join("");
-    var dots=EVENTS.map(function(e,i){ return '<button class="gm-dot'+(i===0?' active':'')+'" data-i="'+i+'" aria-label="'+e.name+'"></button>'; }).join("");
+    /* DOIS índices no mesmo botão, e trocar um pelo outro quebra em silêncio:
+       - data-i  = posição do SLIDE neste carrossel (0..3). É o que o `go()` daqui consome.
+       - data-lvl = NÍVEL na escada (Sênior=0 … Acionista=4). É por ele que o mundo de fora
+         (clique na barra no desktop, toque no mobile, modo apresentação) pede uma galeria.
+       Tentei primeiro usar data-i para as duas coisas e o resultado foi galeria trocada: com o
+       Sênior fora do array, `go(2)` levava ao slide 2 (Diretor) quando o pedido era o nível 2
+       (Executivo). Medido: pin GESTOR abrindo cruzeiro, EXECUTIVO abrindo neve, e assim por diante,
+       tudo deslocado em um. Os dois atributos precisam continuar separados. */
+    var dots=EVENTS.map(function(e,i){ return '<button class="gm-dot'+(i===0?' active':'')+'" data-i="'+i+'" data-lvl="'+e.lvl+'" aria-label="'+e.name+'"></button>'; }).join("");
     var modal=document.createElement("div");
     modal.className="grad-modal"; modal.id="gradEventsModal"; modal.setAttribute("aria-hidden","true");
     modal.innerHTML='<div class="gm-backdrop"></div>'
