@@ -252,10 +252,19 @@
         var bs = document.querySelectorAll('#gradBars .bar-group');
         var n = bs.length;
         var out = [{ y:y, action:function(){ gradEventsClose(); gradClear(); } }];   // gráfico completo
+        /* NEM TODO NÍVEL TEM GALERIA. O Sênior não tem (pedido do dono, 2026-08-04: "Senior não
+           tem pop-up, retira esse que tá aparecendo treinamentos") — o pin dele entra, a galeria
+           não. Quem tem vem do index, em window.GRAD_GAL_LEVELS, ao lado do array EVENTS: é lá que
+           a verdade mora. Contar dots aqui NÃO serve — o modal é montado em runtime e pode não
+           existir quando rebuildIndex() roda (mesma razão de a contagem sair das barras). Sem a
+           lista, o fallback é "todos têm", que é o comportamento antigo. */
+        var comGal = window.GRAD_GAL_LEVELS || null;
+        var temGal = function(lvl){ return comGal ? comGal.indexOf(lvl) >= 0 : true; };
         for (var d = 0; d < n; d++){                                                 // Sênior → ... → Acionista
           (function(lvl){
             var barIdx = n - 1 - lvl;                                                // DOM invertido
             out.push({ y:y, action:function(){ gradEventsClose(); gradHover(barIdx); } });                    // pin no gráfico
+            if (!temGal(lvl)) return;                   // sem galeria: não cria parada morta
             out.push({ y:y, action:function(){ gradClear(); gradEventsOpen(); gradEventGo(lvl); } });         // galeria do pin
           })(d);
         }
@@ -434,7 +443,10 @@
   function gradModalEl(){ return document.getElementById('gradEventsModal'); }
   function gradEventsOpen(){ var m = gradModalEl(); if (m && m.classList.contains('open')) return; var b = document.getElementById('gradEventsBtn'); if (b) try{ b.click(); }catch(e){} }
   function gradEventsClose(){ var m = gradModalEl(); if (m && m.classList.contains('open')){ var c = m.querySelector('.gm-close'); if (c) try{ c.click(); }catch(e){} } }
-  function gradEventGo(i){ var d = document.querySelector('#gradEventsModal .gm-dot[data-i="' + i + '"]'); if (d) try{ d.click(); }catch(e){} }
+  /* `i` é o NÍVEL da escada (Sênior=0 … Acionista=4), por isso data-lvl e não data-i — o data-i é a
+     posição do slide no carrossel do modal, e os dois deixaram de coincidir quando o Sênior saiu da
+     galeria. Trocar um pelo outro abre a galeria do nível vizinho, sem erro nenhum no console. */
+  function gradEventGo(i){ var d = document.querySelector('#gradEventsModal .gm-dot[data-lvl="' + i + '"]'); if (d) try{ d.click(); }catch(e){} }
 
   /* bonificação: seleciona o carro/aba (clicar no .carbtn dispara o setCar do site) */
   function carSelectRaw(i){ var b = document.querySelector('.carbtn[data-car="' + i + '"]'); if (b) try{ b.click(); }catch(e){} }
