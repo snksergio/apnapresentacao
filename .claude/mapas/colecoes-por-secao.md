@@ -74,7 +74,23 @@ Há uma constante de duração casada com a animação do deck: `CARO = 5` em `j
 
 Cada card aponta para uma `produtos/conexao*.html` — card novo precisa de página nova (base: `produtos/template.html`).
 
-**Cada card tem 4 `.emods li`, e isso não é decoração: é o que iguala a altura dos cards.** Medido a 1920×946 (card de 346px de largura): 4 itens + descrição de 2 linhas = **510px**; a 3ª linha de descrição soma 19px (Telecom e Seguros ficam em 529px). Até 2026-08-04 o **Expansão** tinha só 3 itens e media **471px** — 39px mais baixo que os quatro vizinhos, desalinhado. Ao trocar o conteúdo dele (texto novo do dono) os itens foram para 4 e ele passou a 510px, igual a Livre/Green/Placas/Solar. A altura da seção **não** depende disso (o deck é horizontal com altura própria): página 30037 antes e depois, então nada abaixo se move — mas um card com contagem diferente aparece como degrau no deck.
+**Cada card tem 4 `.emods li`.** Até 2026-08-04 o **Expansão** tinha só 3 e media **471px**, contra 510px dos vizinhos de mesma forma — 39px de degrau. Ao trocar o conteúdo dele (texto novo do dono) os itens foram para 4 e ele igualou.
+
+### O que faz a altura de um card (medido a 1920×946, card de 346px, lista de 300px)
+Três coisas somam, e **cada linha de texto a mais custa ~14px na lista e 19px na descrição**:
+
+| peça | 1 linha | 2 linhas |
+|---|---|---|
+| `.emods li` (fonte 12,5px, padding 11px 2px) | 39px | 53px |
+| descrição `<p>` | — | +19px por linha extra |
+
+Alturas reais depois do pedido do dono de 2026-08-04 (expandir "+ Extra" para "+ Bônus Extra conforme campanha vigente"): **Livre 510 · Green 524 · Placas 510 · Solar 524 · Telecom 544 · Seguros 544 · Expansão 510**. O texto longo quebra em 2 linhas em Green, Solar, Telecom e Seguros; Telecom e Seguros ainda somam a 3ª linha de descrição. Espalhamento de 34px (era 19px).
+
+⚠ **Esse espalhamento NÃO é degrau numa fileira.** Os 7 cards ficam em posições diferentes do baralho 3D dirigido por scroll (medido: topos em 9130, 9246, 9467, 9640, 9670, 9670, 9687) — aparecem um por vez, então altura diferente não desalinha nada visualmente.
+
+⚠ **No DESKTOP mexer no texto do card não move nada abaixo** (o deck tem altura própria): página 30037 antes e depois. **No MOBILE move**: lá os cards empilham, e as 4 quebras de linha somaram **58px** na página (16872 → 16930). Nada quebrou — a Trajetória vem ANTES do Ecossistema, e o que vem depois se posiciona pela própria seção — mas se um dia a conta de scroll do mobile não fechar, este é um dos lugares que a mudou.
+
+⚠ **Ao medir quebra de linha aqui, não use `line-height`:** ele é `normal` nestes `li`, então `parseFloat` devolve NaN e qualquer comparação vira falso — um detector escrito assim reporta "0 itens em 2 linhas" com os itens visivelmente quebrados (aconteceu). Meça a altura do texto (altura da caixa menos o padding): 17px = 1 linha, 31px = 2.
 
 ⚠ **REVERTIDO em 2026-08-03 (pedido do dono):** os cards **NUNCA** abrem a página de produto — nem na apresentação, nem fora dela. Antes avançar por dentro do stop navegava para o produto de propósito; hoje há **duas travas pareadas**, e as duas precisam continuar existindo:
 - `js/page-transition.js` — o `click` e o `keydown` saem antes se o href contém `produtos/`. A trava é **incondicional** (antes só valia com `pmode-active`).
