@@ -74,6 +74,8 @@ Há uma constante de duração casada com a animação do deck: `CARO = 5` em `j
 
 Cada card aponta para uma `produtos/conexao*.html` — card novo precisa de página nova (base: `produtos/template.html`).
 
+**Cada card tem 4 `.emods li`, e isso não é decoração: é o que iguala a altura dos cards.** Medido a 1920×946 (card de 346px de largura): 4 itens + descrição de 2 linhas = **510px**; a 3ª linha de descrição soma 19px (Telecom e Seguros ficam em 529px). Até 2026-08-04 o **Expansão** tinha só 3 itens e media **471px** — 39px mais baixo que os quatro vizinhos, desalinhado. Ao trocar o conteúdo dele (texto novo do dono) os itens foram para 4 e ele passou a 510px, igual a Livre/Green/Placas/Solar. A altura da seção **não** depende disso (o deck é horizontal com altura própria): página 30037 antes e depois, então nada abaixo se move — mas um card com contagem diferente aparece como degrau no deck.
+
 ⚠ **REVERTIDO em 2026-08-03 (pedido do dono):** os cards **NUNCA** abrem a página de produto — nem na apresentação, nem fora dela. Antes avançar por dentro do stop navegava para o produto de propósito; hoje há **duas travas pareadas**, e as duas precisam continuar existindo:
 - `js/page-transition.js` — o `click` e o `keydown` saem antes se o href contém `produtos/`. A trava é **incondicional** (antes só valia com `pmode-active`).
 - `js/presentation-mode.js` — no `goNext`, o stop de card do ecossistema só avança (`isEcoCardStop` → `goToIndex(+1)`); não chama mais `openEcoCard()`.
