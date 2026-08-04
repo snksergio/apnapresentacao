@@ -2293,8 +2293,8 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   @keyframes bootSlide{0%{transform:translateX(-120%)}100%{transform:translateX(330%)}}
   @media (prefers-reduced-motion:reduce){#boot .boot-logo,#boot .boot-bar i{animation:none}}
 </style>
-<link rel="stylesheet" href="css/page-transition.css">
-<link rel="stylesheet" href="css/presentation-mode.css" media="(min-width:1025px)">
+<link rel="stylesheet" href="css/page-transition.css?v=20260804">
+<link rel="stylesheet" href="css/presentation-mode.css?v=20260804" media="(min-width:1025px)">
 <script>try{if(sessionStorage.getItem('pt')){sessionStorage.removeItem('pt');document.documentElement.setAttribute('data-pt-state','cover');}}catch(e){}</script>
 </head>
 <body>
@@ -6702,7 +6702,7 @@ if(window.gsap&&window.ScrollTrigger){
   }
 })();
 </script>
-<script src="js/video-inview.js"></script>
+<script src="js/video-inview.js?v=20260804"></script>
 <script>
 /* Tiles do carrossel de logos do clube (orbita): 12 dos 48 nunca carregavam.
    Sao duplicatas do carrossel infinito que vivem FORA da viewport na horizontal, e o
@@ -7444,7 +7444,7 @@ if(window.gsap&&window.ScrollTrigger){
 })();
 </script>
 <script>/* PERF: modo apresentacao e desktop-only (o JS ja faz early-return no mobile). Carrega so no desktop p/ poupar ~41KB no mobile. */
-if(window.matchMedia&&matchMedia('(min-width:1025px)').matches){var pm=document.createElement('script');pm.src='js/presentation-mode.js';document.body.appendChild(pm);}</script>
-<script src="js/page-transition.js"></script>
+if(window.matchMedia&&matchMedia('(min-width:1025px)').matches){var pm=document.createElement('script');pm.src='js/presentation-mode.js?v=20260804';document.body.appendChild(pm);}</script>
+<script src="js/page-transition.js?v=20260804"></script>
 </body>
 </html>

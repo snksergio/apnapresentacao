@@ -346,3 +346,29 @@ Das 183 `<img>` da index, percorrendo a página inteira:
   - **Não é o mesmo bug do fundo de moedas** (ali a caixa tinha altura 0 e a imagem nunca aparecia). Aqui a caixa tem tamanho e o problema é só o disparo do lazy num elemento que vive fora da viewport horizontal.
   - **Conserto quando o dono quiser:** tirar o `loading="lazy"` desses tiles (são pequenos — os avif somam poucas dezenas de kB) ou pré-carregar quando a órbita se aproxima. Custa alguns kB no carregamento e resolve o branco. Decisão de peso é do dono.
 - **Nenhuma outra imagem visível deixou de carregar.** As 76 ocorrências de `lazy` sem `width`/`height` **não** estão quebradas hoje — mas continuam sendo a condição que apagou o fundo de moedas, então declare dimensões em imagem nova.
+
+---
+
+## ⚠ Arquivo externo que muda de conteúdo TEM de mudar de URL (2026-08-04)
+
+Sintoma do dono, palavras dele: **"somente no modo apresentação que ficou a ordem das viagens errada; no clique tá ok"**. Eu já tinha medido a apresentação e ela passava — e passava mesmo, no meu navegador.
+
+**Causa: cache do navegador dele.** O caminho do clique é **inline no `index.html`** (ele recebeu a versão nova junto com a página). O caminho da apresentação vem de **`js/presentation-mode.js`, arquivo externo** — e nenhuma URL local do projeto tinha versão, então o navegador reaproveitou a cópia antiga. HTML novo rodando JS velho.
+
+Reproduzido de propósito, servindo o `index.html` novo com o `presentation-mode.js` anterior:
+
+| pin | galeria que abria | correto |
+|---|---|---|
+| Sênior | Experience | nenhuma |
+| Gestor | Cruzeiro | Experience |
+| Executivo | neve | Cruzeiro |
+| Diretor | Europa | neve |
+| Acionista | Europa (repetida) | Europa |
+
+Exatamente "as viagens deslocadas em um, e uma repetida". **Zero erro no console** — o índice antigo (`data-i`) simplesmente casava com o dot errado.
+
+**Correção:** todas as 50 referências a `js/*.js` e `css/*.css` (index + 8 páginas de produto, incluindo o `pm.src=` dinâmico) passaram a levar `?v=20260804`. Script: `node .claude/scripts/versionar-assets.js <versao>` — conta antes, aborta se a contagem não bater, trabalha linha a linha e preserva CRLF.
+
+**Ao mexer em qualquer arquivo de `js/` ou `css/`, suba o `?v=`.** O `antes-de-commitar.js` avisa se você esquecer, e também se aparecer URL sem versão. Detalhe do detector que custou uma volta: ele precisa exigir `src=`/`href=` com as aspas, senão conta as **menções em comentário** ("o IntersectionObserver do js/video-inview.js, que…") e o aviso sai falso.
+
+**Lição mais geral, que vale para além deste caso:** quando o sintoma aparece **só em um dos caminhos** que fazem a mesma coisa, compare o que é *inline* com o que é *arquivo externo* antes de procurar erro de lógica. Aqui a lógica estava certa nos dois — o que diferia era a idade do código.

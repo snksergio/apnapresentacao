@@ -54,7 +54,47 @@ for (const f of todos) {
   }
 }
 
-/* 4) o verificador de padroes passa? */
+/* 4) mexeu num js/css externo e NAO subiu o ?v= das URLs?
+   Isto existe porque aconteceu (2026-08-04): o dono viu "a ordem das viagens errada SO no modo
+   apresentacao, no clique ta ok". Reproduzido — o navegador dele tinha o js/presentation-mode.js
+   ANTIGO em cache com o index.html novo: o pin GESTOR abria cruzeiro, EXECUTIVO abria a neve,
+   DIRETOR abria Europa, e o Senior abria uma galeria que nao deveria ter. O clique acertava porque
+   esse caminho e inline no index; a apresentacao vem do arquivo externo. Nenhuma URL local tinha
+   versao, entao o navegador reaproveitou a copia velha — sem erro nenhum no console.
+   Um arquivo externo que muda de CONTEUDO tem de mudar de URL, senao o cache decide por voce. */
+const ext = arq.filter(f => /^(js|css)\/.*\.(js|css)$/.test(f));
+if (ext.length) {
+  const html = ['index.html'].concat(
+    fs.existsSync('produtos') ? fs.readdirSync('produtos').filter(f => f.endsWith('.html')).map(f => 'produtos/' + f) : []
+  ).filter(f => fs.existsSync(f));
+  /* a versao em uso hoje, lida do proprio HTML */
+  const versoes = new Set();
+  let semVersao = 0;
+  /* exige src=/href= e as aspas: sem isso conta tambem as MENCOES em comentario
+     ("o IntersectionObserver do js/video-inview.js, que...") e o aviso sai falso — testado. */
+  for (const f of html) {
+    const t = fs.readFileSync(f, 'utf8');
+    const re = /(?:src|href)\s*=\s*(['"])((?:\.\.\/)?(?:js|css)\/[a-z0-9-]+\.(?:js|css))(\?v=([0-9]+))?\1/g;
+    let m;
+    while ((m = re.exec(t))) { if (m[4]) versoes.add(m[4]); else semVersao++; }
+  }
+  if (semVersao) {
+    avisos.push('Ha ' + semVersao + ' URL(s) de js/css SEM ?v= nos HTML.\n' +
+      '     Arquivo externo sem versao na URL fica preso no cache do navegador: o visitante roda\n' +
+      '     codigo velho com HTML novo, e nao aparece erro nenhum. Rode o versionador ou adicione\n' +
+      '     ?v=<data> a mao.');
+  }
+  /* o ?v= mudou neste commit? */
+  const diffHtml = sh('git diff --cached -U0 -- index.html produtos') || sh('git diff -U0 -- index.html produtos');
+  if (!/^\+.*\?v=/m.test(diffHtml)) {
+    avisos.push('Voce alterou ' + ext.length + ' arquivo(s) em js/ ou css/ e NAO subiu o ?v= das URLs\n' +
+      '     nos HTML (versao atual: ' + (Array.from(versoes).join(', ') || 'nenhuma') + ').\n' +
+      '     Sem trocar a URL, quem ja visitou o site continua rodando a versao antiga desse arquivo.\n' +
+      '     Foi assim que "a ordem das viagens" ficou errada so no modo apresentacao.');
+  }
+}
+
+/* 5) o verificador de padroes passa? */
 const rev = sh('node .claude/scripts/revisar.js');
 const mErr = rev.match(/(\d+) erro\(s\)/);
 if (mErr && +mErr[1] > 0) {
