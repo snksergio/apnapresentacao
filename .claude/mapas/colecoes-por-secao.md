@@ -50,6 +50,10 @@ A **curva SVG se estende sozinha**: `buildCurve()` gera o `d` amostrando uma sen
 
 Cada item tem `.jcard`, `.jphoto` e `.jspark`. As fotos têm efeito CRT aplicado por JS que envolve a `<img>` (usa `img.closest('picture') || img` — se você trocar por `<picture>`, o efeito precisa continuar achando o elemento certo).
 
+⚠ **O `end` do scrub é `bottom 90%`, e mudar isso quebra o último marco.** Era `bottom 62%` e o dono relatou: "no modo apresentação, quando chego na foto do Gusttavo Lima ele já desce de uma vez". Não era a apresentação descendo — **medido em 1955×1142** (tela alta), a parada dele pousava com o card em `[-345,-229]`, isto é **345px acima do topo da tela**. Causa raiz, e ela vale também para o site sem apresentação: o `jcheck` revela um marco quando a PONTA da curva passa o ponto dele, e com `end` em 62% a curva só terminava de crescer quando a base do `.jwrap` chegava a 62% da tela — em tela alta isso é muito scroll, e o último ponto só era alcançado depois de o card sair de cena (revelação em y≈6843 contra y≈6539, o último instante em que ele ainda caberia). Com 90% a curva fecha com a base do wrap mais baixa na tela. Verificado depois: 1955×1142 → o 7º card em `[888,1004]`, e **os 7 na tela e revelados**; 1229×600 → os 7 ok e a apresentação andando `Trajetória#0…#6 → Sede#0`.
+
+**Por que eu não achei antes:** testei 1920×946, 1229×600 e mobile, e nas três o último marco aparecia. O defeito só existe a partir de ~1000px de ALTURA de viewport. Ao mexer nesta seção, inclua uma tela alta nas configurações de teste.
+
 **Apresentação:** usa `trig:'.jwrap'` com `buildStops` que faz **busca binária ao longo do caminho SVG** (`fill.getPointAtLength`) para achar o progresso em que cada ponto aparece. Ou seja: as paradas **derivam do desenho**, não de uma lista fixa. Adicionar um ponto tende a funcionar sozinho — mas **valide**, porque o caminho SVG e o número de itens precisam continuar casados. Confirmado na prática em 2026-08-03: ao ir de 5 para 7 itens as paradas foram de 5 para 7 sem tocar em nada, e cada parada revela exatamente um card a mais.
 
 Ao adicionar: o ponto no caminho SVG, o `.jitem` correspondente, e a foto tratada (`ativos-guardian`).
@@ -121,7 +125,11 @@ Estado em 2026-08-03: **2 Embaixadores + 13 Royais**, nomes reais passados pelo 
 
 **A lista dos Royais foi trocada na 2ª rodada de 2026-08-03** e a ordem do array **é a ordem do trilho** (alfabética por primeiro nome, como o dono mandou). Quatro nomes mudaram e valem conferência se algum dia baterem os registros: `André Maluf` → `André Maluf e Beatriz Guimarães`; `Fillipe Souza` → `Fillipe Souza e Stela Souza` (antes o nome vinha **cortado** no material); `Joel Pletsch` → **`Joel e Fabiana Lisboa`** (sobrenome era outro); `Orlando Ferreira` → `Orlando Ferreira e Florence Gentil`. E `Luiz Carlos (Pit)` perdeu os parênteses.
 
-**O nível aparece em 2 lugares no card, ambos vindos do mesmo `lvl`** — mudar o `lvl` de uma pessoa muda os dois de uma vez, e move a pessoa de grupo no trilho:
+**O nível aparece em 2 lugares (2026-08-04): o rótulo ACIMA do card e o pin.** Dentro do card não há mais texto de nível — o `[ ROYAL ]` / `[ EMBAIXADOR ]` saiu a pedido do dono. O rótulo acima é o `.cr-kicker` do trilho e diz só **"Acionistas Royal"** / **"Acionistas Embaixadores"** (sem o "A Rede ·", sem 5K/12K), vindo do `rotulo` de cada grupo em `G[]`. A regra CSS do `.rc-tag` fica no arquivo: devolver é só voltar o `<span>` no `cardHtml()`.
+
+⚠ **Ao remover a tag, o pin foi para a ESQUERDA e caiu em cima do nome.** A regra compartilhada do `.rc-head` usa `justify-content:space-between`, que com dois filhos jogava um em cada ponta — com um filho só, ela manda o item para o **início**. Por isso o trilho força `justify-content:flex-end`. Verificado: pin em x 288–345, nome termina em 276, folga de 12px, nos dois grupos.
+
+**(histórico) Antes eram 2 lugares assim no card, ambos vindos do mesmo `lvl`** — mudar o `lvl` de uma pessoa muda os dois de uma vez, e move a pessoa de grupo no trilho:
 1. `[ EMBAIXADOR ]` / `[ ROYAL ]` no canto superior **esquerdo** (`.rc-tag`);
 2. o **pin exato** no canto superior direito (`.rc-pin`) — `EMBAIXADOR` → `assets/pins/pin-e12.webp`, `ROYAL` → `assets/pins/pin-r5.webp`, os mesmos arquivos das graduações. Antes era um selo desenhado em CSS (conic-gradient); foi removido. Nível novo = entrada nova no objeto `PIN`, senão o card sai sem pin.
 
@@ -141,9 +149,20 @@ Duas adaptações que **não** são escolha de estilo, não "conserte" para o qu
 
 **Fotos — requisito de conteúdo, não capricho:** uma foto por pessoa, com dominante **distinta das vizinhas**. Enquanto a seção esteve visível, a foto do card ativo virava backdrop borrado (blur 95px) e o crossfade entre elas era o efeito de ambiente; reciclar imagem fazia a troca passar em branco. No trilho da Bonificação não há backdrop, mas a exigência de foto distinta continua: são cards vizinhos no baralho. Ficam em `assets/img/rede/`.
 
-**`ph:true` = placeholder de evento esperando a foto real. Hoje não existe mais nenhum:** as **15 pessoas têm foto real** em `assets/img/rede/`, uma por pessoa, com o nome-slug do campo `first` (`André Maluf` → `andre-maluf.jpg`). A última a entrar foi **André Maluf e Beatriz Guimarães** (`andre-maluf.jpg`, 660×706) em 2026-08-03 — ela ocupava o placeholder `assets/img/eventos/america-latina-4.webp`, e era a 2ª parada dos Royais no trilho. Ver a especificação da foto abaixo antes de pedir arquivo novo.
+**`ph:true` = placeholder de evento esperando a foto real.** Hoje faltam **10 fotos**: Anderson Gessler, André Maluf, Eduardo Martins, Fillipe Souza, Gabriel Martins, Joel, Lucas Battistoni, Luiz Carlos Pit, Orlando Ferreira e Renato Cardoso. Já têm foto real: David Willian, Evandro Martinez, João Paulo, **Fellipe e Andréa Morais** e **Sanzio e Soraia Morvan** (as duas últimas vieram em 2026-08-03). Ver a especificação da foto abaixo antes de pedir arquivo novo.
 
-### Especificação da foto do card — o que pedir ao dono
+### Especificação da foto do card — ATUALIZADA em 2026-08-04
+**A foto ocupa o CARD INTEIRO no trilho.** O dono reenviou as 13 fotos dos Royais já recortadas (pasta `Fotos_Royais`, com o `.psd` de trabalho), em **273×415 = proporção 0,66** — que não é a da caixa antiga da foto (330:353 = 0,935) e sim quase a do **card** (1/1.575 = 0,635). Trocar só os arquivos faria o `object-fit:cover` comer 30% da altura pelo meio e decepar cabeças. Então `.carsrail .rcard .rc-ph{top:0;height:100%}`: o corte caiu para **≤4%**, e sobra na largura, não na altura (medido nas 15).
+
+**Pedir ao dono:** proporção **1/1.575** (≈ 0,635), rostos no **primeiro terço** — a máscara é opaca até 38% da altura e totalmente transparente a partir de 82%, onde entra o nome.
+
+⚠ **RESOLUÇÃO ABAIXO DO IDEAL, em aberto:** os arquivos têm 273px de largura, e o card renderiza **360px** no desktop e até 320px no mobile (×3 de dpr = **960px reais**). Ou seja o navegador amplia ~1,3× no desktop e ~3,5× no celular — fica macio. O `.psd` também é 273px, então não há resolução escondida: para resolver, exportar em **720×1134**. Não bloqueia nada, é qualidade.
+
+**Os dois Embaixadores** foram recortados dos posters 1080×1350 na proporção nova (`crop=508:800`). Não dá para excluir o pill "Acionistas Embaixadores" **e** manter o homem inteiro — eles disputam a mesma faixa horizontal; o pill sobrou dentro do recorte de propósito, a ~70% da altura, onde a máscara já o deixa quase invisível.
+
+⚠ **O pin desceu para o canto INFERIOR direito.** Com a foto no card inteiro, o canto superior direito é onde costuma estar o rosto de quem aparece à direita — medido: no card do Anderson o pin caía em cima da cabeça da Débora. Embaixo ele pousa na faixa já dissolvida. O `[ ROYAL ]` fica no topo esquerdo. O `.rc-body` ganhou `padding-right` do tamanho do pin para o nome não correr por baixo dele (verificado: nome termina em x=276, pin começa em x=288).
+
+### (histórico) Especificação anterior — caixa de 68% da altura
 Medido em 2026-08-03 na cena real (não deduzido):
 
 | | valor |
@@ -162,6 +181,23 @@ Medido em 2026-08-03 na cena real (não deduzido):
 **Backdrop:** duas `<img>` em ping-pong. Nunca troque o `src` da mesma tag nem remonte o elemento — repintar um blur desse tamanho a cada quadro trava o scroll.
 
 **Mobile (≤1024px):** sem pin e sem 3D — carrossel horizontal nativo com `scroll-snap`. Deliberado: pinar 8 × 90vh no celular seria 720vh de rolagem forçada, e o ScrollSmoother não existe abaixo de 1025px. A troca de faixa (girar o aparelho) faz `location.reload()` de propósito, para não ficar num meio-estado entre pin e carrossel.
+
+### Apresentação — bolinhas do trilho de navegação
+**Seção com `on:false` NÃO ganha bolinha** (2026-08-03). O dono relatou "tem mais bolinha aparecendo que seção de navegação" e era isso, medido: **12 bolinhas para 10 seções ligadas** — as duas sobrando eram de seções ocultas (`#recorrencia`, antiga, e `#rede`, que virou o trilho dos carros). A bolinha existia, era visível e não fazia nada (o clique é guardado por `if (SECTIONS[i].on)`). O array `dots` **continua com um lugar por seção** (índice = índice em `SECTIONS`, que é como o resto do arquivo indexa); as desligadas ficam `null`, e `renderDotsState` e o listener de clique testam a existência antes de mexer. Verificado depois: 10 bolinhas, 10 seções, nenhuma desativada.
+
+### Trajetória no mobile — o trilho verde PARA no último marco
+Era `bottom:0` com fade a partir de 64%, **de propósito**: o comentário dizia "conectando/dissolvendo na próxima section". Só que a próxima section é a do vídeo, e a linha entrava nela — o dono relatou "a linha verde desce até o vídeo". Agora `bottom:230px` (a mesma conta do preenchimento `::after`, `100% - 234px`) com fade curto em 88%. Verificado: a linha termina em 2893, exatamente onde o último marco termina. Os 230px de `padding-bottom` seguem como respiro.
+
+### Trilho de pessoas no mobile — tudo centralizado
+Rótulo, barra+contador e setas ficavam em alinhamentos diferentes (só as setas estavam no centro). A coluna é `align-items:stretch` porque o deck precisa da largura toda, então quem centraliza cada linha é `text-align:center` no rótulo e `justify-content:center` na barra. Verificado: desvio do centro **0px** nos três.
+
+### Trajetória no mobile — tamanho das fotos
+**⚠ Três das cinco fontes são QUADRADAS** — medido: jp1 1536×1024 (paisagem de verdade), jp2 1254×1254, jp3 1024×1024, jp4 1024×1024, jp5 460×460. Na caixa 16:10 do mobile o `object-fit:cover` come **34% da altura** de toda fonte quadrada.
+
+Em jp4 (Forbes/Amanda) e jp5 (BP/Gusttavo Lima) isso cortava **conteúdo real**: são peças de arte com texto no topo E no rodapé — partia a palavra "Forbes" ao meio e comia o "+800M clientes"; no BP cortava a testa e os olhos. Nenhum `object-position` resolvia, porque salvar um lado perde o outro. Solução: nessas duas a caixa acompanha a arte (`aspect-ratio:1/1`), e nada é cortado (verificado: caixa 328×328, perda 0%). As outras seguem 16:10 — são fotos, não arte com texto.
+
+**Em aberto:** jp2 e jp3 também perdem 34% da altura. Não foram tocadas porque o dono não pediu e são fotos (recorte é enquadramento, não perda de informação). Se um dia incomodar, é a mesma linha — mas cada foto que vira quadrada alonga a timeline do mobile em ~112px.
+As 5 `.jphoto` eram **172×108** (16:10) — 44% de uma tela de 390px, e num recorte 16:10 as fotos verticais mostravam só um pedaço do tronco da pessoa. O dono pediu ajuste; medido antes de mexer, as cinco tinham **exatamente** o mesmo tamanho, ou seja o problema não era inconsistência entre elas, era escala. Agora **300×188** (77% da tela). O teto de 300px vem da largura útil: `390 − 40` do `padding-left` da linha do tempo `− 20` de margem `= 330`.
 
 ## Bonificação (carros) — seção PINADA + trilho das 15 pessoas
 Seção `#bonificacao`, a última antes do Rodapé. **Mudou de natureza em 2026-08-03:** era 1 tela fixa (`.carstage{height:100vh}`, sem pin e sem scrub) e passou a ser **pinada com curso de rolagem**, porque recebeu o trilho de pessoas que era a seção A Rede. Blocos: `<style id="carsrail-styles">`, o `<div class="carsrail">` dentro da `.carstage`, e o `<script id="carsrail-app">`.
@@ -193,7 +229,15 @@ Altura da section = `100 + 55 + 480 + 40 + 40 + 45` = **760vh** com 13+2. **Roya
 
 **A troca de grupo é um salto seco, não um tween.** O baralho novo tem outra contagem; deixar o tween varrer de `p=12` (último Royal) para `p=0` fazia o `apply()` rodar com índices que não existem nos 2 Embaixadores — medido: contador em `03 / 02`. E ao estacionar os cards do grupo que sai é preciso **remover o `.on`**, não só zerar a opacidade: sem isso o `.rcard.on` do documento continuava sendo o do grupo anterior (medido: na 1ª parada dos Embaixadores o destacado ainda era "Fillipe Souza"). O salto cai no meio da ponte, com o trilho invisível, então ninguém vê.
 
+⚠ **`garanteCarro()` tem de ser chamado DEPOIS do bloco que força o fim do vídeo, nunca antes.** O `carsFinish()` do site — disparado pelo `ended` que o trilho força quando liga — termina com um `setCar(0)`. Com a ordem invertida ficava um estado impossível: card de Embaixador na tela com a aba em "Royal 5K" e a BYD acesa. Só aparece ao **entrar direto** no trecho dos Embaixadores (o que a apresentação e quem chega no meio da página fazem); rolando devagar não aparecia, porque o vídeo acaba muito antes de o trilho ligar. Verificado depois: entrada direta nos Embaixadores → aba "Embaixador 12K", trilho à ESQ; voltando aos Royais → aba "Royal 5K", trilho à DIR.
+
 **Clicar numa aba dentro do trilho SALTA para o trecho daquele grupo.** Quem manda na seleção aqui é a **posição do scroll**; se o clique só trocasse o carro, ficava um estado impossível — medido: aba em "Embaixador 12K" com os cards dos Royais na tela. Posse explícita a uma das duas mecânicas é a lição que este projeto já aprendeu com o snap brigando com auto-scroll. A trava do salto é "o grupo discorda do scroll" (+ um flag para a troca feita **pelo** scroll não voltar como salto) — **de propósito não usa `isTrusted`**: qualquer coisa que selecione um carro fora do trecho dele precisa levar o scroll junto, venha de clique humano ou de código. Sem risco de laço: o salto muda o scroll, o `onUpdate` vê o grupo já correto e não clica em nada.
+
+**SETAS, e por que elas são obrigatórias.** O container do trilho é `pointer-events:none` para não roubar o tap que seleciona o carro — consequência: fora da apresentação **não havia como passar as fotos**, porque clicar em cima do card cai na metade escurecida e seleciona o carro de trás. As duas setas (`.cr-arrows`) são a **única** parte do trilho com `pointer-events:auto`. Ficam em **linha própria, abaixo do contador** (pedido do dono). Elas andam pela lista **global** das 15 paradas, não pelo grupo: no 13º Royal o "próximo" atravessa a ponte e cai no 1º Embaixador, com o carro trocando sozinho. No mobile empurram o `scrollLeft` do deck (não há pin lá). Verificado: desktop `01/13→02→03→04`, volta a `03`, e do 13º Royal salta para `01/02` com o Taycan aceso; mobile `01/15→02→03→04`.
+
+**Tamanho do card no desktop:** `--cardw: min(clamp(232px,20vw,360px), calc((100vh - 235px)/1.575))`. O 2º termo é o orçamento de ALTURA e subiu de 210 para 235px quando as setas ganharam linha própria — sem isso, num notebook de 600px úteis a coluna card+contador+setas não caberia. Medido: 1920×946 → **360×567** (era 306×482); 1229×600 → 232×365, **igual a antes** (lá quem manda é a altura, não a largura).
+
+⚠ **Ao medir a `.carpick` deslocada, meça em DUAS chamadas.** A transição de `transform` é de 0,6s e numa aba throttled ela não avança dentro do mesmo `evaluate`: duas leituras minhas deram "não deslocou" (777px) e a chamada seguinte deu o valor certo (`translateX(-307px)`, folga de 317px do card). Não era bug — era a medição.
 
 **O kicker do trilho diz de quem é a vez** (`A Rede · Acionistas Royal 5K` / `... Embaixador 12K`) — é o que amarra o baralho ao carro aceso ao lado. No mobile ele volta a ser só `A Rede`.
 

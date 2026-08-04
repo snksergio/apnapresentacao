@@ -91,6 +91,11 @@ A causa de engasgo aqui quase nunca é o arquivo — é **trabalho por quadro**:
 - **Você não mede FPS de forma confiável** nessa condição. Seja honesto: meça bytes, latência, contagem de camadas — e diga que "ficou mais fluido?" só o notebook do dono responde.
 - Se o MCP do Chrome DevTools travar: outra conversa Claude pode estar usando o mesmo perfil de navegador. Só um por vez.
 - `file://` gera erro de CORS de fonte no console. É conhecido e não conta como erro novo.
+- **`file://` não é o site.** Três coisas não funcionam lá e nenhuma é defeito da página: o popup
+  do vídeo institucional (o player do YouTube exige origem válida; em `file://` a origem é a string
+  `"null"` e ele devolve **Erro 153** — medido de novo em 2026-08-04), as fontes locais (CORS) e o
+  `navigator.share`. Para revisar como no site real: `node .claude/scripts/ver-local.js` — sobe um
+  http em porta livre e abre o navegador. Sem dependência: é o servidor que já vem no node.
 - **`sessionStorage` é compartilhado entre páginas `file://`.** A chave `pm` faz o modo apresentação **entrar sozinho** na próxima carga — se a página abrir em apresentação sem você pedir, é isso. Limpe antes de testar.
 - **Cuidado com `&&` em cadeia no shell.** Um `grep` que não acha nada retorna 1 e **aborta o resto da linha** — já fez um `git rm` seguido de commit não rodar, silenciosamente. Use `;` quando os comandos são independentes.
 
@@ -176,7 +181,8 @@ Todas foram descobertas errando. Não repita.
 - **`data-pt-href` é só para navegar ENTRE páginas.** Em âncora da mesma página ele faz o clique
   tentar "navegar" para o próprio documento. Remova ao converter link de página em âncora.
 - **`navigator.share` e a área de transferência exigem HTTPS.** Em `file://` falham caladas — o
-  botão parece quebrado. Teste servindo por http (`npx serve .`), nunca abrindo o arquivo direto.
+  botão parece quebrado. Teste servindo por http (`node .claude/scripts/ver-local.js`), nunca
+  abrindo o arquivo direto.
 - **Só o item ATIVO do carrossel de KPIs tem largura.** Os inativos ficam com `width: 0`, e aí
   qualquer teste de "texto cortado" (`scrollWidth > clientWidth`) dá falso positivo. Espere o item
   entrar em foco antes de medir.

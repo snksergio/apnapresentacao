@@ -246,25 +246,7 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
   .jtitle.jtitle-frase{font-size:clamp(28px,3.1vw,46px);letter-spacing:.01em;text-wrap:balance;
     text-transform:none}
   .jhint{margin-top:16px;font-size:14.5px;color:var(--ink-dim)}
-  /* RABICHO DA TIMELINE 320 -> 620 (2026-08-03). Sintoma do dono: no modo apresentacao o ultimo
-     marco ("Parceria Estrategica") "aparece rapidamente e ja vai para a proxima secao", sem dar
-     tempo de ler, e o video da Sede aparecia antes de ele clicar na seta.
-     CAUSA (nao e avanco automatico — e ENQUADRAMENTO): o stop do marco nasce do buildStops da
-     Trajetoria, que faz busca binaria pelo p em que o traco verde alcanca o .jdot e ainda soma
-     +0.05 de margem. Para o ULTIMO marco isso da p ~0.89, e o proximo irmao no DOM e a section
-     #sede, que abre com o video .hqbg. Estimativa pelo CSS (7 .jitem + margin 150 +
-     este padding): .jwrap ~2294px, range do scrub ~2370px, logo a borda de baixo da .jwrap pousa
-     a ~844px numa tela de 946 -> ~100px do video ja na tela.
-     POR QUE MEXER AQUI E NAO NO STOP: o card do marco SO e revelado quando o traco chega nele
-     (mesmo limiar do jcheck). Parar antes desse p esconderia justamente o card que ele quer ler
-     — os dois estao amarrados. Alongar o rabicho desamarra: o dot sobe no percurso do traco (p
-     cai para ~0.79) e a Sede desce no documento, entao no mesmo gesto o card revela E o video
-     fica fora da tela (~190px de folga pelo calculo).
-     O rabicho e espaco vazio DEPOIS do ultimo marco, entao nao mexe em nenhum card.
-     Mobile nao e afetado: a media query <=1024px redefine .jwrap para padding:6px 0 0.
-     E um numero so: se sobrar buraco demais no scroll normal, 520px ainda deve segurar; se o
-     video ainda espiar, sobe para 700px. */
-  .jwrap{position:relative;padding:24px 0 620px}
+  .jwrap{position:relative;padding:24px 0 320px}
   .jsvg{position:absolute;left:50%;top:0;height:100%;width:220px;margin-left:-110px;overflow:visible}
   .jtrackp{fill:none;stroke:rgba(232,255,228,.10);stroke-width:3;stroke-linecap:round}
   .jfillp{fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;
@@ -1544,6 +1526,22 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
 #simulador .selhelp{margin:13px 0 0;font-size:11.5px;color:var(--mute)}
 #simulador .sel .chip{flex-direction:row;gap:7px;padding:9px 14px;border-radius:99px;font-size:10px;letter-spacing:.04em}
 #simulador .sel .chip svg{width:15px;height:15px}
+/* MOBILE: as 3 conexoes numa LINHA SO (pedido do dono, 2026-08-04). Estavam quebrando com
+   "Seguros" sozinho na segunda linha. Medido em 390x844: a faixa tem 284px e as 3 pilulas pediam
+   305,7px (87 + 102 + 101 + 2 gaps de 8) — faltavam 21,7px, ou seja nao era ajuste de gap.
+   A solucao: `nowrap` + `flex:1 1 0`, que divide a faixa em tercos iguais (as pilulas passam a ter
+   a mesma largura, o que tambem fica mais alinhado), com o padrao horizontal e o gap do icone
+   apertados para o texto caber no terco. Estas regras vem DEPOIS das globais de cima de proposito:
+   media query nao soma especificidade, quem empata ganha por ordem no arquivo.
+   Por que 600px e nao os 1024px de sempre: a quebra so acontece abaixo de ~412px de tela, e medido
+   em 1024 os tercos esticavam cada pilula para 169px — pilula larga com 10px de texto dentro, uma
+   mudanca que o dono nao pediu no tablet. O `max-width:130px` e a mesma trava por dentro: mesmo na
+   maior tela que entra aqui a pilula para de crescer no tamanho que ela tem no celular. */
+@media (max-width:600px){
+  #simulador .sel .chips{flex-wrap:nowrap;gap:6px}
+  #simulador .sel .chip{flex:1 1 0;min-width:0;max-width:130px;padding:9px 8px;gap:5px}
+  #simulador .sel .chip span{white-space:nowrap}
+}
 #simulador .sel .grads{grid-template-columns:repeat(4,1fr);gap:9px}
 #simulador .sel .grad{padding:14px 5px 12px;border-radius:12px}
 #simulador .sel .grad img,#simulador .sel .grad .gicon{width:38px;height:38px;margin:0 auto 7px}
@@ -1907,11 +1905,16 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .jsvg,.jspark{display:none}       /* esconde a curva central; usa trilho reto */
     /* padding-bottom estende o trilho ~150px além do último marco, conectando na próxima section */
     .jitems{padding-left:40px;--jp:0;padding-bottom:230px}
-    /* trilho apagado (::before) esmaece na base, conectando/dissolvendo na próxima section */
-    .jitems::before{content:'';position:absolute;left:11px;top:4px;bottom:0;width:2px;z-index:0;
+    /* O TRILHO PARA NO ÚLTIMO MARCO (pedido do dono, 2026-08-04: "a linha verde desce até o
+       vídeo"). Antes era `bottom:0` com fade a partir de 64%: de propósito ele atravessava os 230px
+       de padding para "conectar na próxima section" — só que a próxima section é a do vídeo, e a
+       linha entrava nela. Agora termina onde o preenchimento termina (`100% - 234px`, a mesma conta
+       do ::after), com um fade curto só para não cortar seco. Os 230px de padding continuam como
+       respiro entre a timeline e a seção seguinte. */
+    .jitems::before{content:'';position:absolute;left:11px;top:4px;bottom:230px;width:2px;z-index:0;
       background:rgba(24,255,0,.14);
-      -webkit-mask-image:linear-gradient(#000 64%,transparent 100%);
-      mask-image:linear-gradient(#000 64%,transparent 100%)}
+      -webkit-mask-image:linear-gradient(#000 88%,transparent 100%);
+      mask-image:linear-gradient(#000 88%,transparent 100%)}
     /* preenchimento (segue o scroll) para no último marco, sem entrar no fade */
     .jitems::after{content:'';position:absolute;left:11px;top:4px;width:2px;z-index:0;
       height:calc((100% - 234px) * var(--jp));
@@ -1940,6 +1943,21 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
     .jseal.jflag{width:clamp(26px,7vw,34px);max-height:none}
     .jname{font-size:17px;margin-top:6px}
     .jdesc{font-size:14px;margin-top:9px;line-height:1.55}
+    /* FOTOS MAIORES no mobile (pedido do dono: "ajustes no tamanho"). Eram 172px de largura —
+       44% de uma tela de 390 — e num recorte 16:10 as fotos verticais ficavam so um pedaco do
+       tronco da pessoa. Medido: as 5 tinham exatamente 172x108, ou seja o problema nao era
+       inconsistencia entre elas, era tamanho. Agora 300px (77% da tela) e 16:10 mantido.
+       O teto de 300 vem da largura util: 390 - 40 do padding-left da linha - 20 da margem = 330. */
+    .jphoto{max-width:min(80vw,300px)}
+    .jmedia .jphoto{width:min(80vw,300px);max-width:min(80vw,300px)}
+    /* jp4 (Forbes/Amanda) e jp5 (BP/Gusttavo Lima) SEM RECORTE no mobile.
+       As duas fontes sao QUADRADAS (1024x1024 e 460x460) e sao pecas de arte com texto no topo E
+       no rodape. No 16:10 dos outros, o object-fit:cover tirava 37% da altura pelo meio: no Forbes
+       partia a palavra ao meio e comia o "+800M clientes"; no BP cortava a testa e os olhos do
+       Gusttavo. Qualquer object-position resolveria UM lado e perderia o outro — entao aqui a
+       caixa acompanha a arte (1/1) e nada e cortado. As outras tres seguem 16:10: sao fotos, nao
+       arte com texto. */
+    .jphoto.jp4 img,.jphoto.jp5 img{aspect-ratio:1/1}
     /* reveals via classe .inview (IO no script independente) */
     .jitem .jphoto,.jitem .jcard{opacity:0;visibility:visible;translate:0 22px;
       transition:opacity .55s ease,translate .6s cubic-bezier(.16,1.1,.3,1)}
@@ -1959,7 +1977,29 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
       color:var(--ink-dim);display:block}
     .hqbadges{margin-top:22px;gap:9px}
     .hqbadge{font-size:12.5px;padding:9px 15px}
-    .hqwatch{display:none}            /* vídeo já roda sozinho — card "assistir" redundante */
+    /* BOTÃO DE PLAY NO MOBILE (pedido do dono, 2026-08-04). Era `display:none` aqui, com a
+       justificativa de que "o vídeo já roda sozinho" — mas o vídeo que roda sozinho é o de FUNDO da
+       sede, e o institucional do YouTube ficava inacessível no celular: sem o card, não havia
+       nenhum gatilho para o popup.
+       Não dá para simplesmente reexibir o card: ele é `position:absolute; bottom:15%` e colide com
+       os `.hqbadge` (medido em sessão anterior). Então no mobile ele deixa de ser card e vira um
+       BOTÃO redondo de play, centralizado na parte de cima do vídeo — longe da copy e dos badges,
+       que vivem na base. O clique é o mesmo do desktop, então abre o mesmo popup. */
+    /* left/right:0 + align-items:center em vez de left:50% + translate(-50%): o bloco pai deste
+       elemento absoluto não é a largura da tela (medido: com left:50% o botão caía a 72% da
+       largura, não no meio). Esticando de ponta a ponta, quem centraliza é o flex. */
+    .hqwatch{display:flex;left:0;right:0;top:30%;bottom:auto;
+      transform:translateY(-50%);align-items:center;gap:10px;
+      width:auto;padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+      backdrop-filter:none;-webkit-backdrop-filter:none;z-index:4}
+    .hqwatch .hqthumb{width:68px;height:68px;aspect-ratio:1/1;border-radius:50%;
+      border:1px solid rgba(24,255,0,.45);background:rgba(5,14,8,.5);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+    .hqwatch .hqthumb img{display:none}   /* a miniatura não tem src; o círculo é o próprio botão */
+    .hqwatch .hqplay{width:100%;height:100%;border:0;background:none;box-shadow:none}
+    .hqwatch .hqplay svg{width:24px;height:24px}
+    .hqwatch .hqwtxt b{font-size:13.5px;font-weight:500;
+      text-shadow:0 2px 14px rgba(3,6,3,.95),0 0 6px rgba(3,6,3,.9)}
     /* (o reveal em cascata subiu para a CSS base: agora vale no desktop também) */
 
     /* ---- O Ecossistema: lista vertical (sem scroll horizontal / deck / pin / overlap) ---- */
@@ -2401,7 +2441,7 @@ window.igRefresh=(function(){
     <div class="sfloat" style="top:21%;left:16%"><div class="sfnum"><i>+R$</i><b data-target="150">0</b><i>mi</i></div><span class="sflbl">de bônus distribuídos à rede</span></div>
     <div class="sfloat sr" style="top:11%;right:10%"><div class="sfnum"><i>+</i><b data-target="800">0</b><i>mil</i></div><span class="sflbl">clientes conectados</span></div>
     <div class="sfloat" style="top:44%;left:8%"><div class="sfnum"><i>+</i><b data-target="35">0</b><i>mil</i></div><span class="sflbl">licenciados ativos</span></div>
-    <div class="sfloat sr" style="top:44%;right:8%"><div class="sfnum"><i>+</i><b data-target="11">0</b></div><span class="sflbl">milionários formados</span></div>
+    <div class="sfloat sr" style="top:44%;right:8%"><div class="sfnum"><i>+</i><b data-target="15">0</b></div><span class="sflbl">milionários formados</span></div>
     <div class="sfloat" style="bottom:15%;left:12%"><div class="sfnum"><b data-target="3000">0</b><i>m²</i></div><span class="sflbl">de sede própria no Brasil<small>R. Marfim, 265 · Jaraguá, Uberlândia/MG</small></span></div>
     <div class="sfloat sf-team" style="bottom:8%;left:42%"><div class="sfnum"><i>+</i><b data-target="500">0</b></div><span class="sflbl">colaboradores na equipe interna</span></div>
     <div class="sfloat sr" style="top:24%;right:26%"><div class="sfnum"><i>+</i><b data-target="1000">0</b></div><span class="sflbl">Usinas Solares em Operação</span></div>
@@ -2516,7 +2556,8 @@ window.igRefresh=(function(){
        logo depois desta seção.
        O href continua apontando para o vídeo de verdade, com target="_blank": é a rede de
        segurança para o caso de o JS não rodar — aí o clique ainda leva a algum lugar útil em vez
-       de virar um botão morto. Com o JS ativo o popup dá preventDefault e o href nunca é usado. -->
+       de virar um botão morto. Com o JS ativo o popup dá preventDefault e o href só é usado se o
+       arquivo local do vídeo faltar (ver a "reserva" no #vmodal-app). -->
   <a class="hqwatch" href="https://youtu.be/qdeblguZdGc" target="_blank" rel="noopener" aria-label="Assistir ao vídeo institucional">
     <span class="hqthumb"><img alt=""><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
     <span class="hqwtxt"><b>Assista ao vídeo institucional</b></span>
@@ -2534,18 +2575,24 @@ window.igRefresh=(function(){
   .vmodal.open{opacity:1;visibility:visible}
   .vmodal .vm-backdrop{position:absolute;inset:0;background:rgba(2,5,3,.88);
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-  /* a largura sai do MENOR entre 1180px, 92vw e o que 86vh permite em 16:9. Sem esse terceiro
-     termo, num notebook baixo (600px de altura util) o aspect-ratio brigava com o max-height e o
-     painel saia mais largo que o video, com tarja preta dos dois lados. */
+  /* a largura sai do MENOR entre 1180px, 92vw e o que 86vh permite na proporcao do video. Sem esse
+     terceiro termo, num notebook baixo (600px de altura util) o aspect-ratio brigava com o
+     max-height e o painel saia mais largo que o video, com tarja preta dos dois lados.
+     A PROPORCAO E 12/5 (2,40:1), nao 16/9: o institucional e cinemascope. Medido com cropdetect no
+     arquivo — a imagem util e 2560x1068 dentro de um quadro 2560x1440, com 186px de tarja PRETA
+     GRAVADA em cima e embaixo. Num painel 16/9 essa tarja aparecia como duas faixas negras grossas
+     dentro do popup. A tarja foi cortada na conversao e o painel passou a ter a forma do video. */
   .vmodal .vm-panel{position:relative;z-index:1;
-    width:min(1180px,92vw,calc(86vh * 16 / 9));aspect-ratio:16/9;
+    width:min(1180px,92vw,calc(86vh * 12 / 5));aspect-ratio:12/5;
     border-radius:18px;overflow:hidden;background:#000;border:1px solid rgba(24,255,0,.28);
     box-shadow:0 40px 130px rgba(0,0,0,.72),0 0 60px rgba(24,255,0,.10);
     transform:translateY(18px) scale(.99);transition:transform .38s cubic-bezier(.16,1,.3,1)}
   .vmodal.open .vm-panel{transform:none}
-  .vmodal .vm-panel iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  .vmodal .vm-panel iframe,
+  .vmodal .vm-panel video{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
+    background:#000}
   /* fechar no canto da TELA, nao do painel: no canto do painel encavalaria os controles do
-     proprio player do YouTube, que aparecem no topo ao passar o mouse. */
+     player (os nativos ficam embaixo, mas os do YouTube aparecem no topo ao passar o mouse). */
   .vmodal .vm-close{position:absolute;top:18px;right:22px;z-index:3;width:42px;height:42px;
     border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.45);color:#fff;
     font-size:15px;cursor:pointer;transition:background .2s,border-color .2s;
@@ -2553,7 +2600,7 @@ window.igRefresh=(function(){
   .vmodal .vm-close:hover{background:rgba(0,0,0,.78);border-color:rgba(24,255,0,.42)}
   .vmodal .vm-close:focus-visible{outline:2px solid var(--green);outline-offset:3px}
   @media (max-width:1024px){
-    .vmodal .vm-panel{width:min(94vw,calc(80vh * 16 / 9));border-radius:14px}
+    .vmodal .vm-panel{width:min(96vw,calc(80vh * 12 / 5));border-radius:14px}
     .vmodal .vm-close{top:12px;right:14px}
   }
   @media (prefers-reduced-motion:reduce){ .vmodal,.vmodal .vm-panel{transition:none} }
@@ -2562,11 +2609,13 @@ window.igRefresh=(function(){
 /* O card "Assista ao vídeo institucional" abria o canal do YouTube em nova aba; o dono passou a
    URL do vídeo e pediu popup DENTRO do site.
    Três decisões que valem registro:
-   1) O <iframe> só nasce no CLIQUE e é DESTRUÍDO ao fechar. Nascer no clique mantém o custo do
-      carregamento da página em zero (nenhum request de terceiro no boot, que é o orçamento que
-      este projeto defende); destruir ao fechar é o que realmente PARA o vídeo — só esconder o
-      iframe deixaria o áudio tocando atrás do site.
-   2) youtube-nocookie.com: o mesmo player, sem cookie de rastreio antes do play.
+   1) O player só nasce no CLIQUE e é DESTRUÍDO ao fechar. Nascer no clique mantém o custo do
+      carregamento da página em zero (nenhum byte do vídeo no boot, que é o orçamento que este
+      projeto defende — são 42,7MB); destruir ao fechar é o que realmente PARA o vídeo — só
+      esconder deixaria o áudio tocando atrás do site.
+   2) O player é um elemento video com o arquivo LOCAL; o embed do YouTube ficou como reserva. O porquê
+      está escrito na íntegra dentro da função, junto do Erro 153. Quando a reserva entra em cena,
+      é youtube-nocookie.com: o mesmo player, sem cookie de rastreio antes do play.
    3) Pausa o vídeo de fundo da Sede enquanto o popup está aberto. Dois vídeos decodificando ao
       mesmo tempo é justamente o "trabalho por quadro" que engasga o notebook do dono. Ao fechar,
       volta a tocar só se estava tocando (o video-inview.js não reage a isso: ele só age quando a
@@ -2575,16 +2624,22 @@ window.igRefresh=(function(){
   var link=document.querySelector('.hqwatch');
   if(!link) return;
   var ID='qdeblguZdGc';
-  /* ABRINDO O ARQUIVO DIRETO (file://) O EMBED NAO EXISTE — e nao e culpa do video.
-     O player do YouTube exige uma origem valida; em file:// a origem e a string "null" e ele
-     devolve a tela cinza "Erro 153 — erro de configuracao do player de video". Isso vale para
-     QUALQUER site, nao e uma configuracao deste video: servido por http o mesmo embed toca
-     (verificado). Antes disso aqui existir, o dono abriu o index no navegador e recebeu a tela de
-     erro dentro do popup.
-     Entao: fora de http/https nem montamos o popup — o clique leva ao YouTube em nova aba, que e
-     o unico caminho que funciona nessa condicao. Em producao (https) o popup e o normal. */
-  var podeEmbed=(location.protocol==='http:'||location.protocol==='https:');
-  if(!podeEmbed) return;   /* o proprio href do card (target="_blank") ja resolve o clique */
+  var LOCAL='assets/video/institucional-igreen.mp4';
+  /* PRIMEIRO O ARQUIVO LOCAL, O YOUTUBE E RESERVA — e essa ordem resolve tres problemas de uma vez.
+     1) O dono pediu "no desktop ele precisa abrir dentro do site". Abria: medido em http, popup com
+        iframe de 1178x662 e nenhuma aba nova. O que ele viu foi o caminho file:// — abrindo o
+        index com dois cliques na pasta, o player do YouTube exige uma origem valida, em file:// a
+        origem e a string "null" e ele devolve "Erro 153 — erro de configuracao do player de video"
+        (remedido em 2026-08-04). Antes daqui o codigo desistia do popup fora de http e deixava o
+        clique ir para o YouTube em nova aba. Com o arquivo local o elemento video nativo toca em file://
+        tambem, entao o popup passa a abrir DENTRO do site em qualquer condicao.
+     2) O dono perguntou se a apresentacao depende 100% de internet. Com o video local, nao depende:
+        e o unico pedaco da pagina que saia para fora (fontes, GSAP e os outros videos ja sao locais).
+     3) Um elemento video nativo sabe dizer que acabou pelo evento 'ended'. Antes isso exigia carregar a API
+        de iframe do YouTube — script de terceiro, so para descobrir o fim do video.
+     A reserva existe porque o arquivo pesa 42,7MB e pode nao estar no deploy: se ele faltar, o
+     evento 'error' do elemento video troca o player pelo embed do YouTube (em http) ou manda para a aba do
+     YouTube (em file://). Nenhum caminho termina em botao morto. */
   var modal=document.createElement('div');
   modal.className='vmodal'; modal.id='videoModal'; modal.setAttribute('aria-hidden','true');
   modal.innerHTML='<div class="vm-backdrop"></div>'
@@ -2596,22 +2651,68 @@ window.igRefresh=(function(){
   var bg=document.querySelector('.hqbg');       /* vídeo de fundo da Sede */
   var bgTocava=false;
   function sm(){ return (window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null; }
-  function abrir(){
-    if(modal.classList.contains('open')) return;
+  /* ---- os dois players ---------------------------------------------------------------------- */
+  function montaLocal(){
+    var v=document.createElement('video');
+    v.id='vmLocal'; v.src=LOCAL; v.controls=true; v.playsInline=true; v.preload='auto';
+    v.setAttribute('playsinline','');          /* iOS: sem isso o video vai para tela cheia sozinho */
+    v.width=1440; v.height=600;                /* dimensoes declaradas: sem elas a caixa nasce 0 */
+    v.addEventListener('ended',fim);
+    /* 'error' no proprio elemento video so dispara por causa do src; um 404 do arquivo cai aqui. */
+    v.addEventListener('error',semArquivo);
+    panel.appendChild(v);
+    var p=v.play();
+    /* autoplay COM som depende de o navegador ter registrado interacao. No fluxo normal houve
+       clique (no card ou no avanco da apresentacao), entao toca. Se for recusado, o video fica
+       parado com os controles a mostra e o apresentador da play — melhor que tocar sem som. */
+    if(p&&p.catch) p.catch(function(){});
+  }
+  function montaYouTube(){
     var f=document.createElement('iframe');
     /* &origin explicito: e exatamente o parametro que o YouTube cobra no erro 153. Aqui ele nunca
-       pode divergir (sai de location.origin) e so chegamos neste ponto em http/https. */
+       pode divergir (sai de location.origin).
+       &enablejsapi=1: sem isso nao ha como saber que o video ACABOU, e o dono pediu que ao acabar
+       a apresentacao siga sozinha para a proxima secao. */
+    f.id='vmYT';
     f.src='https://www.youtube-nocookie.com/embed/'+ID
-      +'?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin='+encodeURIComponent(location.origin);
+      +'?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin='+encodeURIComponent(location.origin);
     f.title='Vídeo institucional iGreen';
     f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
     f.setAttribute('allowfullscreen','');
     f.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
     panel.appendChild(f);
+    if(window.YT&&YT.Player) liga(); else pedeApi();
+  }
+  /* ---- reserva: o arquivo local nao esta la (deploy sem o video, caminho trocado) -------------
+     'usaReserva' fica ligado para SEMPRE depois da primeira falha. Sem isso a segunda abertura
+     montaria o elemento video quebrado de novo, o 'error' voltaria com o guarda ja gasto e o popup abriria
+     VAZIO — o pior dos estados, porque parece que o site travou. */
+  var http=(location.protocol==='http:'||location.protocol==='https:');
+  var usaReserva=false, tentandoReserva=false;
+  function abreNoYouTube(){
+    fechar();
+    try{ window.open(link.href,'_blank','noopener'); }catch(e){}
+  }
+  function semArquivo(){
+    if(tentandoReserva) return; tentandoReserva=true; usaReserva=true;
+    panel.innerHTML='';
+    if(http) montaYouTube();
+    else abreNoYouTube();     /* em file:// o embed do YouTube da Erro 153 — nova aba e o unico jeito */
+  }
+  function abrir(){
+    if(modal.classList.contains('open')) return;
+    tentandoReserva=false;
+    if(!usaReserva) montaLocal();
+    else if(http) montaYouTube();
+    else { abreNoYouTube(); return; }   /* nada que possa ser mostrado dentro do site aqui */
     modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
     var s=sm(); if(s) s.paused(true); else document.body.style.overflow='hidden';
     if(bg){ bgTocava=!bg.paused; try{ bg.pause(); }catch(e){} }
-    try{ closeBtn.focus(); }catch(e){}
+    /* preventScroll: focus() SEM ele faz o navegador rolar o elemento para dentro da tela, e isso
+       briga com o ScrollSmoother — foi o que o dono viu como "no modo apresentacao ele desce
+       automatico". O botao de fechar e position:fixed (nao rolaria), mas o .hqwatch do fechar()
+       abaixo e absolute dentro da secao da Sede e rolava a pagina de verdade. */
+    try{ closeBtn.focus({preventScroll:true}); }catch(e){ try{ closeBtn.focus(); }catch(e2){} }
   }
   function fechar(){
     if(!modal.classList.contains('open')) return;
@@ -2619,7 +2720,7 @@ window.igRefresh=(function(){
     panel.innerHTML='';
     var s=sm(); if(s) s.paused(false); else document.body.style.overflow='';
     if(bg&&bgTocava){ var p=bg.play(); if(p&&p.catch) p.catch(function(){}); }
-    try{ link.focus(); }catch(e){}
+    try{ link.focus({preventScroll:true}); }catch(e){ /* sem preventScroll, nao devolve o foco */ }
   }
   link.addEventListener('click',function(e){ e.preventDefault(); abrir(); });
   closeBtn.addEventListener('click',fechar);
@@ -2628,6 +2729,37 @@ window.igRefresh=(function(){
     if(!modal.classList.contains('open')) return;
     if(e.key==='Escape'||e.keyCode===27) fechar();
   });
+
+  /* ---- FIM DO VIDEO: fecha o popup e AVISA quem quiser saber ------------------------------
+     O dono pediu que, no modo apresentacao, ao acabar o video a apresentacao siga sozinha para a
+     proxima secao. Nao existe como saber que um embed do YouTube terminou sem a API de iframe
+     dele, entao ela e carregada AQUI, e so na primeira vez que o popup abre — nenhum byte de
+     terceiro no carregamento da pagina. Quem reage ao fim e o presentation-mode.js, escutando o
+     evento 'igreen:video-fim': o popup nao sabe (nem precisa saber) o que e uma apresentacao. */
+  var apiPedida=false, player=null;
+  function fim(){
+    fechar();
+    try{ document.dispatchEvent(new CustomEvent('igreen:video-fim')); }catch(e){}
+  }
+  function liga(){
+    var f=panel.querySelector('iframe');
+    if(!f || !window.YT || !YT.Player) return;
+    try{
+      player=new YT.Player(f,{ events:{ onStateChange:function(ev){
+        if(ev.data===0) fim();          /* 0 = YT.PlayerState.ENDED */
+      } } });
+    }catch(e){}
+  }
+  window.onYouTubeIframeAPIReady=function(){ liga(); };
+  function pedeApi(){
+    if(apiPedida) return; apiPedida=true;
+    var t=document.createElement('script');
+    t.src='https://www.youtube.com/iframe_api'; t.async=true;
+    document.head.appendChild(t);
+  }
+  /* handle para o modo apresentacao abrir/fechar o video sem depender do clique no card */
+  window.IGREEN_VIDEO={ abrir:function(){ abrir(); }, fechar:fechar,
+    aberto:function(){ return modal.classList.contains('open'); } };
 })();
 </script>
 
@@ -3350,8 +3482,14 @@ window.igRefresh=(function(){
 
   /* o card sai do MENOR entre a largura disponivel e o que a ALTURA da tela permite: num notebook
      de 600px uteis um card de 480 nao caberia junto do kicker e do contador. */
+  /* CARD MAIOR NO DESKTOP (pedido do dono: "esta pequeno"). Antes clamp(232,17.5vw,306) com
+     orcamento de altura de 210px, o que travava em 306px numa tela de 1920. Agora vai a 360px.
+     O segundo termo (o orcamento de ALTURA) subiu de 210 para 235px porque as setas passaram a
+     ocupar uma LINHA PROPRIA embaixo do contador — sem isso, em notebook de 600px uteis a coluna
+     kicker+card+contador+setas nao caberia. Efeito medido: 1920x946 -> 306 vira 360px;
+     1229x600 (notebook) -> segue 232px, exatamente como antes. */
   .carsrail .cr-deck{
-    --cardw:min(clamp(232px,17.5vw,306px),calc((100vh - 210px) / 1.575));
+    --cardw:min(clamp(232px,20vw,360px),calc((100vh - 235px) / 1.575));
     --cardh:calc(var(--cardw) * 1.575);
     --headh:calc(var(--cardw) * .158);
     --namefs:calc(var(--cardw) * .076);
@@ -3359,11 +3497,39 @@ window.igRefresh=(function(){
     --rede-accent:var(--green);        /* dentro da cena dos carros o verde e o do site */
     --rede-surface:#050c06;
     width:var(--cardw);height:var(--cardh);perspective:1500px}
+  /* FOTO OCUPANDO O CARD INTEIRO (2026-08-04). O dono reenviou as 13 fotos dos Royais ja
+     recortadas, em 273x415 — proporcao 0.66, que NAO e a da caixa antiga da foto (330:353 = 0.935)
+     e sim quase a do CARD (1/1.575 = 0.635). Trocar so os arquivos faria o object-fit:cover comer
+     30% da altura pelo meio e decepar cabecas; com a caixa virando o card, o corte cai para ~4%.
+     Especificidade: 3 classes, acima do `.rdeck .rcard .rc-ph` compartilhado com a #rede — que
+     segue com a caixa de 68% dela (esta oculta, mas nao quebra). */
+  .carsrail .rcard .rc-ph{top:0;height:100%}
+  /* veu do topo mais leve. Com a foto comecando no topo do card, o gradiente de antes (preto a 90%)
+     caia justo sobre o ROSTO das pessoas — nas fotos novas as cabecas comecam a ~4% da altura.
+     Agora ele so precisa segurar a leitura do "[ ROYAL ]" e do pin, que ficam por cima. */
+  .carsrail .rcard .rc-ph::after{
+    background:linear-gradient(to bottom, rgba(7,10,8,.62) 0%, rgba(7,10,8,.20) 12%, rgba(7,10,8,0) 26%)}
+  /* PIN DESCE para o canto INFERIOR direito. Com a foto ocupando o card, o canto superior direito
+     e onde costuma estar o ROSTO de quem aparece a direita na foto — medido no card do Anderson, o
+     pin caiu em cima da cabeca da Debora. Embaixo ele pousa sobre a faixa que a mascara da foto ja
+     dissolveu, entao nao cobre ninguem. O "[ ROYAL ]" fica no topo ESQUERDO, como o dono pediu.
+     O .rc-head passa a ocupar o card (inset) so para dar a referencia de "embaixo" ao pin; sem
+     caixa nem fundo, e com pointer-events:none para nao roubar o clique das metades. */
+  /* justify-content:flex-end e obrigatorio aqui: a regra compartilhada usa space-between, que com
+     DOIS filhos (tag + pin) jogava um em cada ponta. Sem a tag sobrou um filho so, e space-between
+     manda o unico item para o INICIO — o pin foi para a esquerda e caiu em cima do nome. */
+  .carsrail .rcard .rc-head{inset:14px;pointer-events:none;justify-content:flex-end}
+  .carsrail .rcard .rc-pin{align-self:flex-end}
+  /* e o nome ganha folga a direita para nao correr por baixo do pin */
+  .carsrail .rcard .rc-body{padding-right:calc(var(--pinsz,52px) + 26px)}
   .carsrail .cr-kicker{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
     color:var(--green);text-shadow:0 2px 14px rgba(3,6,3,.92)}
   .carsrail .cr-meter{display:flex;align-items:center;gap:12px}
-  /* as setas sao a UNICA parte do trilho que recebe clique (o container e pointer-events:none) */
+  /* as setas sao a UNICA parte do trilho que recebe clique (o container e pointer-events:none).
+     Vivem numa LINHA PROPRIA, depois do contador — como o .carsrail e uma coluna flex com
+     align-items:center, basta nao estarem dentro do .cr-meter para descerem e centralizarem. */
   .carsrail .cr-arrows{display:flex;align-items:center;gap:4px;padding:4px;border-radius:999px;
+    margin-top:-2px;flex:none;
     border:1px solid rgba(24,255,0,.22);background:rgba(5,14,8,.62);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto}
   .carsrail .cr-arrows button{appearance:none;border:0;background:transparent;cursor:pointer;
@@ -3389,7 +3555,14 @@ window.igRefresh=(function(){
     .carsrail{order:4;position:relative;top:auto;left:auto;transform:none;translate:none;
       opacity:1;visibility:visible;transition:none;width:100%;padding:2px 0 26px;gap:12px;
       align-items:stretch}
+    /* TUDO CENTRALIZADO no mobile (pedido do dono, 2026-08-04). Antes so as setas estavam no
+       centro e o rotulo + barra + contador ficavam encostados na esquerda, o que lia como
+       desalinhado. A coluna e align-items:stretch (o deck precisa da largura toda), entao quem
+       centraliza cada linha e o text-align do rotulo e o justify-content da barra. */
     .carsrail .cr-kicker,.carsrail .cr-meter{padding:0 20px}
+    .carsrail .cr-kicker{text-align:center}
+    .carsrail .cr-meter{justify-content:center}
+    .carsrail .cr-arrows{align-self:center;margin:4px 0 0}
     .carsrail .cr-deck{--cardw:clamp(268px,78vw,320px);
       width:100%;height:auto;perspective:none;
       display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
@@ -3423,23 +3596,24 @@ window.igRefresh=(function(){
     <!-- trilho de pessoas. Os 15 cards sao montados pelo #carsrail-app com o MESMO HTML da
          seccao #rede (window.REDE_DATA.cardHtml) — nao existe segunda copia dos dados. -->
     <div class="carsrail" id="carsRail" aria-hidden="true">
-      <span class="cr-kicker">A Rede</span>
+      <!-- texto so para o primeiro quadro; quem manda e o `rotulo` do grupo no #carsrail-app -->
+      <span class="cr-kicker">Acionistas Royal</span>
       <div class="cr-deck rdeck" id="carsRailDeck"></div>
       <div class="cr-meter">
-        <!-- SETAS (pedido do dono): sem elas nao havia como passar as fotos no site fora da
-             apresentacao — clicar em cima do card cai na metade escurecida e SELECIONA o carro de
-             tras, porque o trilho todo e pointer-events:none justamente para nao roubar esse tap.
-             So estes dois botoes voltam a receber clique. -->
-        <div class="cr-arrows">
-          <button type="button" id="carsRailPrev" aria-label="Pessoa anterior">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <button type="button" id="carsRailNext" aria-label="Próxima pessoa">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
         <div class="cr-bar"><i id="carsRailBar"></i></div>
         <span class="cr-count" id="carsRailCount">01 / 13</span>
+      </div>
+      <!-- SETAS em LINHA PROPRIA, embaixo do contador (pedido do dono). Sem elas nao havia como
+           passar as fotos no site fora da apresentacao: clicar em cima do card cai na metade
+           escurecida e SELECIONA o carro de tras, porque o trilho todo e pointer-events:none
+           justamente para nao roubar esse tap. So estes dois botoes voltam a receber clique. -->
+      <div class="cr-arrows">
+        <button type="button" id="carsRailPrev" aria-label="Pessoa anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" id="carsRailNext" aria-label="Próxima pessoa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
       </div>
     </div>
     <!-- pins/medalhas girando 3D acima de cada carro; aparecem ao selecionar o veículo.
@@ -4303,7 +4477,19 @@ window.igRefresh=(function(){
     window.addEventListener('resize',buildCurve);
     var jprog={p:0};
     gsap.to(jprog,{p:1,ease:"none",
-      scrollTrigger:{trigger:".jwrap",start:"top 70%",end:"bottom 62%",scrub:.5},
+      /* end "bottom 90%" (era 62%) — CONSERTO 2026-08-04, medido em 1955x1142.
+         Sintoma do dono: "no modo apresentação, quando chego na foto do Gusttavo Lima ele já desce
+         de uma vez". Não era a apresentação descendo: a parada dele pousava com o card em
+         [-345,-229], ou seja 345px ACIMA do topo da tela — o card já tinha saído de cena.
+         Causa raiz, e ela também afeta o site sem apresentação: o `jcheck` revela um marco quando a
+         PONTA da curva passa o ponto dele, e com end em 62% a curva só terminava de crescer quando
+         a base do .jwrap chegava a 62% da tela. Em tela alta isso é muito scroll: o último ponto só
+         era alcançado quando o card já havia passado do topo. Medido: revelação em y≈6843 contra
+         y≈6539, o último instante em que o card ainda cabia na tela.
+         Com 90% a curva termina de crescer com a base do wrap mais BAIXA na tela, então o último
+         marco é revelado (e a parada pousa) enquanto ele ainda está visível. Custo: o curso do
+         scrub encurta ~13% em tela alta, e os 7 marcos revelam num ritmo um pouco mais rápido. */
+      scrollTrigger:{trigger:".jwrap",start:"top 70%",end:"bottom 90%",scrub:.5},
       onUpdate:function(){ fillP.style.strokeDashoffset=String(1-jprog.p); jcheck(jprog.p); spark.style.opacity=jprog.p>.94?String(Math.max(0,(1-jprog.p)/.06)):"1"; }});
     return function(){ window.removeEventListener('resize',buildCurve); };
   });
@@ -5906,8 +6092,24 @@ if(window.gsap&&window.ScrollTrigger){
     function mClose(){ mmodal.classList.remove("open"); }
     mmodal.querySelector(".gmob-bd").addEventListener("click",mClose);
     mmodal.querySelector(".gmob-x").addEventListener("click",mClose);
+    /* CLIQUE NA BARRA (mobile) ABRE A GALERIA da qualificacao — pedido do dono, 2026-08-03.
+       Antes abria o `mOpen`, um cartao com pontos/ganho/perk daquele nivel. Ele saiu porque esses
+       numeros JA estao impressos embaixo de cada barra no grafico do mobile ("10.000 · SENIOR ·
+       R$ 500/mes"), ou seja, o cartao repetia o que estava na tela; o que faltava era a galeria.
+       Reusa o MESMO modal do desktop (#gradEventsModal), que ja tem CSS de mobile.
+       Ordem: ABRE e depois seleciona o slide — o inverso dependeria de o modal ja existir no
+       primeiro clique, e um `dot` nulo abriria a galeria do nivel ERRADO (Senior) em silencio.
+       O `mOpen` fica no arquivo (marcador CARTAO-MOBILE-DESATIVADO): religar e so voltar a
+       chamada aqui. */
     [].slice.call(mwrap.querySelectorAll(".gb")).forEach(function(col){
-      col.addEventListener("click",function(){ mOpen(+col.getAttribute("data-i")); });
+      col.addEventListener("click",function(){
+        var i=+col.getAttribute("data-i");
+        var btn=document.getElementById("gradEventsBtn");
+        if(btn) try{ btn.click(); }catch(e){}
+        var dot=document.querySelector('#gradEventsModal .gm-dot[data-i="'+i+'"]');
+        if(dot) try{ dot.click(); }catch(e){}
+        mhint.classList.add("used");   /* a dica de "toque numa barra" cumpriu o papel */
+      });
     });
     if('IntersectionObserver' in window){
       var mio=new IntersectionObserver(function(es){ es.forEach(function(e){
@@ -6506,8 +6708,8 @@ if(window.gsap&&window.ScrollTrigger){
 
   /* ATENCAO ao trocar fotos: o brief exige UMA foto por pessoa, com dominante distinta das
      vizinhas — o backdrop borrado e o crossfade dependem disso. Reciclar imagem faz a troca
-     acontecer sem ninguem perceber. Desde 2026-08-03 as 15 pessoas tem foto real em
-     assets/img/rede/ — nao existe mais PLACEHOLDER (ph:true) nesta lista. */
+     acontecer sem ninguem perceber. As 3 primeiras sao as fotos que vieram no material; as 5
+     ultimas sao PLACEHOLDER de evento (marcadas com ph:true) esperando a foto real. */
   /* NIVEL -> pin EXATO (pedido do dono). Sao as mesmas artes das graduacoes, com alpha:
      Embaixador 12K = pin-e12.webp | Royal 5K = pin-r5.webp. Nada de selo desenhado em CSS. */
   var PIN={ EMBAIXADOR:"assets/pins/pin-e12.webp", ROYAL:"assets/pins/pin-r5.webp" };
@@ -6540,39 +6742,20 @@ if(window.gsap&&window.ScrollTrigger){
     { first:"André Maluf", last:"e Beatriz Guimarães", lvl:"ROYAL",
       img:"assets/img/rede/andre-maluf.jpg" },
     { first:"David Willian", last:"e Aline Moura", lvl:"ROYAL",
-      pill:"Um dos primeiros licenciados iGreen", hl:"Acionista Royal",
-      body:["Acabou de conquistar um ",{h:"carro"}," com a iGreen, uma das ",
-        {h:"primeiras licenças da companhia"},", fazendo parte da operação desde a criação e estará no ",
-        {h:"Rio de Janeiro"}," para dividir sua experiência no mercado."],
       img:"assets/img/rede/david-willian.jpg" },
     { first:"Eduardo Martins", last:"e Ana Paula", lvl:"ROYAL",
       img:"assets/img/rede/eduardo-martins.jpg" },
     { first:"Evandro", last:"Martinez", lvl:"ROYAL",
-      pill:"Com 4 anos de operação já faz parte do:", hl:"Clube de Milionários",
-      body:["Acumula mais de ",{h:"4 milhões em ganhos"},
-        " com a iGreen, foi o primeiro licenciado a ganhar um ",{h:"carro"},
-        " da companhia e vai estar em ",{h:"Goiânia"}," para te ensinar a impulsionar o seu negócio."],
       img:"assets/img/rede/evandro-martinez.jpg" },
     { first:"Fillipe Souza", last:"e Stela Souza", lvl:"ROYAL",
       img:"assets/img/rede/fillipe-souza.jpg" },
     { first:"Gabriel Martins", last:"e Marcelle Moura", lvl:"ROYAL",
-      pill:"Com 25 anos de experiência de mercado", hl:"35 Milhões de kWh",
-      body:["Se tornou ",{h:"milionário aos 26 anos"},
-        " e está na iGreen desde o começo da operação, com presença em ",
-        {h:"todo território nacional, EUA e Europa"},". Estará em Natal."],
       img:"assets/img/rede/gabriel-martins.jpg" },
     { first:"João Paulo", last:"e Gabriella", lvl:"ROYAL",
-      pill:"Já captou mais de:", hl:"130 milhões de kWh",
-      body:["Com mais de ",{h:"4 anos de operação"}," tem mais de 450.000 clientes conectados. Já formou mais de ",
-        {h:"10 milionários"}," em sua rede e estará em ",{h:"Belo Horizonte"},"."],
       img:"assets/img/rede/joao-paulo.jpg" },
     { first:"Joel", last:"e Fabiana Lisboa", lvl:"ROYAL",
       img:"assets/img/rede/joel-lisboa.jpg" },
     { first:"Lucas", last:"Battistoni", lvl:"ROYAL",
-      pill:"Já conquistou mais de:", hl:"80 Milhões",
-      body:["Na indústria e em apenas ",{h:"5 meses de iGreen"},
-        " ocupa a graduação de Royal. Estará em ",{h:"Porto Alegre"},
-        " para te ensinar como conquistar grandes resultados."],
       img:"assets/img/rede/lucas-battistoni.jpg" },
     { first:"Luiz Carlos Pit", last:"e Valquíria Ferreira", lvl:"ROYAL",
       img:"assets/img/rede/luiz-carlos-pit.jpg" },
@@ -6608,10 +6791,17 @@ if(window.gsap&&window.ScrollTrigger){
        O .rc-hl continua existindo para quem TEM destaque proprio no material ("80 Milhões",
        "Clube de Milionários"): agora ele so entra se houver `hl`. Quem nao tem texto mostra
        nome + tag + pin, e nada de nivel repetido tres vezes. */
+    /* width/height = tamanho REAL dos arquivos que o dono entregou (273x415). Nao e decoracao:
+       sem dimensao declarada, uma <img> lazy dentro de container que tira a altura dela pode nunca
+       baixar (foi o que apagou o fundo de moedas dos planos). O CSS e quem manda na caixa. */
     return '<div class="rc-ph"><img src="'+p.img+'" alt="'+esc(p.first+" "+p.last)+'"'
-        +' width="330" height="353" loading="lazy" decoding="async"></div>'
-      +'<div class="rc-head"><span class="rc-tag">[ '+esc(p.lvl)+' ]</span>'
-        +'<img class="rc-pin" src="'+PIN[p.lvl]+'" alt="" width="46" height="46"'
+        +' width="273" height="415" loading="lazy" decoding="async"></div>'
+      /* O NIVEL saiu de DENTRO do card (pedido do dono, 2026-08-04): nao ha mais o "[ ROYAL ]" /
+         "[ EMBAIXADOR ]" sobre a foto. Ele fica so no rotulo ACIMA do card (o .cr-kicker do
+         trilho, que diz "Acionistas Royal" / "Acionistas Embaixadores") mais o pin. A regra CSS do
+         .rc-tag fica no arquivo — devolver e so voltar o <span> aqui. */
+      +'<div class="rc-head">'
+        +'<img class="rc-pin" src="'+PIN[p.lvl]+'" alt="'+esc(p.lvl)+'" width="46" height="46"'
         +' loading="lazy" decoding="async"></div>'
       +'<div class="rc-body">'
         +'<h3 class="rc-name"><b>'+esc(p.first)+'</b><i>'+esc(p.last)+'</i></h3>'
@@ -6824,13 +7014,54 @@ if(window.gsap&&window.ScrollTrigger){
     deck.appendChild(a); cards.push(a);
   });
 
+  /* ---- AS FOTOS DO TRILHO NAO PODEM SER `loading=lazy` ---------------------------------------
+     O dono relatou "nem no site aparece as imagens". Medido no navegador dele (1856px de largura):
+     15 de 15 fotos com `naturalWidth 0` e `complete:false` — ou seja, o navegador NUNCA baixou os
+     arquivos, e sem erro nenhum no console. O card aparece (borda, nome e pin no lugar), so a foto
+     falta. O pin carrega e a foto nao porque o pin esta no fluxo do card e a foto depende da
+     posicao do card no LAYOUT.
+     A causa: o baralho posiciona os 15 cards com `transform` 3D. O `loading=lazy` do navegador
+     decide pela caixa de LAYOUT, que ignora transform — os cards ficam com a caixa a milhares de
+     pixels da tela (medido: `top` 6731 com o card visualmente no centro), entao "longe da tela"
+     para sempre. A mesma foto carrega se a pagina for varrida com scroll continuo, o que explica
+     por que na medicao anterior (varredura de 400 em 400px) as 15 apareceram: a caixa passou pela
+     tela em algum momento. No uso real — e no modo apresentacao, que PULA direto — ela nunca passa.
+     A correcao nao e tirar o lazy no boot (seriam 420kB baixados em toda visita, do tamanho de todo
+     o desperdicio que este projeto ja cortou). E um observador na SECAO: quando a Bonificacao chega
+     a uma tela de distancia, as 15 viram `eager` de uma vez. Trocar `loading` para 'eager' numa
+     imagem lazy ainda nao baixada dispara o download na hora — e o que faz o trabalho aqui.
+     Observador na SECAO, nao nos cards, justamente porque a caixa dos cards e que esta mentindo. */
+  var fotos=[], fotosPedidas=false;
+  cards.forEach(function(c){
+    Array.prototype.forEach.call(c.querySelectorAll('img[loading="lazy"]'), function(im){ fotos.push(im); });
+  });
+  function pedeFotos(){
+    if(fotosPedidas) return; fotosPedidas=true;
+    fotos.forEach(function(im){ im.loading='eager'; });
+  }
+  if(window.IntersectionObserver){
+    var obs=new IntersectionObserver(function(ents){
+      for(var i=0;i<ents.length;i++) if(ents[i].isIntersecting){ pedeFotos(); obs.disconnect(); return; }
+    },{ rootMargin:'100% 0px' });         /* uma tela de antecedencia, acima e abaixo */
+    obs.observe(sec);
+  } else pedeFotos();
+  /* o modo apresentacao pode abrir JA na secao, antes de qualquer rolagem: se a secao ja esta na
+     tela quando o trilho monta, nao ha mudanca de intersecao para o observador reagir. */
+  (function(){
+    var r=sec.getBoundingClientRect();
+    if(r.top < innerHeight*2 && r.bottom > -innerHeight) pedeFotos();
+  })();
+
   /* Os grupos seguem a ORDEM DAS ABAS, nao a ordem do array P (onde os Embaixadores vem antes):
      G[0] casa com data-car="0" (Royal 5K / BYD) e G[1] com data-car="1" (Embaixador 12K / Taycan).
      Trocar o `lvl` de alguem no array P move a pessoa de grupo sozinho — e o mesmo `lvl` que
      escolhe o pin e o rotulo do card, entao os quatro nunca discordam. */
   var G=[
-    { lvl:'ROYAL',      rotulo:'A Rede · Acionistas Royal 5K',      idx:[] },
-    { lvl:'EMBAIXADOR', rotulo:'A Rede · Acionistas Embaixador 12K', idx:[] }
+    /* rotulo ACIMA do card — e o unico lugar onde o nivel aparece escrito agora (pedido do dono,
+       2026-08-04): so "Acionistas Royal" / "Acionistas Embaixadores", sem o "A Rede ·" e sem o
+       5K/12K. O que estava dentro do card ("[ ROYAL ]") saiu. */
+    { lvl:'ROYAL',      rotulo:'Acionistas Royal',       idx:[] },
+    { lvl:'EMBAIXADOR', rotulo:'Acionistas Embaixadores', idx:[] }
   ];
   P.forEach(function(p,i){ (p.lvl==='EMBAIXADOR'?G[1]:G[0]).idx.push(i); });
   if(!(G[0].idx.length && G[1].idx.length)) return;   /* sem os dois grupos nao ha coreografia */
@@ -6951,9 +7182,6 @@ if(window.gsap&&window.ScrollTrigger){
         var v=vh(self.progress);
         var g=grupoDe(v), dentro=ligadoEm(v);
 
-        /* o carro segue o SCROLL — e isto que faz "passou todos os Royais, entra o Taycan
-           sozinho". A troca cai no meio da ponte, com o trilho invisivel. */
-        garanteCarro(g);
         if(g!==grupo){
           grupo=g;
           if(tw) tw.kill();
@@ -6981,6 +7209,16 @@ if(window.gsap&&window.ScrollTrigger){
             }
           }
         }
+
+        /* O CARRO SEGUE O SCROLL — e isto que faz "passou todos os Royais, entra o Taycan sozinho".
+           ⚠ Tem de vir DEPOIS do bloco acima, e nao antes. O carsFinish() do site (disparado pelo
+           `ended` que forcamos ali) termina com um setCar(0), entao chamar garanteCarro() antes
+           deixava o estado impossivel: card de Embaixador na tela com a aba em "Royal 5K" e a BYD
+           acesa — medido ao entrar direto no trecho dos Embaixadores, que e o que a apresentacao e
+           quem chega no meio da pagina fazem. Rolando devagar nao aparecia, porque o video acaba
+           muito antes de o trilho ligar. */
+        garanteCarro(g);
+
         if(!dentro) return;
         if(kicker && kicker.textContent!==G[grupo].rotulo) kicker.textContent=G[grupo].rotulo;
         var snapped=Math.round(localEm(v,grupo)*((grupo===0?NR:NE)-1));
@@ -7056,22 +7294,64 @@ if(window.gsap&&window.ScrollTrigger){
     /* mobile: sem pin e sem grupos — os 15 numa tira so, na ordem do array. Quem manda e o scroll
        horizontal do proprio deck. A coreografia de grupo existe porque no desktop metade da cena
        fica escurecida; no celular a cena e uma coluna e nao ha metade nenhuma para ocupar. */
-    if(kicker) kicker.textContent='A Rede';
+    /* MOBILE COM GRUPO, como no desktop (pedido do dono): selecionar o carro filtra o trilho.
+       Royal 5K -> so os 13 Royais | Embaixador 12K -> so os 2 Embaixadores.
+       Aqui NAO da para esconder por opacidade: a media query do mobile forca
+       `opacity:1!important` nos cards para matar o baralho 3D. Quem tira de cena e o
+       `display:none`, que ainda por cima remove o card da tira flex e do scroll-snap — sem isso
+       sobrariam vaos vazios no carrossel. */
+    var atual=0;
+    function visiveis(){ return G[grupo].idx; }
+    function pintaGrupo(){
+      var tem=G[grupo].tem;
+      for(var i=0;i<N;i++) cards[i].style.display = tem[i] ? '' : 'none';
+      if(kicker) kicker.textContent=G[grupo].rotulo;
+      atual=0; deck.scrollLeft=0;
+      var n=visiveis().length;
+      if(countEl) countEl.textContent='01 / '+String(n).padStart(2,'0');
+      if(bar) bar.style.width=(n<2?100:5)+'%';
+      atualizaSetas();
+    }
+    document.addEventListener('cars:select',function(e){
+      var i=(e.detail&&e.detail.i)|0;
+      if(i===grupo) return;
+      grupo=i; pintaGrupo();
+    });
+
+    /* setas empurram o proprio scroll horizontal do deck (nao existe pin aqui) */
+    function irCard(k){
+      var v=visiveis();
+      k=Math.min(v.length-1,Math.max(0,k)); atual=k;
+      var c=cards[v[k]];
+      deck.scrollTo({left:c.offsetLeft-(deck.clientWidth-c.offsetWidth)/2,
+        behavior:reduce?'auto':'smooth'});
+    }
+    atualizaSetas=function(){
+      var n=visiveis().length;
+      if(prevBtn) prevBtn.disabled=(atual<=0);
+      if(nextBtn) nextBtn.disabled=(atual>=n-1);
+    };
+    if(prevBtn) prevBtn.addEventListener('click',function(){ irCard(atual-1); });
+    if(nextBtn) nextBtn.addEventListener('click',function(){ irCard(atual+1); });
+
     var raf=null;
     deck.addEventListener('scroll',function(){
       if(raf) return;
       raf=requestAnimationFrame(function(){
         raf=null;
-        var mid=deck.scrollLeft+deck.clientWidth/2, best=0, bd=Infinity;
-        for(var i=0;i<N;i++){
-          var c=cards[i], cc=c.offsetLeft+c.offsetWidth/2, d=Math.abs(cc-mid);
-          if(d<bd){ bd=d; best=i; }
+        var v=visiveis(), mid=deck.scrollLeft+deck.clientWidth/2, best=0, bd=Infinity;
+        for(var k=0;k<v.length;k++){
+          var c=cards[v[k]], cc=c.offsetLeft+c.offsetWidth/2, d=Math.abs(cc-mid);
+          if(d<bd){ bd=d; best=k; }
         }
-        if(countEl) countEl.textContent=String(best+1).padStart(2,'0')+' / '+String(N).padStart(2,'0');
-        if(bar) bar.style.width=Math.max(5,(best/(N-1))*100)+'%';
+        atual=best;
+        if(countEl) countEl.textContent=String(best+1).padStart(2,'0')+' / '+String(v.length).padStart(2,'0');
+        if(bar) bar.style.width=(v.length<2?100:Math.max(5,(best/(v.length-1))*100))+'%';
+        atualizaSetas();
       });
     },{passive:true});
-    if(countEl) countEl.textContent='01 / '+String(N).padStart(2,'0');
+    /* comeca no grupo do carro que o site seleciona sozinho no fim do video (Royal 5K) */
+    pintaGrupo();
   }
 
   /* troca de faixa (girar o celular / redimensionar cruzando 1025px): remonta no modo certo */

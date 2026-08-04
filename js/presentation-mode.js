@@ -38,9 +38,29 @@
         if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
         var fill = node.querySelector('.jfillp');
         var wrap = node.querySelector('.jwrap');
-        if (!fill || !wrap || !fill.getTotalLength) return null;
-        var len = fill.getTotalLength();
-        if (!len) return null;
+        if (!fill || !wrap) return null;
+        var len = (fill.getTotalLength) ? fill.getTotalLength() : 0;
+        /* REDE DE SEGURANÇA (2026-08-04). O dono relatou: "na PRIMEIRA vez ele não trava no último
+           marco, desce direto para a seção". Não consegui reproduzir — medido em carga limpa,
+           entrando na apresentação sem rolar nada antes, as 7 paradas existiam e a apresentação
+           parou em todas, inclusive na última (y=5298). Registrado aqui porque a hipótese pode
+           voltar: descer direto é EXATAMENTE o sintoma de a seção ficar com UMA parada, e o único
+           caminho que produz isso é este buildStops devolver null — o que acontece se o caminho SVG
+           ainda não tiver sido desenhado quando o índice é montado (`getTotalLength()` = 0).
+           Em vez de devolver null nesse caso, distribuímos as paradas pela GEOMETRIA dos pontos,
+           que existe desde o primeiro quadro. Mesma solução usada na antiga seção A Rede.
+           Só entra em ação quando o caminho não está pronto: com ele pronto, nada muda. */
+        if (!len){
+          var wr0 = wrap.getBoundingClientRect(), h0 = wr0.height || 1;
+          var span0 = st.end - st.start, alt = [];
+          node.querySelectorAll('.jitem').forEach(function(it){
+            var d0 = it.querySelector('.jdot'); if (!d0) return;
+            var r0 = d0.getBoundingClientRect();
+            var f = ((r0.top - wr0.top) + r0.height / 2) / h0;   // fração da altura do wrap
+            alt.push(st.start + span0 * Math.min(1, Math.max(0, f)));
+          });
+          return alt.length ? alt : null;
+        }
         var wr = wrap.getBoundingClientRect();
         var span = st.end - st.start;
         var out = [];
@@ -85,7 +105,24 @@
       onEnter:function(){ var v=document.querySelector('.hqbg');
         if(v){ try{ v.loop=true; v.currentTime=0; var p=v.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} } },
       onLeave:function(){ var v=document.querySelector('.hqbg');
-        if(v){ try{ v.loop=true; }catch(e){} } } },
+        if(v){ try{ v.loop=true; }catch(e){} }
+        /* saindo da seção, o popup não pode ficar aberto por cima da próxima */
+        if (window.IGREEN_VIDEO && window.IGREEN_VIDEO.aberto()) window.IGREEN_VIDEO.fechar(); },
+      /* DUAS paradas na MESMA posição (pedido do dono, 2026-08-03): a 1ª enquadra a seção como
+         sempre; no PRÓXIMO passo abre o popup do vídeo institucional. Quando o vídeo termina, o
+         #vmodal-app dispara 'igreen:video-fim' e a apresentação segue sozinha para a próxima
+         seção (ver o listener perto do fim deste arquivo).
+         Só existe se o popup existir: no mobile o card .hqwatch é display:none e o vmodal nem é
+         montado, então lá a seção continua com 1 parada. */
+      buildStops:function(st, node){
+        var off = (typeof this.frameOff === 'function') ? this.frameOff() : (this.frameOff != null ? this.frameOff : 90);
+        var y = curY() + node.getBoundingClientRect().top - off;
+        if (!window.IGREEN_VIDEO) return [ y ];
+        return [
+          y,
+          { y:y, action:function(){ window.IGREEN_VIDEO.abrir(); } }
+        ];
+      } },
     { label:'Ecossistema',  sel:'#ecossistema2', subs:[], on:true,
       /* baralho: um passo por card em foco (como a trajetória). O card i fica em
          foco quando cp = i/(N-1); e cp = (progress*D)/CARO_DUR, com CARO_DUR=5 e
@@ -140,16 +177,9 @@
       /* 3 views: (1) app + cards flutuantes, (2) tela do clube, (3) download.
          Ao ir pela seta a ponte eco2→órbita dispara o igStartOrbita; ao ir pelo dot
          disparamos o intro na mão e garantimos o smoother ativo. */
-      /* entrada pela seta é a varredura MAIS LONGA da apresentação: cobre o colapso dos cards
-         no núcleo + a descida até o celular (com o valor padrão era rápido demais pra ver).
-         Não afeta os passos internos da órbita.
-         6 -> 3.2 em 2026-08-03: o dono relatou que sair do Simulador estava "lento". A ponte é
-         justamente Simulador -> Órbita (Recorrência fica no meio, mas está `on:false`), então
-         quem mandava no tempo era este enterDur, não o cálculo por distância. 3.2 ainda mostra
-         o colapso dos cards; a suavidade não vem daqui e sim do ease `power1.inOut` que o
-         goToIndex aplica sempre que enterDur existe — por isso ficou mais rápido sem ficar seco.
-         É um número só: se ainda parecer arrastado, baixe para ~2.4. */
-      enterDur:3.2,
+      /* entrada pela seta é LENTA: cobre o colapso dos cards no núcleo + a descida
+         até o celular (era rápido demais pra ver). Não afeta os passos internos. */
+      enterDur:6,
       onEnter:function(){
         try{ var s=(window.ScrollSmoother&&ScrollSmoother.get)?ScrollSmoother.get():null; if(s) s.paused(false); }catch(e){}
         if (window.igStartOrbita) window.igStartOrbita();
@@ -461,7 +491,16 @@
   btnPlay.setAttribute('aria-label', 'Reproduzir automaticamente'); btnPlay.title = 'Auto (play)';
 
   var dotsList = el('ol', 'pmode-dots'); dotsList.setAttribute('role', 'list');
+  /* SEÇÃO DESLIGADA NÃO GANHA BOLINHA (2026-08-03). O dono relatou "tem mais bolinha aparecendo
+     que seção de navegação" — e era isso, medido: 12 bolinhas para 10 seções ligadas. As duas
+     sobrando eram de seções ocultas (#recorrencia, de antes, e #rede, que virou o trilho dos
+     carros): a bolinha existia, era visível e não fazia nada, porque o clique dela é guardado por
+     `if (SECTIONS[i].on)`.
+     O `dots` continua com um lugar por seção (índice = índice em SECTIONS) — o resto do arquivo
+     indexa por aí, inclusive o renderDotsState. As desligadas só ficam com `null`, e quem mexe em
+     dot já testa a existência. */
   var dots = SECTIONS.map(function(s, i){
+    if (!s.on) return null;
     var li = el('li');
     var d = el('button', 'pmode-dot', '<span class="sr-only">' + s.label + '</span>');
     d.type = 'button';
@@ -695,19 +734,10 @@
   function renderDotsState(){
     var activeSi = (curIdx >= 0 && activeStops[curIdx]) ? activeStops[curIdx].si : -1;
     dots.forEach(function(d, i){
-      /* DOT FANTASMA (2026-08-03): o dot e criado para TODA entrada de SECTIONS (map na
-         construcao do rail), e as desligadas so ganhavam `is-disabled` — ficavam no rail com
-         opacidade .26. Resultado medido: 12 bolinhas para 10 secoes navegaveis, porque
-         #recorrencia e #rede estao `on:false` (as duas ocultas com display:none). Agora a <li>
-         sai do rail. Nao filtramos o array `dots` de proposito: renderDotsState e o
-         data-section mapeiam por INDICE em SECTIONS, e reindexar quebraria os dois.
-         O fallback para SECTIONS[i].on importa: `sections` comeca vazio e so e preenchido no
-         rebuildIndex, entao sem ele o primeiro render esconderia TODAS as bolinhas. */
-      var entry = sections[i];
-      var on = entry ? !!entry.on : !!(SECTIONS[i] && SECTIONS[i].on);
+      if (!d) return;                       // seção desligada não tem bolinha
+      var on = !!(sections[i] && sections[i].on);
       d.disabled = !on;
       d.classList.toggle('is-disabled', !on);
-      if (d.parentNode) d.parentNode.hidden = !on;
       d.classList.toggle('is-active', i === activeSi);
       d.setAttribute('aria-current', i === activeSi ? 'true' : 'false');
       if (on && activeSi >= 0 && i < activeSi) d.classList.add('is-visited');
@@ -850,6 +880,7 @@
 
   /* ---- controles ---- */
   dots.forEach(function(d, i){
+    if (!d) return;                         // seção desligada não tem bolinha
     d.addEventListener('click', function(){ if (SECTIONS[i].on) manualSection(i); });
   });
   btnUp.addEventListener('click', function(){ goPrev(); });
@@ -928,6 +959,15 @@
   }
   if (document.readyState === 'complete') setTimeout(autoEnterIfNeeded, 140);
   else window.addEventListener('load', function(){ setTimeout(autoEnterIfNeeded, 140); });
+
+  /* ---- vídeo institucional acabou → próxima seção (pedido do dono, 2026-08-03) ----
+     Quem detecta o fim é o #vmodal-app (só ele tem a API de iframe do YouTube em mãos); ele fecha
+     o popup e dispara este evento. Aqui a única decisão é "estou apresentando?": fora da
+     apresentação o fim do vídeo não deve mover a página de lugar nenhum. */
+  document.addEventListener('igreen:video-fim', function(){
+    if (!active) return;
+    setTimeout(goNext, 220);   /* deixa o popup terminar de fechar antes de rolar */
+  });
 
   /* handle p/ depuração */
   window.__pmode = {
