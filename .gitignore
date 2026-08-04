@@ -49,3 +49,11 @@ produtos/legados/
 docs/
 BACKLOG.md
 teste-video.html
+
+# Video institucional (42,7MB, 1440x600 H.264) e o master dele (89,2MB, AV1 2560x1440).
+# O popup toca o LOCAL quando ele existe e cai no embed do YouTube quando nao existe, entao o site
+# publicado funciona sem ele. O arquivo existe para APRESENTAR SEM INTERNET, e isso acontece na
+# maquina de quem apresenta (com `node .claude/scripts/ver-local.js`), nao no deploy — botar 42,7MB
+# no historico do repo nao daria nada em troca e nao se desfaz depois. Quem quiser offline copia o
+# arquivo para assets/video/ com este nome.
+assets/video/institucional-igreen.mp4
