@@ -1,6 +1,8 @@
-# iGreen — site institucional
+# GranShow[AP] — apresentação iGreen
 
-Landing institucional da iGreen Energy, com 8 páginas de produto e um **modo apresentação** que substitui PowerPoint em apresentações ao vivo.
+Landing da iGreen Energy preparada para o **GranShow**, com 8 páginas de produto e um **modo apresentação** que substitui PowerPoint em apresentações ao vivo. É a partir dele que a apresentação roda: cada clique avança uma parada.
+
+Este repositório **não é** o site institucional em produção. Aquele é o `igreenlab/ui-apn-institucional`, e o que existe aqui — a peça de reconhecimento por graduação, a galeria de slides por conexão do ecossistema, os Destaques e o TOP 10 Green Points — nunca entrou nele. Por isso o `.github/workflows/deploy-prod.yml`, que fazia SSH no servidor de produção a cada push na `main`, **foi removido**: aqui ele deploiaria a apresentação por cima do site institucional.
 
 ## Antes de mexer, leia isto
 
@@ -56,3 +58,17 @@ node .claude/scripts/revisar.js
 ```
 
 Confere os padrões do projeto e aponta o que costuma quebrar aqui. Cada regra existe porque o problema aconteceu de verdade.
+
+## Publicação — Netlify
+
+O site é publicado pelo **Netlify**, ligado direto a este repositório do GitHub. Não há build: o `netlify.toml` publica a raiz do jeito que ela está, que é como o site já roda no disco.
+
+**Todo push na `main` republica sozinho.** Não existe script de deploy, não existe passo manual, e não é preciso avisar ninguém. É a única mecânica de publicação deste repositório.
+
+Uma branch qualquer (ou uma PR) gera um **deploy de pré-visualização** com URL própria, sem tocar no site publicado. É onde a validação no navegador acontece antes de a `main` mudar — o que mantém a regra do projeto de validar antes de publicar, só que com um endereço que dá para abrir no celular e mandar para outra pessoa.
+
+O `netlify.toml` guarda três decisões que valem uma linha cada:
+
+- **`/.claude/*`, `/.github/*` e `/.githooks/*` devolvem 404.** O repositório é privado, mas o site é público: sem isso, `/.claude/CLAUDE.md` entregaria as instruções e os mapas internos a quem digitasse o endereço.
+- **`assets/` tem cache de 1 dia, não de 1 ano.** Neste projeto arte trocada é arte **sobrescrita com o mesmo nome** — cache eterno faria a versão antiga continuar aparecendo depois do deploy.
+- **`js/` e `css/` revalidam sempre.** HTML novo com JS velho não dá erro: só faz a apresentação parar no lugar errado.

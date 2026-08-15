@@ -118,15 +118,64 @@
         var off = (typeof this.frameOff === 'function') ? this.frameOff() : (this.frameOff != null ? this.frameOff : 90);
         var y = curY() + node.getBoundingClientRect().top - off;
         if (!window.IGREEN_VIDEO) return [ y ];
+        /* ============================================================
+           O PLAY VIROU UMA PARADA (2026-08-13)
+           ------------------------------------------------------------
+           Pedido do dono: *"no modo apresentacao no proximo click ele da o play e no proximo
+           click ele segue o fluxo normal"*.
+
+           ⚠ ISTO É A OUTRA METADE DA RETIRADA DO AUTOPLAY (6f36fb7). Tirar o `v.play()` do
+           `montaLocal()` deixou o pop-up abrindo na capa — certo para quem navega o site, mas
+           na apresentação criou um buraco: a parada abria o vídeo parado e o clique seguinte
+           já saía da seção. O vídeo nunca tocava. Uma mudança pediu a outra, e é por isso que
+           elas estão separadas em dois commits mas descrevem um fluxo só.
+
+           A SEQUÊNCIA AGORA: enquadra a seção -> abre o pop-up (capa + play) -> TOCA -> o
+           clique seguinte segue o fluxo. São 3 paradas onde eram 2.
+
+           ⚠ A PARADA DO PLAY É AUTOSSUFICIENTE: ela reabre o pop-up antes de mandar tocar. Sem
+           isso, funcionaria descendo e falharia subindo — voltar atrás é uso normal ao vivo, e
+           `abrir()` num pop-up já aberto não faz mal (a peça é idempotente).
+           ⚠ E o `tocar()` é do próprio `IGREEN_VIDEO`, não um `querySelector('video').play()`
+           daqui: quem sabe se o player montado é o arquivo local ou o embed do YouTube é a
+           peça, e os dois tocam de formas diferentes. Alcançar dentro dela seria criar um
+           segundo dono do play.
+           ============================================================ */
+        /* ⚠ AS TRÊS FECHAM/PAUSAM O QUE NÃO É DELAS — medido, e sem isso o defeito só aparecia
+           VOLTANDO: da parada do play para a do pop-up, o vídeo continuava tocando; e da do
+           pop-up para o enquadramento, o pop-up continuava aberto. É a terceira vez hoje que
+           esta mesma armadilha aparece (ecossistema e graduações foram as outras duas). */
+        var V = function(){ return window.IGREEN_VIDEO; };
         return [
-          y,
-          { y:y, action:function(){ window.IGREEN_VIDEO.abrir(); } }
+          { y:y, action:function(){ if (V().aberto()) V().fechar(); } },
+          { y:y, action:function(){ V().abrir(); if (V().pausar) V().pausar(); } },
+          { y:y, action:function(){ V().abrir(); if (V().tocar) V().tocar(); } }
         ];
       } },
     { label:'Ecossistema',  sel:'#ecossistema2', subs:[], on:true,
       /* baralho: um passo por card em foco (como a trajetória). O card i fica em
          foco quando cp = i/(N-1); e cp = (progress*D)/CARO_DUR, com CARO_DUR=5 e
-         D = duração da deckTL (exposta pelo próprio trigger em st.animation). */
+         D = duração da deckTL (exposta pelo próprio trigger em st.animation).
+         ============================================================
+         E, DEPOIS DE CADA CARD, AS FOTOS DAQUELA CONEXÃO
+         ------------------------------------------------------------
+         Pedido do dono (2026-08-10): "cada ecossistema terá o seu pop up... você
+         clica na seta da apresentação, abre o pop up e vai passando as imagens;
+         chega na última e ela volta, e com outro clique passa para a Conexão
+         Green". É a MESMA forma das graduações: parada de conteúdo, depois uma
+         parada por página de foto, todas no MESMO y do card.
+         Duas coisas fazem isso funcionar e as duas são fáceis de quebrar:
+         (1) as paradas de foto ficam no y do card, e o `activeStops.sort()` por y
+             é ESTÁVEL — então elas continuam logo depois dele, na ordem em que
+             entram aqui. Dar a elas outro y as jogaria para outro lugar da fila.
+         (2) o próprio card ganha uma AÇÃO que FECHA o pop-up. É o que faz o
+             caminho de volta funcionar: voltando da 1ª foto para o card, o
+             pop-up sai da frente. Sem isso ele ficaria aberto sobre a seção.
+         Quem tem foto vem do window.ECO_GAL_CARDS, publicado pelo
+         js/ecossistema-galeria.js — conexão sem foto não gera parada nenhuma,
+         mesmo critério do GRAD_GAL_LEVELS: parada que não faz nada é pior que
+         parada nenhuma, porque quem apresenta clica e não entende.
+         ============================================================ */
       buildStops:function(st, node){
         if (!st) return null;   // reduced-motion: sem trigger → enquadramento simples
         var cards = node.querySelectorAll('.ecard');
@@ -134,13 +183,77 @@
         if (!N) return null;
         var D = (st.animation && st.animation.duration) ? st.animation.duration() : 10.4;
         var CARO = 5, span = st.end - st.start, out = [];
+        var G = window.IGREEN_ECO_GAL || null;
         for (var i = 0; i < N; i++){
           var cp = (N > 1) ? i / (N - 1) : 0;
           var p = Math.min(1, (CARO * cp) / D);
-          out.push(st.start + span * p);
+          var y = st.start + span * p;
+          (function(idx, yy){
+            /* ⚠ `ecoVideoClose()` NAS DUAS PARADAS ABAIXO — e isto é correção de um defeito
+               REAL, medido em 2026-08-13 ao percorrer as paradas ao contrário. Indo para a
+               frente estava tudo certo; VOLTANDO, o vídeo do Seguros ficava aberto por cima
+               da parada da imagem (21) e até da parada do cartão (20), porque essas duas só
+               fechavam a GALERIA. Sintoma ao vivo: o apresentador volta um passo para
+               reexibir a arte e continua vendo o player.
+               É a MESMA falha de 2026-08-10 nas Graduações, e a mesma regra: PARADA TEM DE
+               SER AUTOSSUFICIENTE. Ela não pode contar com o que a parada vizinha deixou
+               pronto — funciona descendo e falha subindo, e voltar atrás é uso normal. */
+            out.push({ y:yy, action:function(){ ecoVideoClose(); ecoGalClose(); } });  // o card em foco
+            var pags = G ? G.paginas(idx) : 0;
+            /* ============================================================
+               O VÍDEO VEM ANTES DAS IMAGENS (2026-08-13, à noite)
+               ------------------------------------------------------------
+               ⚠ ESTA ORDEM JÁ FOI A CONTRÁRIA, no mesmo dia. Entrou como imagens -> vídeo,
+               copiando o fluxo das Graduações, e o dono corrigiu: *"coloque o video antes e
+               depois que finalizar no proximo click aparece o slide do bonus extra"*.
+               Faz sentido no conteúdo: o vídeo da BP Seguradora APRESENTA a conexão, e o
+               Bônus Extra é a campanha do mês — o argumento vem antes da tabela.
+               ⚠ NÃO GENERALIZE DAS GRADUAÇÕES: lá a ordem é fotos -> vídeo, aqui é o
+               inverso, e as duas estão certas para o que contam. Quem for "uniformizar" as
+               duas vai desfazer um pedido explícito.
+               ⚠ A parada é AUTOSSUFICIENTE: fecha a galeria antes de abrir o vídeo. Sem isso
+               ela funcionaria descendo e falharia subindo — o defeito que esta mesma região
+               teve horas atrás.
+               ============================================================ */
+            for (var k = 0; k < pags; k++){
+              (function(pag){ out.push({ y:yy, action:function(){ ecoVideoClose(); ecoGalOpen(idx, pag); } }); })(k);
+              /* logo DEPOIS da capa (página 0), o vídeo. As páginas 1..N são as artes. */
+              if (k === 0 && ecoTemVideo(idx))
+                out.push({ y:yy, action:function(){ ecoGalOpen(idx, 0); ecoVideoOpen(idx); } });
+            }
+            /* ============================================================
+               UM PASSO SÓ PARA FECHAR, depois da última imagem
+               ------------------------------------------------------------
+               Sem ele, o clique que saía da última imagem fazia DUAS coisas no mesmo
+               gesto: fechava o pop-up e movia o baralho para a conexão seguinte. O dono
+               relatou exatamente isso (2026-08-10): "quando é a última imagem, no modo
+               apresentação ele volta de uma vez e já pula para o próximo, e isso não pode
+               acontecer."
+               Agora a última imagem tem um passo próprio de volta: o pop-up esmaece e a
+               cena fica NESTA conexão, com o card dela em foco. Só o clique seguinte vai
+               para a próxima. Fica no mesmo y, então esse passo não move o scroll — quem
+               move é o card seguinte, e aí o pop-up já saiu da frente há um clique.
+               ============================================================ */
+            /* ============================================================
+               A PARADA DO VÍDEO DA CONEXÃO (2026-08-13, Conexão Seguros)
+               ------------------------------------------------------------
+               Entra ENTRE a última imagem e o passo que fecha, e a ordem é a mesma que o
+               dono definiu para as graduações e repetiu aqui: FOTOS -> VÍDEO -> sai.
+               ⚠ A PARADA É AUTOSSUFICIENTE, que é a regra mais cara deste arquivo: ela
+               garante a galeria na página certa ANTES de abrir o vídeo. Sem isso ela
+               funcionaria descendo e falharia subindo — e voltar atrás é uso normal ao vivo,
+               o dono reexibe coisa. Foi exatamente o defeito de 2026-08-10 nas Graduações.
+               ⚠ E o passo de fechar logo abaixo fecha os DOIS (vídeo e galeria), senão o
+               pop-up do vídeo ficaria por cima da conexão seguinte.
+               ============================================================ */
+            if (pags) out.push({ y:yy, action:function(){ ecoVideoClose(); ecoGalClose(); } });
+          })(i, y);
         }
         return out;
-      } },
+      },
+      /* saindo da seção pela seta ou pelo dot, o pop-up não pode ficar por cima da
+         próxima seção — mesma rede de segurança do vídeo institucional e das graduações */
+      onLeave:function(){ ecoVideoClose(); ecoGalClose(); } },
     { label:'Simulador',    sel:'#simulador',    subs:[], on:true, frame:true,
       /* enquadra o cabeçalho do simulador (evita o vazio grande no topo) */
       buildStops:function(st, node){
@@ -203,11 +316,18 @@
       } },
     { label:'Planos',       sel:'#planos',       subs:[], on:true,
       /* sub-steps (os cards são altos e não cabem juntos): (1) título + plano 1;
-         (2) plano 2 enquadrado; (3) footer (#rodape). Sem pin/scrub → geometria. */
+         (2) plano 2 enquadrado. Sem pin/scrub → geometria.
+         ⚠ HAVIA UM TERCEIRO passo aqui, que enquadrava o RODAPÉ. Ele saiu em 2026-08-10,
+         quando o rodapé ganhou seção própria (a entrada "Encerramento", criada porque o
+         dono pediu que depois da última tela dos Destaques a apresentação "continuasse
+         para a última seção"). Com os dois, o rodapé era enquadrado DUAS VEZES em sequência
+         — e, pior, o segundo enquadramento aparecia rotulado como "Planos", já depois dos
+         Destaques, porque o `activeStops` ordena por y e aquele passo era clampado para o
+         fim da página. Medido: y=32241 num maxY de 32393, ou seja o fim.
+         Se um dia o Encerramento sair, este passo é o que o substitui. */
       buildStops:function(st, node){
         var head = node.querySelector('.pl-head');
         var plans = node.querySelectorAll('.pl-list .plan');
-        var footer = document.getElementById('rodape');
         var vh = window.innerHeight, base = curY(), out = [];
         var ref1 = head || plans[0];
         /* off1 ADAPTATIVO: rola o quanto precisar p/ o plano 1 caber inteiro (antes era fixo
@@ -223,14 +343,10 @@
           var r2 = plans[1].getBoundingClientRect();
           out.push(base + r2.top - Math.max(80, (vh - r2.height) / 2));            // plano 2
         }
-        if (footer){
-          var rf = footer.getBoundingClientRect();
-          out.push(base + rf.top - Math.max(60, (vh - rf.height) / 2));            // footer (clamp leva ao fim)
-        }
         return out.length ? out : null;
       } },
     { label:'Graduações',   sel:'#graduacoes',   subs:[], on:true, trig:'#gradSection', dur:2.8,
-      onLeave:function(){ gradEventsClose(); gradClear(); },
+      onLeave:function(){ recVidClose(); gradTudoClose(); gradClear(); },
       /* 1º passo: gráfico completo. Depois, INTERCALADO por nível (pedido do dono):
          pin no gráfico → galeria daquele pin → pin do próximo → galeria dele → ...
          Antes vinham em dois blocos (os 5 pins, e só então as 5 galerias), o que não
@@ -251,7 +367,7 @@
         var y = st.start + (st.end - st.start) * 0.9;
         var bs = document.querySelectorAll('#gradBars .bar-group');
         var n = bs.length;
-        var out = [{ y:y, action:function(){ gradEventsClose(); gradClear(); } }];   // gráfico completo
+        var out = [{ y:y, action:function(){ gradTudoClose(); gradClear(); } }];   // gráfico completo
         /* NEM TODO NÍVEL TEM GALERIA. O Sênior não tem (pedido do dono, 2026-08-04: "Senior não
            tem pop-up, retira esse que tá aparecendo treinamentos") — o pin dele entra, a galeria
            não. Quem tem vem do index, em window.GRAD_GAL_LEVELS, ao lado do array EVENTS: é lá que
@@ -260,12 +376,159 @@
            lista, o fallback é "todos têm", que é o comportamento antigo. */
         var comGal = window.GRAD_GAL_LEVELS || null;
         var temGal = function(lvl){ return comGal ? comGal.indexOf(lvl) >= 0 : true; };
+        /* ============================================================
+           RECONHECIMENTO-FORA-DA-APRESENTACAO (2026-08-12)
+           ------------------------------------------------------------
+           A parada dos NOMES saiu da apresentação por pedido do dono. Ele descreveu a
+           sequência nova nível por nível e em nenhum dos cinco os nomes aparecem:
+           *"o próximo que é o gestor aparece as fotos depois video e sai e volta para o
+           grafico e ele clica no executivo exibe as imagens aparece o pop up do vídeo e
+           depois sai novamente e assim sucessivamente para o diretor e acionista"*.
+           Confirmado com ele antes de mexer, porque a frase de abertura falava em "antes de
+           ir pros nomes" e havia duas leituras possíveis.
+
+           ⚠ COMENTADO, NÃO APAGADO — é a convenção deste projeto (ver `CTA-DESATIVADO` no
+           CLAUDE.md). Devolver os nomes à apresentação é descomentar estas duas linhas e a
+           parada lá embaixo, nada mais.
+
+           ⚠ E A PEÇA NÃO FICOU ÓRFÃ, o que foi conferido antes de desligar: fora da
+           apresentação o caminho de clique continua inteiro — o botão `.gm-rec-btn` da
+           galeria chama `depoisDasFotos()`, que abre a capa de vídeo, e clicar no card da
+           capa chama `abreRec()`. Ou seja, o dono ainda alcança os nomes na mão durante uma
+           apresentação ao vivo se quiser. Nada de `js/reconhecimento.js` (1.7k linhas) nem
+           dos ativos dele virou peso morto.
+
+        var comRec = window.GRAD_REC_LEVELS || null;
+        var temRec = function(lvl){ return comRec ? comRec.indexOf(lvl) >= 0 : false; };
+           ============================================================ */
+        /* NÍVEIS COM CAPA DE VÍDEO. Era um número só (o Executivo) até 2026-08-09, quando o
+           dono pediu a mesma capa no Diretor e no Acionista; o GESTOR entrou em 2026-08-10.
+           São quatro hoje, e a lista vem do index, ao lado do EVENTS.
+           Nos níveis SEM reconhecimento a capa é a última parada daquele pin: a próxima
+           parada é o pin seguinte, e é ela que fecha tudo. Onde HÁ reconhecimento (Gestor e
+           Executivo) a capa é o passo do meio, e é o `gradVidClose()` da parada dos nomes
+           que a tira da frente. */
+        var comVid = (window.GRAD_REC_FLOW && window.GRAD_REC_FLOW.niveisDoVideo) || [];
+        var temVid = function(lvl){ return comVid.indexOf(lvl) >= 0; };
+        /* ============================================================
+           CADA PARADA ESTABELECE O ESTADO COMPLETO DO SEU NÍVEL
+           ------------------------------------------------------------
+           Esta função existe por causa de um defeito relatado pelo dono em 2026-08-10:
+           *"eu seleciono o do gestor e ele abre a imagem de fundo do executivo, e as
+           outras em sequência também"* — sempre o nível VIZINHO.
+
+           A causa: as ações eram escritas só para AVANÇO. A galeria era selecionada na
+           parada das fotos, e as paradas da CAPA DE VÍDEO e do RECONHECIMENTO confiavam
+           que ela já estivesse no nível certo. Indo para a FRENTE isso é verdade; indo
+           para TRÁS, não — e aí a capa do Gestor aparecia sobre as fotos do Executivo.
+           Medido percorrendo as 19 paradas ao contrário: na parada 6 (capa do Gestor) o
+           rótulo dizia "Gestor" e o dot ativo da galeria era "Executivo".
+           Por que o SÊNIOR estava ok, e a pista estava aí: ele não tem galeria, então não
+           havia fundo errado para aparecer. Era o único nível imune.
+
+           A correção é tornar cada parada AUTOSSUFICIENTE em vez de acrescentar uma
+           regra para o caso de "estar voltando": uma parada que só funciona vinda de um
+           lado é uma parada que vai falhar de novo na próxima mudança de ordem.
+           Voltar atrás é uso normal numa apresentação ao vivo — o dono reexibe coisa.
+
+           ⚠ O guarda `temGal` não é enfeite: sem ele, o Sênior abriria o modal SEM ter
+           dot para selecionar, e o fundo ficaria na galeria de outro nível — exatamente
+           o defeito que esta função conserta, só que no único nível que não o tinha.
+           `gradEventsOpen` é idempotente (sai se o modal já está aberto), então chamar em
+           toda parada não pisca nem reabre nada.
+           ============================================================ */
+        var garanteGaleria = function(lvl){
+          if (!temGal(lvl)) return;
+          /* Usa o `abrirGaleriaDe` do index de propósito, e não o par
+             `gradEventsOpen()` + `gradEventGo()`: é ele que posiciona o slide ANTES de abrir
+             e sem deslizar. Com o par, o modal reabria no nível ANTERIOR e corria 0,5s até o
+             certo — o "no primeiro clique ainda é o anterior" que o dono relatou.
+             Quem sabe fazer isso sem deslize é quem tem o `track` na mão, ou seja o index.
+             O par fica como reserva para o caso de o script não ter carregado: melhor um
+             deslize do que nenhuma galeria. */
+          var F = window.GRAD_REC_FLOW;
+          if (F && F.abrirGaleriaDe){ try{ F.abrirGaleriaDe(lvl); return; }catch(e){} }
+          gradEventsOpen(); gradEventGo(lvl);
+        };
         for (var d = 0; d < n; d++){                                                 // Sênior → ... → Acionista
           (function(lvl){
             var barIdx = n - 1 - lvl;                                                // DOM invertido
-            out.push({ y:y, action:function(){ gradEventsClose(); gradHover(barIdx); } });                    // pin no gráfico
-            if (!temGal(lvl)) return;                   // sem galeria: não cria parada morta
-            out.push({ y:y, action:function(){ gradClear(); gradEventsOpen(); gradEventGo(lvl); } });         // galeria do pin
+            out.push({ y:y, action:function(){ gradTudoClose(); gradHover(barIdx); } });                      // pin no gráfico
+            /* ⚠ O `gradRecClose()` e o `gradVidClose()` AQUI CONSERTAM UM DEFEITO PRÉ-EXISTENTE,
+               achado em 2026-08-12 percorrendo as paradas AO CONTRÁRIO (medido: nas paradas de
+               fotos do Gestor, Executivo, Diretor e Acionista o vídeo continuava ABERTO).
+               A ação era só `gradClear() + garanteGaleria()`. Indo para a FRENTE isso basta,
+               porque quando esta parada roda o vídeo ainda não abriu. Voltando do vídeo para as
+               fotos, nada o fechava — e a capa ficava por cima das fotos que era para ela ter
+               deixado. Não é defeito novo: conferi no HEAD e a ação era idêntica lá.
+               É exatamente a armadilha do CLAUDE.md ("parada de apresentação tem de ser
+               AUTOSSUFICIENTE... funciona indo para a frente e falha indo para trás"), e voltar
+               atrás é uso normal ao vivo — o dono reexibe coisa.
+               Fecha os dois e NÃO usa `gradTudoClose()`, que fecharia também a galeria que esta
+               parada existe para mostrar. */
+            if (temGal(lvl))                            // sem galeria: não cria parada morta
+              out.push({ y:y, action:function(){ recVidClose(); gradRecClose(); gradVidClose(); gradClear(); garanteGaleria(lvl); } });   // galeria do pin
+            /* ORDEM PEDIDA PELO DONO: as fotos, depois a capa de vídeo, e só então os nomes.
+               A capa é sinalização e fica POR CIMA das fotos, por isso ela NÃO fecha a
+               galeria — quem fecha é a parada seguinte. E é justamente por ficar por cima
+               que ela precisa GARANTIR o fundo: o que aparece atrás dela é conteúdo. */
+            if (temVid(lvl))
+              out.push({ y:y, action:function(){ recVidClose(); garanteGaleria(lvl); gradVidOpen(lvl); } });  // capa de vídeo
+            /* ============================================================
+               O VÍDEO TOCANDO É UMA PARADA (2026-08-13, à noite)
+               ------------------------------------------------------------
+               Pedido do dono, descrevendo o passador de slide na mão: *"entra na foto, depois
+               no popup do video, clica denovo abre o video, clica novamente ele fecha e depois
+               clica novamente passa para a proxima qualificacao"*.
+
+               ⚠ FALTAVA JUSTO ESTA. A capa (`gradVidOpen`) é só o cartão que anuncia o vídeo;
+               quem TOCA é o `IGREEN_REC_VIDEO`. No site o cartão já abria o player no clique
+               desde que a peça existe — mas na apresentação não havia parada para isso, então
+               o passador ia da capa direto para a saída e o vídeo nunca rodava. Sintoma: o
+               apresentador clica esperando o vídeo e a tela volta para o gráfico.
+
+               ⚠ A CAPA É FECHADA AQUI, e a primeira versão desta parada NÃO fechava — defeito
+               relatado pelo dono com print: *"quando dou o player o popup anterior fica na
+               frente dos videos"*. Eu tinha deixado a capa aberta supondo que o player, sendo
+               tela cheia, cobriria tudo. Não cobre: a capa está numa camada acima e ficava
+               POR CIMA do vídeo. Fechar a capa não custa nada indo para trás, porque a parada
+               anterior a reabre por conta própria — é a autossuficiência fazendo o trabalho.
+               ⚠ E O "FECHA" NÃO É PARADA NOVA: a saída do nível, logo abaixo, já é o clique
+               que fecha tudo e volta ao gráfico. Somando, a sequência fica exatamente a que
+               ele pediu — fotos, capa, vídeo, fecha, próxima qualificação.
+               ============================================================ */
+            if (temVid(lvl))
+              out.push({ y:y, action:function(){ garanteGaleria(lvl); gradVidClose(); recVidOpen(lvl); } });   // o vídeo tocando
+            /* ============================================================
+               A SAÍDA DO NÍVEL É UM CLIQUE PRÓPRIO (2026-08-12)
+               ------------------------------------------------------------
+               Pedido do dono, nas palavras dele: as fotos, o vídeo, *"e sai e volta para o
+               grafico"*, e só então *"ele clica no executivo"*.
+
+               Poderia não existir: a parada do PIN do nível seguinte já faz
+               `gradTudoClose()`, então um único clique fecharia o vídeo E acenderia o pino
+               do Executivo. Não fiz assim de propósito, e o precedente é do próprio dono —
+               no ecossistema, em 2026-08-10, ele reclamou exatamente desse atalho:
+               *"quando é a última imagem, no modo apresentação ele volta de uma vez e já
+               pula para o próximo, e isso não pode acontecer."* Um clique que faz duas
+               coisas atropela a fala de quem está apresentando.
+
+               ⚠ E É ESTA PARADA que resolve o Acionista sem nenhum caso especial. O dono
+               pediu: *"quando chega um acionista as fotos e depois o vídeo ele permanece na
+               sessão das qualificações e depois no próximo clique ele desce para a próxima
+               sessão"*. Como o Acionista é o último, não existe pino seguinte — a saída dele
+               é a última parada da seção, o gráfico fica na tela com o pino dele aceso, e o
+               clique seguinte desce. Cai fora da regra geral por consequência, não por
+               exceção escrita à mão, que é o tipo de coisa que quebra na próxima mudança.
+
+               A ação é a MESMA do pino (`gradTudoClose` + `gradHover`), e isso é correto:
+               parada autossuficiente estabelece o estado completo do seu nível, indo para a
+               frente ou para trás. Ver o bloco `garanteGaleria` acima.
+
+               O guarda existe porque o SÊNIOR não tem fotos nem vídeo: para ele o pino já é
+               o gráfico limpo, e uma saída seria um clique que não muda nada na tela. */
+            if (temGal(lvl) || temVid(lvl))
+              out.push({ y:y, action:function(){ recVidClose(); gradTudoClose(); gradHover(barIdx); } });     // sai e volta ao gráfico
           })(d);
         }
         return out;
@@ -319,7 +582,33 @@
          pouco (-72), telas baixas (notebook ~700-768px) ficam em 0, senão o título encavala
          na navbar. Com o pin ativo o enquadramento é o próprio start do pin. */
       frameOff:function(){ return window.innerHeight < 900 ? 0 : -72; },
-      onEnter:function(){ var v=document.querySelector('.carvid'); if (v){ var p=v.play(); if (p&&p.catch) p.catch(function(){}); } },
+      /* ============================================================
+         A "ANDADA" DOS CARROS VOLTA A CADA ENTRADA NA SEÇÃO (2026-08-13)
+         ------------------------------------------------------------
+         Sintoma do dono: *"os carros antes andavam, nao sei se tirou por querer, mas se der
+         pra voltar com essa andada quando tiver no slide dele, seria bom"*.
+
+         ⚠ NADA FOI TIRADO — o vídeo nunca deixou de existir. O que acontece é que ele toca
+         UMA vez e congela no último quadro, por duas razões somadas: o `<video class="carvid">`
+         não tem `loop`, e o IntersectionObserver que dá o play faz `disconnect()` logo depois
+         (de propósito: é para não ficar religando a cada rolagem).
+         Resultado ao vivo: na primeira passagem os carros andam; ao VOLTAR para o slide deles
+         — que é uso normal, o dono reexibe — a cena já está parada e parece que a animação
+         sumiu. Daí o "antes andavam".
+
+         ⚠ A CORREÇÃO É O `currentTime = 0`, não o `play()`. O `play()` sozinho já estava aqui,
+         e é justamente por isso que o defeito passou despercebido: num vídeo que ACABOU, o
+         play recomeça do zero em alguns navegadores e em outros não faz nada visível. Rebobinar
+         explicitamente tira essa diferença do caminho.
+         ⚠ Dentro de `try`: mexer em `currentTime` antes de os metadados carregarem lança em
+         alguns navegadores, e uma exceção aqui derrubaria a entrada da seção inteira.
+         ============================================================ */
+      onEnter:function(){
+        var v=document.querySelector('.carvid');
+        if (!v) return;
+        try{ v.currentTime = 0; }catch(e){}
+        var p=v.play(); if (p&&p.catch) p.catch(function(){});
+      },
       buildStops:function(st, node){
         /* as frações vêm do próprio trilho (window.CARSRAIL, publicado pelo #carsrail-app).
            NÃO repetir aqui os 55/40/70vh dele: número repetido em dois arquivos é o gêmeo
@@ -351,10 +640,148 @@
               A 1ª pessoa é a única com ação: `carSelect(0)` (e não `carSelectRaw`) porque, se o
               dono avançar antes de o vídeo acabar, é preciso forçar o estado final — abas e foto
               no lugar — antes de o card aparecer. */
-        out.push({ y:ini + R.paradas[0] * L, action:function(){ carSelect(0); } });
-        for (var i = 1; i < R.paradas.length; i++) out.push(ini + R.paradas[i] * L);
+        out.push({ y:ini + R.paradas[0] * L, action:function(){ carSelect(0); royaisClose(); } });
+        /* ============================================================
+           A CAPA DOS ROYAIS ABRE O POP-UP (2026-08-14)
+           ------------------------------------------------------------
+           Pedido do dono: a capa no trilho e, ao clicar, *"um pop up com todas os quatorze
+           nomes e imagens"*, com "a funcionalidade do clique da apresentacao". Ele confirmou
+           que e UM clique so — os 14 aparecem juntos numa grade, nao um por vez.
+
+           ⚠ A PARADA ENTRA LOGO DEPOIS DA PRIMEIRA POSICAO DO TRILHO, que e onde a capa fica:
+           o grupo ROYAL passou a ter UM card (a capa) em vez de 14, entao `R.paradas[0]` e ela.
+           ⚠ AUTOSSUFICIENTE nos dois sentidos: esta ABRE, e a parada de cima e as de baixo
+           FECHAM. Sem isso o pop-up ficaria por cima dos Embaixadores ao seguir, e continuaria
+           aberto ao voltar — o defeito de "so falha voltando" que este arquivo ja teve tres
+           vezes esta semana (ecossistema, graduacoes e Sede).
+           ============================================================ */
+        out.push({ y:ini + R.paradas[0] * L, action:function(){ carSelect(0); royaisOpen(); } });
+        /* ⚠ O PASSO QUE FECHA E VOLTA A CARTA — pedido explicito do dono, e eu tinha construido
+           so dois passos onde ele descreveu TRES: *"selecionar a carta, abrir o pop up, quando
+           exibir tudo no proximo clic ele fecha volta no estado da carta e depois no proximo
+           clique ele continua no fluxo normal"*.
+           Sem esta parada, o clique que fecha o pop-up era o MESMO que saia da secao — duas
+           coisas num gesto so. E exatamente a reclamacao que ele ja fez em 2026-08-10 sobre o
+           ecossistema (*"volta de uma vez e ja pula para o proximo, e isso nao pode acontecer"*).
+           Fica no MESMO y da anterior: nao move o scroll, so muda a cena. */
+        out.push({ y:ini + R.paradas[0] * L, action:function(){ carSelect(0); royaisClose(); } });
+        for (var i = 1; i < R.paradas.length; i++)
+          (function(fr){ out.push({ y:ini + fr * L, action:royaisClose }); })(R.paradas[i]);
         return out;
       } },
+    /* ----- AGENDA DA SEMANA (2026-08-09) -----
+       Carrossel de dias, logo depois da Bonificação. UMA PARADA POR DIA, todas no MESMO y:
+       quem muda a cena é a `action`, não a rolagem — o mesmo desenho das Graduações e da
+       Trajetória. É isso que atende ao pedido do dono de que "a cada toque no teclado, a
+       cada scroll do mouse, muda o dia": na apresentação o avanço já é tecla e roda, e
+       aqui cada avanço cai num dia.
+       A CONTAGEM VEM DOS DADOS, não de contar nós na tela: o componente usa Shadow DOM e
+       os círculos não são alcançáveis por querySelectorAll a partir daqui. `ag.dados` é a
+       lista publicada pelo próprio componente. Sem ele (script não carregou), devolve null
+       e a seção volta a ser uma parada de enquadramento simples — nunca uma parada morta. */
+    /* ============================================================
+       TOP 10 GREEN POINTS — uma parada, entre os carros e a Agenda (2026-08-10)
+       ------------------------------------------------------------
+       Pedido do dono: a tabela "precisa ficar ao meio, uma secao", entre os carros e a
+       agenda. E arte unica, sem passo interno: uma parada so, centrada na tela como a
+       Agenda e os Destaques — encostar o topo no topo da janela deixaria a tabela na
+       beirada de baixo.
+       A ORDEM na apresentacao sai da posicao desta entrada no SECTIONS, e a ordem na
+       PAGINA sai do #reorder-secoes. As duas precisam concordar: 'top10' entrou entre
+       'bonificacao' e 'agenda' nas duas listas.
+
+       ⚠ TOP10-DESATIVADO (2026-08-12): `on:false`. O dono pediu *"a imagem anexo retire essa
+       secao"*, com o print da tabela em anexo. A secao esta `display:none` no index e saiu da
+       lista do #reorder-secoes; aqui ela vira parada MORTA e fica fora da apresentacao — e é
+       obrigatorio que as tres coisas andem juntas, senao a apresentacao teria um clique que
+       pousa num elemento invisivel e a tela nao muda nada (defeito que este projeto ja
+       conhece: overlay aberto com o scroll andando atras, comando que parece morto).
+       Mesmo tratamento da #rede e da #recorrencia. Reativar = `on:true` + as duas de la.
+       ============================================================ */
+    { label:'TOP 10',       sel:'#top10',        subs:[], on:false, frame:true,
+      buildStops:function(st, node){
+        var sobra = Math.max(0, (window.innerHeight - node.offsetHeight) / 2);
+        return [ curY() + node.getBoundingClientRect().top - sobra ];
+      } },
+    { label:'Agenda',       sel:'#agenda',       subs:[], on:false, dur:1.2,
+      buildStops:function(st, node){
+        var ag = document.getElementById('agendaSemana');
+        var dias = (ag && ag.dados && ag.dados.length) || 0;
+        if (dias < 2) return null;
+        /* CENTRALIZA a seção na tela em vez de encostar o topo dela no topo da janela
+           (pedido do dono: "sobe ele mais um pouco e ajusta de forma que eu consiga ver em
+           uma tela de forma completa tanto o dia quanto as atividades abaixo").
+           A seção cabe inteira depois que o cabeçalho saiu; centrar é o que garante que
+           nem o carrossel nem os cards de horário fiquem na beirada. O Math.max(0,...)
+           cobre a tela baixa, onde a seção é maior que a janela: aí volta a encostar no
+           topo, que é o menos pior. */
+        var sobra = Math.max(0, (window.innerHeight - node.offsetHeight) / 2);
+        var y = curY() + node.getBoundingClientRect().top - sobra;
+        var out = [];
+        for (var d = 0; d < dias; d++) (function(i){
+          out.push({ y:y, action:function(){ try{ ag.ir(i); }catch(e){} } });
+        })(d);
+        return out;
+      } },
+    /* ============================================================
+       DESTAQUES — 3 telas, uma parada cada (2026-08-10)
+       ------------------------------------------------------------
+       "um carrossel que passará por clique e no modo apresentação também... e depois
+       que passar a última ela continua para a última seção."
+       Mesma forma da Agenda: todas as paradas no MESMO y (a seção enquadrada), e a
+       ação de cada uma leva o carrossel para a tela dela. Ficando no mesmo y, o
+       `activeStops.sort()` — que é estável — mantém a ordem em que entram aqui, e a
+       varredura não precisa andar entre telas.
+       A parada da PRIMEIRA tela chama `ir(0)`, e não só enquadra: voltando do rodapé
+       para cá, o carrossel tem de voltar à tela 1 em vez de continuar na 3.
+       ============================================================ */
+    { label:'Destaques',    sel:'#destaques',    subs:[], on:false, dur:1.2,
+      buildStops:function(st, node){
+        var D = window.IGREEN_DESTAQUES;
+        var n = (D && D.telas && D.telas()) || 0;
+        if (!n) return null;                       /* sem telas: enquadramento simples */
+        /* centraliza a seção, como a Agenda: ela é uma arte 16:9 e encostar o topo no
+           topo da janela deixaria a arte na beirada de baixo */
+        var sobra = Math.max(0, (window.innerHeight - node.offsetHeight) / 2);
+        var y = curY() + node.getBoundingClientRect().top - sobra;
+        var out = [];
+        for (var i = 0; i < n; i++) (function(k){
+          out.push({ y:y, action:function(){ try{ D.ir(k); }catch(e){} } });
+        })(i);
+        return out;
+      } },
+    /* ============================================================
+       MAPA DO SUMMIT — uma parada, entre os Destaques e o Encerramento (2026-08-12)
+       ------------------------------------------------------------
+       Entrou quando o dono tirou a 3ª tela do carrossel dos Destaques (a arte da agenda
+       das 21 cidades) e pediu *"crie uma nova secao abaixo para mapa summit"*.
+
+       ⚠ UMA PARADA, DE ENQUADRAMENTO — e essa foi uma escolha conservadora que vale
+       explicar, porque o contrário era tentador. O `window.IGREEN_SUMMIT` já expõe tudo
+       o que faria uma parada por CIDADE (as 21, com `paginas()`, `abrir(uf, pag)` e
+       `fechar()`, de propósito na mesma forma da `IGREEN_ECO_GAL`). Não fiz isso porque:
+         · o dono pediu uma SEÇÃO, não uma coreografia — 21 paradas novas mudariam a
+           duração da apresentação inteira sem ele ter pedido;
+         · ele acabou de REDUZIR paradas (tirou os nomes das Graduações e o TOP 10);
+         · a arte que saiu dos Destaques era UMA parada, então a apresentação fica com o
+           mesmo tamanho de antes desta mudança.
+       Se ele quiser percorrer as cidades, o `buildStops` vira o mesmo desenho do
+       ecossistema (uma parada por página, todas no mesmo y, mais uma de fechar) e a API
+       já está pronta. Está registrado como pergunta aberta.
+
+       `frame:true` centra a seção na tela, como o TOP 10 fazia e como a Agenda faz: o
+       mapa é alto e encostar o topo no topo da janela deixaria o rodapé da seção fora.
+       ============================================================ */
+    /* ============================================================
+       ENCERRAMENTO — o rodapé, para a apresentação ter fim
+       ------------------------------------------------------------
+       Entrou junto com os Destaques porque o pedido do dono foi que depois da última
+       tela do carrossel a apresentação "continua para a última seção". Sem uma parada
+       aqui, a última tela do carrossel seria o fim e o clique seguinte não faria nada
+       — parecendo travamento. É uma parada só, de enquadramento: o rodapé não tem
+       coreografia nenhuma.
+       ============================================================ */
+    { label:'Encerramento', sel:'#rodape',       subs:[], on:true, frame:true, frameOff:0 },
   ];
 
   /* ----- config por página -----
@@ -447,6 +874,44 @@
      posição do slide no carrossel do modal, e os dois deixaram de coincidir quando o Sênior saiu da
      galeria. Trocar um pelo outro abre a galeria do nível vizinho, sem erro nenhum no console. */
   function gradEventGo(i){ var d = document.querySelector('#gradEventsModal .gm-dot[data-lvl="' + i + '"]'); if (d) try{ d.click(); }catch(e){} }
+
+  /* ---- reconhecimento por qualificação (2026-08-09) ----
+     A peça (js/reconhecimento.js) é tela cheia e o popup de vídeo é um cartão sobre a
+     galeria. Os dois PRECISAM ser fechados no passo seguinte, e não só ao sair da seção:
+     no Sênior não há galeria aberta, então o gradEventsClose() do passo do pin não fecha
+     nada e a peça ficaria por cima do gráfico da próxima qualificação — sem erro nenhum
+     no console, que é justamente o tipo de falha silenciosa que este projeto já pagou caro. */
+  function gradRecClose(){ var R = window.IGREEN_RECONHECIMENTO; if (R && R.aberto()) try{ R.fechar(); }catch(e){} }
+  function gradVidClose(){ var F = window.GRAD_REC_FLOW; if (F && F.videoAberto && F.videoAberto()) try{ F.fecharVideo(); }catch(e){} }
+  function gradRecOpen(lvl){ var R = window.IGREEN_RECONHECIMENTO; if (R) try{ R.abrir(lvl); }catch(e){} }
+  function gradVidOpen(lvl){ var F = window.GRAD_REC_FLOW; if (F && F.abrirVideo) try{ F.abrirVideo(lvl); }catch(e){} }
+  /* fecha tudo que possa estar por cima, na ordem em que aparece */
+  function gradTudoClose(){ gradRecClose(); gradVidClose(); gradEventsClose(); }
+
+  /* ---- fotos do ecossistema (2026-08-10) ----
+     Uma galeria por conexão (js/ecossistema-galeria.js), com o mesmo desenho da galeria
+     das graduações. `i` é a posição do CARTÃO na seção (0 = Livre … 6 = Expansão), que é a
+     ordem do DOM e a mesma que o buildStops percorre — aqui não existe a distinção
+     nível/slide que já deslocou a galeria das graduações em um. `pag` é a página de fotos.
+     O `abrir` recusa sozinho a conexão sem foto, então não há o que conferir antes. */
+  function ecoGalOpen(i, pag){ var G = window.IGREEN_ECO_GAL; if (G) try{ G.abrir(i, pag); }catch(e){} }
+  function ecoGalClose(){ var G = window.IGREEN_ECO_GAL; if (G && G.aberto()) try{ G.fechar(); }catch(e){} }
+  /* o vídeo de uma conexão do ecossistema (Conexão Seguros desde 2026-08-13). A verdade sobre
+     quem tem vídeo mora na galeria, que por sua vez pergunta à peça do vídeo — aqui só se
+     consulta, para não criar um terceiro lugar com a mesma lista. */
+  /* o player de vídeo em si (o mesmo que o ecossistema usa, chaveado por nível nas graduações).
+     ⚠ `recVidClose()` aparece em TODAS as paradas do nível, não só na saída: parada tem de
+     estabelecer o estado completo, e sem isso o vídeo ficaria aberto ao voltar — que foi
+     exatamente o defeito medido no ecossistema hoje mais cedo. */
+  function recVidOpen(lvl){ var V = window.IGREEN_REC_VIDEO; if (V) try{ V.abrir(lvl); }catch(e){} }
+  function recVidClose(){ var V = window.IGREEN_REC_VIDEO; if (V && V.aberto()) try{ V.fechar(); }catch(e){} }
+  /* pop-up dos 14 Acionistas Royal (#royais-app). Mesma forma dos outros: a apresentacao
+     PERGUNTA a peca, nao alcanca dentro dela. */
+  function royaisOpen(){ var R=window.IGREEN_ROYAIS; if(R) try{ R.abrir(); }catch(e){} }
+  function royaisClose(){ var R=window.IGREEN_ROYAIS; if(R && R.aberto()) try{ R.fechar(); }catch(e){} }
+  function ecoTemVideo(i){ var G = window.IGREEN_ECO_GAL; return !!(G && G.temVideo && G.temVideo(i)); }
+  function ecoVideoOpen(i){ var G = window.IGREEN_ECO_GAL; if (G && G.abrirVideo) try{ G.abrirVideo(i); }catch(e){} }
+  function ecoVideoClose(){ var G = window.IGREEN_ECO_GAL; if (G && G.fecharVideo) try{ G.fecharVideo(); }catch(e){} }
 
   /* bonificação: seleciona o carro/aba (clicar no .carbtn dispara o setCar do site) */
   function carSelectRaw(i){ var b = document.querySelector('.carbtn[data-car="' + i + '"]'); if (b) try{ b.click(); }catch(e){} }
@@ -841,7 +1306,22 @@
      (pmtour/pmcard) sobrevive à navegação. */
   function isEcoCardStop(idx){ var s=activeStops[idx]; return !!(s && SECTIONS[s.si] && SECTIONS[s.si].sel==='#ecossistema2'); }
   function ecoCards(){ return document.querySelectorAll('#ecossistema2 .ecard'); }
-  function ecoStopIndexFor(k){ for (var i=0;i<activeStops.length;i++){ var s=activeStops[i]; if (SECTIONS[s.si] && SECTIONS[s.si].sel==='#ecossistema2' && s.sub===k) return i; } return -1; }
+  /* ⚠ `sub` é a posição da parada DENTRO da seção, e desde 2026-08-10 a seção não tem mais
+     uma parada por card: cada conexão com foto acrescenta uma parada por página de galeria
+     depois do card dela. Então `sub` deixou de ser igual ao número do card, e procurar
+     `sub===k` passaria a cair numa parada de FOTO — o mesmo tipo de erro de "índice de uma
+     coisa usado como índice de outra" que já abriu a galeria da qualificação vizinha.
+     A conta certa é somar, para cada card anterior, ele mesmo (1) mais as páginas dele. */
+  function ecoSubDoCard(k){
+    var G = window.IGREEN_ECO_GAL, s = 0;
+    for (var i = 0; i < k; i++){
+      var p = G ? G.paginas(i) : 0;
+      /* 1 (o card) + uma por imagem + 1 do passo que só fecha (só existe se houver imagem) */
+      s += 1 + p + (p ? 1 : 0);
+    }
+    return s;
+  }
+  function ecoStopIndexFor(k){ var alvo = ecoSubDoCard(k); for (var i=0;i<activeStops.length;i++){ var s=activeStops[i]; if (SECTIONS[s.si] && SECTIONS[s.si].sel==='#ecossistema2' && s.sub===alvo) return i; } return -1; }
   function tourOn(){ try{ return sessionStorage.getItem('pmtour')==='1'; }catch(e){ return false; } }
   function tourCard(){ try{ return parseInt(sessionStorage.getItem('pmcard')||'-1',10); }catch(e){ return -1; } }
   function tourSet(on, card){ try{ if(on){ sessionStorage.setItem('pmtour','1'); sessionStorage.setItem('pmcard',String(card)); } else { sessionStorage.removeItem('pmtour'); sessionStorage.removeItem('pmcard'); } }catch(e){} }
@@ -856,9 +1336,41 @@
 
   /* "próximo" central: no ecossistema abre o produto; no produto (tour) o ↓ no fim
      avança pro próximo card; senão comportamento normal de passo. */
-  function goNext(){
+  /* ============================================================
+     QUEM ESTÁ POR CIMA CONSOME O PASSO PRIMEIRO
+     ------------------------------------------------------------
+     O reconhecimento é uma peça de dois atos com várias páginas de
+     nomes. Ela precisa "comer" os avanços enquanto tiver para onde
+     ir, e só então devolver o passo para a apresentação.
+     Isso já existia — mas só no TECLADO, por um listener em fase de
+     captura. E o dono avança pelo BOTÃO da tela: o clique nunca
+     passava por lá, a apresentação pulava direto para a próxima
+     parada e OS NOMES DOS EXECUTIVOS NUNCA APARECIAM. Sintoma dele,
+     literal: "quando eu vou passar para a parte dos nomes ele não
+     exibe os nomes".
+     Perguntar aqui resolve os três caminhos de uma vez — tecla,
+     botão e roda do mouse todos passam por goNext/goPrev. É o lugar
+     certo: um único ponto de decisão em vez de três interceptações.
+     ============================================================ */
+  function pecaConsumiu(frente){
+    var R = window.IGREEN_RECONHECIMENTO;
+    if (!R || !R.aberto()) return false;
+    try{ return frente ? !!R.avancar() : !!R.voltar(); }catch(e){ return false; }
+  }
+
+  /* `manual` = o passo veio de uma AÇÃO DELIBERADA (tecla, passador de slide, botão da
+     interface), não da roda do mouse. Nesse caso ele tem PRIORIDADE: mata a varredura em
+     curso em vez de ser descartado.
+     Por que essa diferença existe, e por que ela não é capricho: a roda dispara muitos
+     eventos por gesto e sem a serialização um único giro de dedo atravessaria três paradas.
+     Uma tecla e um clique de passador disparam UM evento — descartar esse é perder o
+     comando, e o apresentador clica de novo achando que o aparelho falhou (e aí anda dois).
+     O `goPrev` sempre foi assim (force=true desde antes); o `goNext` era o único que
+     descartava, e essa assimetria vinha junto com o defeito do passador de 2026-08-10. */
+  function goNext(manual){
+    if (pecaConsumiu(true)) return;
     stopAuto();
-    if (activeTween) return;
+    if (activeTween && !manual) return;
     if (AUTO){
       if (tourOn() && curIdx >= activeStops.length - 1){
         tourSet(true, tourCard() + 1);
@@ -873,15 +1385,18 @@
        e, no ultimo, segue pra proxima secao) — mesmo comportamento da seta →, que ja "NUNCA
        abre produto". Antes aqui chamava openEcoCard() -> card.click() -> abria o produto. */
     if (curIdx >= 0 && isEcoCardStop(curIdx)){ goToIndex(curIdx + 1, false, true); return; }
-    goToIndex(curIdx < 0 ? 0 : curIdx + 1, false);
+    goToIndex(curIdx < 0 ? 0 : curIdx + 1, false, manual);
   }
-  function goPrev(){ stopAuto(); goToIndex(curIdx <= 0 ? 0 : curIdx - 1, false, true); }
+  function goPrev(){ if (pecaConsumiu(false)) return; stopAuto(); goToIndex(curIdx <= 0 ? 0 : curIdx - 1, false, true); }
 
-  /* passo "puro" (setas < >): NUNCA abre produto — no ecossistema troca de card e,
-     no último, segue pra próxima seção (órbita). Fora do ecossistema = passo normal. */
-  /* a guarda "if (activeTween) return" saiu daqui: era ela + a serializacao do goToIndex que
-     descartavam o clique durante a varredura. Agora o passo assume (force=true). */
-  function goStepNext(){ stopAuto(); goToIndex(curIdx < 0 ? 0 : curIdx + 1, false, true); }
+  /* ⚠ O `goStepNext` FOI REMOVIDO em 2026-08-10. Ele era o passo "puro" da seta →, e existia
+     por uma razão que deixou de valer: garantir que no ecossistema a seta trocasse de card
+     SEM abrir a página de produto. Essa trava mora hoje dentro do próprio `goNext`
+     (`isEcoCardStop`), então ele virou um segundo caminho para o mesmo gesto — sem vantagem
+     nenhuma e com um defeito grave: não chamava `pecaConsumiu()`, e por isso a seta → pulava
+     galerias e reconhecimentos inteiros em vez de virar a página deles.
+     Se você sentir falta do "force" que ele tinha, ele está preservado: é o parâmetro
+     `manual` do `goNext`. NÃO recrie esta função. */
 
   /* produto: fechar E PULAR pro próximo card (no tour); fora do tour só volta */
   function skipProduct(){
@@ -896,7 +1411,7 @@
     d.addEventListener('click', function(){ if (SECTIONS[i].on) manualSection(i); });
   });
   btnUp.addEventListener('click', function(){ goPrev(); });
-  btnDown.addEventListener('click', function(){ goNext(); });
+  btnDown.addEventListener('click', function(){ goNext(true); });   /* clique no botao = passo manual, tem prioridade */
   btnPlay.addEventListener('click', function(){ autoOn ? stopAuto() : startAuto(); });
   toggle.addEventListener('click', function(){ active ? exit() : enter(); });
   btnExit.addEventListener('click', function(){ AUTO ? skipProduct() : exit(); });
@@ -906,10 +1421,36 @@
     if (!active) return;
     var k = e.key;
     if (k === 'Escape' || e.keyCode === 27){ e.preventDefault(); AUTO ? skipProduct() : exit(); }
-    else if (k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'Spacebar'){ e.preventDefault(); goNext(); }
-    else if (k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); goPrev(); }
-    else if (k === 'ArrowRight'){ e.preventDefault(); goStepNext(); }   // troca card sem abrir; no último → próxima seção
-    else if (k === 'ArrowLeft'){ e.preventDefault(); goPrev(); }        // card anterior sem abrir
+    /* ============================================================
+       AS QUATRO SETAS FAZEM A MESMA COISA — e isso é o conserto do PASSADOR DE SLIDE
+       ------------------------------------------------------------
+       Sintoma relatado pelo dono em 2026-08-10, testando com o passador de slide na mão:
+       *"ele está passando só com a seta para cima e para baixo"*.
+
+       CAUSA: `ArrowRight` chamava `goStepNext()`, e `goStepNext` NÃO chamava
+       `pecaConsumiu()` — só o `goNext()` chama. Ou seja, a seta → pulava a parada inteira
+       em vez de perguntar à peça se ela ainda tem página para virar.
+       O pior caso é justamente o mais visível numa apresentação ao vivo: com o
+       reconhecimento do Diretor aberto (15 artes, UMA parada), a → mandava o scroll andar
+       ATRÁS de um overlay de tela cheia — a tela não mudava nada e o passador parecia
+       morto, enquanto ↓ trocava a arte normalmente. Era exatamente o que o dono descreveu.
+
+       POR QUE `goNext()` cobre tudo o que o `goStepNext` fazia: a proteção que justificava
+       a existência dele ("no modo apresentação NUNCA abre página de produto", no stop de
+       card do ecossistema) hoje mora dentro do próprio `goNext`. Então `goStepNext` virou
+       um caminho paralelo sem nenhuma vantagem e só com o defeito. Foi removido — caminho
+       duplicado para o mesmo gesto é a armadilha dos "dois donos" que este projeto já
+       pagou várias vezes.
+
+       Passadores de slide mandam teclas diferentes conforme o modelo: uns PageDown/PageUp,
+       outros ArrowRight/ArrowLeft, alguns espaço. Com as quatro setas + PageDown/PageUp +
+       espaço todas ligadas ao mesmo par de funções, qualquer um deles funciona sem
+       configuração e sem o apresentador precisar saber qual tecla o aparelho manda.
+       ⚠ Ao acrescentar tecla aqui, ligue em `goNext`/`goPrev` e em mais nada: é o
+       `pecaConsumiu` dentro delas que faz as galerias e o reconhecimento passarem página.
+       ============================================================ */
+    else if (k === 'ArrowDown' || k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Spacebar'){ e.preventDefault(); goNext(true); }
+    else if (k === 'ArrowUp'   || k === 'ArrowLeft'  || k === 'PageUp'){ e.preventDefault(); goPrev(); }
     else if (k === 'Home'){ e.preventDefault(); manualIndex(0); }
     else if (k === 'End'){ e.preventDefault(); manualIndex(activeStops.length - 1); }
   }, true);

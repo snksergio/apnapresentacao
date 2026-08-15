@@ -41,29 +41,24 @@ Para qualquer pedido de alteração, siga esta ordem. Existe um agente para cada
    toma decisão errada. Isto não é burocracia — é o que mantém o pipeline útil na segunda vez.
 6. **Relate** o que mudou, o que foi medido, e o que ficou em aberto. Pergunte antes de commitar.
 
-Comandos: `/validar-tudo` (smoke test completo), `/desfazer` (voltar atrás com segurança) e `/publicar` (subir nos dois remotos, na ordem certa).
+Comandos: `/validar-tudo` (smoke test completo) e `/desfazer` (voltar atrás com segurança). ⚠ **`/publicar` não vale mais neste repositório** — ver a seção abaixo.
 
-## Os dois remotos — leia antes de publicar
+## Publicar aqui — leia antes, o destino mudou
 
-| remoto | papel |
-|---|---|
-| `empresa` | `igreenlab/ui-apn-institucional`. O **oficial**, e um push na `main` dele **publica em produção na hora**: o `.github/workflows/deploy-prod.yml` entra por SSH no servidor `162.141.111.97` e roda o `deploy.sh` do `igreen-vault`. Aqui não existe "subir para guardar". **Outras pessoas commitam neste repo** — um push recusado com "fetch first" significa trabalho de alguém que você não tem; traga com `git pull --rebase empresa main` e **nunca** use `--force`. |
-| `origin` | Repo pessoal do dono, e o que a **Vercel** constrói hoje — o repo da organização tem restrição que impede conectar a Vercel nele. É onde as pessoas testam o visual; ter arquivo a mais lá não faz mal. |
+⚠ **Este repositório é o `snksergio/apnapresentacao`.** O conteúdo veio do ROYAIS-APN
+(`MFiGreenSYS/GranShow-AP` / `igreenlab/ui-apn-royal`) em 2026-08-15, por decisão do dono de que a
+APN institucional passaria a ser igual à dos Royais, **sem a seção do mapa do Summit**.
 
-Publicar são **dois passos**: `git push empresa main` e depois `node .claude/scripts/espelhar-visual.js`. Um `git push origin main` direto é **recusado**: o histórico do pessoal é o antigo, de antes da limpeza que tirou 452MB e o material privado, e os dois divergiram. O script resolve gravando lá um commit com o mesmo *conteúdo* em cima do topo que ele já tem — avanço normal, sem forçar, preservando aquele histórico como backup. Ver `/publicar`. **Nunca** use `--force` para contornar isso.
-Skill principal: **`alterar-site`** — é o ponto de entrada de qualquer pedido.
+⚠⚠ **UM PUSH NA `main` DAQUI PUBLICA EM PRODUÇÃO.** O `.github/workflows/deploy-prod.yml` deste
+repositório dispara em `push: branches: [main]`, entra por SSH em `162.141.111.97` e roda
+`/root/projects/igreen-vault/ui-apn-institucional/prod/deploy.sh` — ou seja, **a produção do
+INSTITUCIONAL**. Não é o mesmo destino do ROYAIS-APN, que publica em `ui-apn-royal/prod/`.
+Trocar um pelo outro faria um site sobrescrever o do outro. Ao trazer qualquer coisa de lá,
+**o workflow NÃO vem junto**.
 
-Guardiões (acione só os necessários, para não gastar contexto):
+Por isso, aqui: trabalhe em **branch e PR**. Push em branch não dispara nada; o merge na `main` sim.
 
-| agente | quando |
-|---|---|
-| `geometria-guardian` | qualquer coisa que possa mover pixel |
-| `scroll-guardian` | altura/posição de seção, pin, snap, âncora |
-| `apresentacao-guardian` | mexeu em pin, altura ou ordem das seções |
-| `colecoes-guardian` | adicionar/remover/reordenar item de lista (o mais comum) |
-| `responsividade-guardian` | não cabe na tela, "no notebook fica diferente" |
-| `ativos-guardian` | imagem ou vídeo novo/trocado |
-| `performance-guardian` | animação, mídia, seção nova, ou engasgo relatado |
+O que **NÃO existe aqui** e você vai encontrar citado em documento antigo:
 
 ## Verificação automática
 
@@ -97,6 +92,19 @@ A causa de engasgo aqui quase nunca é o arquivo — é **trabalho por quadro**:
   `navigator.share`. Para revisar como no site real: `node .claude/scripts/ver-local.js` — sobe um
   http em porta livre e abre o navegador. Sem dependência: é o servidor que já vem no node.
 - **`sessionStorage` é compartilhado entre páginas `file://`.** A chave `pm` faz o modo apresentação **entrar sozinho** na próxima carga — se a página abrir em apresentação sem você pedir, é isso. Limpe antes de testar.
+- **Apresentar sem internet é REQUISITO, e existe um comando que confere:**
+  `node .claude/scripts/checar-offline.js`. Ele responde uma pergunta só — "se faltar rede, roda?"
+  — e o dono pode rodar na máquina dele minutos antes de apresentar, sem depender de ninguém.
+  Nasceu do pedido de 2026-08-13: *"eu preciso que se nao tiver internet ele rode"*.
+  **A página em si já roda offline por inteiro**, e isso foi medido varrendo o `index.html` e os
+  `js/`: **não existe um único `src` externo** — nenhuma fonte, script, CSS ou imagem vem de fora.
+  As URLs externas são todas `href` (só carregam se alguém clicar) e `<meta>`/`<link rel=canonical>`,
+  que não fazem pedido de rede. Então o único risco real são os **vídeos que o repositório não
+  carrega**, e a lista deles é **lida do `.gitignore`** em vez de repetida no script — quem
+  acrescentar um vídeo pesado ao `.gitignore` amanhã passa a ser cobrado por ele de graça.
+  ⚠ O detector de ativo externo foi testado contra 8 casos (script de CDN, fonte do Google, imagem
+  externa, preload externo, e os quatro que NÃO devem contar): 8 de 8. Um detector que nunca acusa
+  nada não vale nada — se você mexer nele, refaça esse teste.
 - **Cuidado com `&&` em cadeia no shell.** Um `grep` que não acha nada retorna 1 e **aborta o resto da linha** — já fez um `git rm` seguido de commit não rodar, silenciosamente. Use `;` quando os comandos são independentes.
 
 ## Como escrever a mensagem de commit aqui
@@ -167,6 +175,66 @@ Todas foram descobertas errando. Não repita.
 - `tl.progress(1)` **suprime callbacks** no GSAP. Se um `onComplete` dispara algo importante, forçar o progresso pula esse algo silenciosamente.
 - Dois disparadores para a mesma timeline com `timeScale` diferentes, guardados pela mesma flag, produzem comportamento **intermitente** — o mesmo gesto dá resultados diferentes.
 - Duas mecânicas escrevendo a posição do scroll ao mesmo tempo brigam e a última do quadro ganha. Dê **posse explícita** (ver `autoAte`/`igNavAte` no index).
+- **Parada de apresentação tem de ser AUTOSSUFICIENTE.** Se a ação de uma parada confia que a
+  parada anterior deixou algo pronto, ela funciona indo para a frente e falha indo para trás — e
+  voltar atrás é uso normal ao vivo, o dono reexibe coisa. Foi o defeito de 2026-08-10 nas
+  Graduações: a galeria era selecionada na parada das fotos, e as paradas da CAPA DE VÍDEO e do
+  RECONHECIMENTO não a garantiam. Vindo de cima, a capa do Gestor aparecia sobre a galeria do
+  Executivo. Sintoma do dono: *"seleciono o do gestor e ele abre a imagem de fundo do executivo"*.
+  A pista estava no que funcionava: **o Sênior estava ok porque é o único sem galeria** — não
+  havia fundo errado para aparecer. Conserto: `garanteGaleria(lvl)` em toda parada do nível, em
+  vez de uma regra para "quando estiver voltando".
+- **Ao caçar um pareamento errado, meça TODOS os caminhos antes de mexer.** Nesse mesmo dia
+  conferi capa de vídeo, galeria (dot/slide/fotos), pino e vídeo do reconhecimento, cor, contagem,
+  índice da barra acesa e as 19 paradas: **todos certos indo para a frente**. O defeito só
+  aparecia percorrendo ao contrário. Se todos os caminhos "óbvios" estão certos, o problema é de
+  ORDEM ou de ESTADO REMANESCENTE, não de mapeamento.
+- **Pop-up guarda o slide de quando foi fechado, e reabrir MOSTRA esse slide antes de corrigir.**
+  Sintoma do dono, com print: entrando no GESTOR aparecia a galeria do EXECUTIVO inteira e só
+  depois virava Gestor. A causa NÃO era nível errado — era o **deslize**: o `transform 0.5s`
+  continuava correndo e o modal aparecia no meio dele. Medido: `translateX(-300%)` no instante da
+  abertura. Numa apresentação isso cai em cima da fala.
+  O certo é **posicionar com a transição desligada enquanto o modal está fechado** (ninguém vê o
+  salto) e devolvê-la depois. Precisa de um `void elemento.offsetWidth` entre as duas mudanças de
+  estilo: sem essa leitura forçada o navegador agrupa tudo no mesmo quadro e a transição volta a
+  valer para o salto.
+- ⚠ **TODO tratador de teclado de peça sobreposta precisa da guarda
+  `if(window.__pmode && window.__pmode.isActive && window.__pmode.isActive()) return;`.** São
+  **quatro** no projeto (galeria das graduações no `index.html`, reconhecimento, galeria do
+  ecossistema e destaques) e por meses **só três** tinham a guarda. ⚠ Eram cinco: o mapa do
+  Summit escutava `Enter` e **ESPAÇO** nos estados do SVG — e espaço é tecla de avanço da
+  apresentação, então um estado com foco engolia o comando do passador de slide. Era o caso mais
+  perigoso da lista e saiu junto com a seção. O que faltava era o da galeria
+  das graduações, e ele produziu os dois sintomas que o dono relatou em 2026-08-10:
+  *"o modo para baixo está dando certo mas o do lado não está indo"* (a ↓ o bloco ignora e chega
+  à apresentação; a → era consumida ali) e *"entro no gestor e exibe o fundo do executivo"*
+  (medido: uma → levava a galeria de Gestor para Executivo sozinha, com a apresentação parada no
+  Gestor). Sintoma de "dois donos" quase nunca aparece como erro no console — aparece como tecla
+  que não anda ou conteúdo que troca sozinho. **Ao acrescentar peça com teclado, a guarda é a
+  primeira linha.**
+- ⚠ **Conserto de "abre no slide errado" vai no `go()`, não em quem abre.** Este defeito
+  sobreviveu ao primeiro conserto porque existem **três** caminhos que abrem a galeria das
+  graduações e cada um errava do seu jeito: a apresentação (`abrirGaleriaDe`), o clique na barra
+  do desktop (ordem certa, mas deslizando) e o toque na coluna do mobile (ordem invertida —
+  abria e só então selecionava). Consertei um, o dono voltou com o mesmo sintoma por outro
+  caminho. **Ao achar um defeito num fluxo, procure os outros pontos de entrada do MESMO fluxo
+  antes de dizer que acabou** — e prefira consertar no lugar por onde todos passam.
+- **Todo avanço da apresentação passa por `goNext`/`goPrev`, e por mais nada.** É dentro delas
+  que mora o `pecaConsumiu()`, que pergunta à peça aberta (reconhecimento, galerias) se ela
+  ainda tem página para virar. Um segundo caminho que chame `goToIndex` direto **pula a peça
+  inteira** — e o sintoma é cruel numa apresentação ao vivo: com um overlay de tela cheia
+  aberto, o scroll anda atrás dele e **a tela não muda nada**, então o comando parece morto.
+  Foi exatamente isso que a seta → fazia até 2026-08-10 (ela chamava um `goStepNext` que não
+  perguntava), e o dono descobriu com o **passador de slide** na mão: "está passando só com a
+  seta para cima e para baixo". Ao acrescentar tecla, botão ou gesto, ligue em `goNext`/`goPrev`.
+- **Passador de slide manda tecla diferente conforme o modelo** — uns `PageDown`/`PageUp`,
+  outros `ArrowRight`/`ArrowLeft`, alguns espaço. As quatro setas, PageDown/PageUp e espaço
+  estão todas ligadas ao mesmo par de funções para qualquer aparelho funcionar sem configurar.
+  Não especialize uma seta: foi a especialização que criou o defeito acima.
+- **Tecla e roda do mouse precisam de tratamentos DIFERENTES na serialização.** A roda dispara
+  muitos eventos por gesto e sem serializar um giro de dedo atravessa três paradas; a tecla
+  dispara um, e descartar esse um é perder o comando — o apresentador clica de novo e aí anda
+  dois. É o que o parâmetro `manual` do `goNext` resolve (roda não passa, tecla e botão passam).
 
 **Texto, números e links (aprendido em 2026-07-28)**
 - **Número visível tem gêmeo escondido.** Trocar "750 mil" por "800 mil" no texto deixou **5

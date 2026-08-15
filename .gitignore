@@ -50,10 +50,30 @@ docs/
 BACKLOG.md
 teste-video.html
 
-# Video institucional (42,7MB, 1440x600 H.264) e o master dele (89,2MB, AV1 2560x1440).
-# O popup toca o LOCAL quando ele existe e cai no embed do YouTube quando nao existe, entao o site
-# publicado funciona sem ele. O arquivo existe para APRESENTAR SEM INTERNET, e isso acontece na
-# maquina de quem apresenta (com `node .claude/scripts/ver-local.js`), nao no deploy — botar 42,7MB
-# no historico do repo nao daria nada em troca e nao se desfaz depois. Quem quiser offline copia o
-# arquivo para assets/video/ com este nome.
-assets/video/institucional-igreen.mp4
+# OS 5 VIDEOS DE APRESENTACAO PASSARAM A SER VERSIONADOS EM 2026-08-13.
+# Eles ficavam AQUI, ignorados, e a decisao foi revertida a pedido do dono: *"faca isso"*, depois
+# de eu apresentar o custo duas vezes. Nao apague este comentario — ele e o registro do porque.
+#
+# POR QUE ELES ESTAVAM FORA: os arquivos antigos somavam 385MB e DOIS deles passavam de 100 MiB,
+# que e o limite POR ARQUIVO do GitHub — o envio era recusado, nao era escolha.
+# O QUE MUDOU: no mesmo dia o dono trocou os quatro por versoes mais curtas (13m11s/385MB viraram
+# 7m18s/193MB) e trouxe o institucional (76MB). Medido: o maior passou a ser 76,2 MiB. Todos
+# cabem, e o bloqueio deixou de existir.
+# O QUE SE GANHOU: o site PUBLICADO passa a servir os videos, entao abrir o link toca o arquivo
+# do proprio site e o YouTube vira reserva de verdade; e um `git clone` ja traz tudo pronto para
+# apresentar offline, que era o pedido de fundo do dia.
+# O QUE SE PAGOU, e e o que nao se desfaz: ~269MB entraram no historico. Reconhecimento e MENSAL
+# (`var MES` no js/reconhecimento.js), entao cada troca futura EMPILHA outro tanto — nao
+# substitui. Em um ano isso e alguns GB, e tirar depois exige reescrever a historia do repo.
+# SE UM DIA PRECISAR VOLTAR ATRAS: nao basta re-ignorar, e preciso `git rm --cached` E reescrever
+# o historico. Pense duas vezes antes de trocar um video "so para testar".
+
+# Masters dos banners do Summit (67MB em 21 JPG de 4000x2250, ~3,2MB cada). O site serve
+# assets/img/summit/ (as mesmas 21 em 1920x1080, 7,6MB no total, ~360kB cada), que ESTAO
+# versionadas. 4000px era 2x o que o visor de tela cheia usa no maior monitor — peso sem
+# nenhum ganho visivel, e o QR code continua nitido e escaneavel a 1920.
+# Os masters ficam no disco p/ reexportar se o tamanho de exibicao mudar. Mesmo padrao dos
+# outros masters deste arquivo (pins, faixada, video da sede).
+# ⚠ A pasta tem ESPACO e ACENTO no nome, de proposito: e o nome que o dono usa. O codigo
+# nao le esta pasta — ele le assets/img/summit/ — mas se um dia ler, precisa de encodeURIComponent.
+assets/img/Banner próximo evento/

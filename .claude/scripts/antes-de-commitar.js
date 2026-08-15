@@ -3,18 +3,43 @@
    Verifica o que costuma ser esquecido justamente na hora de fechar o trabalho.
    Uso: node .claude/scripts/antes-de-commitar.js */
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 
-const sh = (c) => { try { return execSync(c, { encoding: 'utf8' }).trim(); } catch (e) { return ''; } };
+/* ============================================================================
+   ⚠ NUNCA VOLTE A EXECUTAR COMANDO COMO STRING AQUI — era command injection, e ATIVA
+   ----------------------------------------------------------------------------
+   Achado numa varredura de seguranca da equipe da org em 2026-08-14, antes de publicar o
+   repositorio. Este arquivo montava o comando concatenando NOME DE ARQUIVO numa string e
+   entregava ao shell. Um arquivo chamado `produtos/a$(comando).html` executaria codigo na
+   maquina de quem commitasse — e este script roda AUTOMATICAMENTE, pelo hook de PreToolUse do
+   .claude/settings.json. Bastava um PR trazendo um arquivo com nome malicioso.
+
+   ⚠ E NAO ERA TEORICO, NEM PRECISAVA DE MA-FE: o repositorio JA TEM nomes com espaco e acento
+   (`Ribeirao Preto.jpg`, `Sao Luis.jpg`, `Belem.jpg`). Concatenados sem aspas, o shell os
+   parte em varios argumentos e o `git diff` olhava o arquivo errado — ou nenhum. Ou seja, o
+   verificador vinha dando resposta silenciosamente ERRADA justamente para os arquivos de nome
+   composto, e ninguem notava porque ele "nao acusava nada".
+
+   A CORRECAO: `execFileSync(programa, [args])`. Sem shell no meio, cada item do array e UM
+   argumento, e nome com espaco, acento, cifrao ou ponto-e-virgula viaja intacto.
+   `git()` para os comandos do git e `node()` para chamar outro script — os dois unicos
+   programas que este arquivo executa.
+   ============================================================================ */
+const run = (exe, args) => {
+  try { return execFileSync(exe, args, { encoding: 'utf8' }).trim(); }
+  catch (e) { return ''; }
+};
+const git  = (...args) => run('git', args);
+const node = (...args) => run(process.execPath, args);
 
 /* Quais arquivos entram NESTE commit.
    Regra: normalmente e o que esta staged. Mas `git commit -a` tambem leva os
    modificados sem stage — e ai olhar so o staged deixava passar alteracao do
    site sem aviso. Recebe o comando como argumento para decidir. */
 const cmdGit = process.argv[2] || '';
-const staged = sh('git diff --cached --name-only').split('\n').filter(Boolean);
-const modif = sh('git diff --name-only').split('\n').filter(Boolean);
+const staged = git('diff','--cached','--name-only').split('\n').filter(Boolean);
+const modif = git('diff','--name-only').split('\n').filter(Boolean);
 let arq = staged;
 if (/\s-(?:[a-zA-Z]*a[a-zA-Z]*)\b|--all\b/.test(cmdGit)) arq = [...new Set([...staged, ...modif])];
 else if (!staged.length) arq = modif; // nada staged: a intencao e commitar o que esta ai
@@ -33,7 +58,7 @@ if (site.length && !mapas.length) {
 }
 
 /* 2) numero visivel trocado sem olhar os contadores animados */
-const idx = arq.includes('index.html') ? sh('git diff --cached -U0 index.html') || sh('git diff -U0 index.html') : '';
+const idx = arq.includes('index.html') ? git('diff','--cached','-U0','index.html') || git('diff','-U0','index.html') : '';
 if (/^[+-].*\b\d{2,3} mil\b/m.test(idx) && !/data-(target|cnum)/.test(idx)) {
   avisos.push('Voce mudou um numero em texto ("N mil") mas nao tocou em data-target/data-cnum.\n' +
     '     Esses atributos guardam o MESMO numero e sao o que anima subindo na tela. O site pode\n' +
@@ -43,7 +68,7 @@ if (/^[+-].*\b\d{2,3} mil\b/m.test(idx) && !/data-(target|cnum)/.test(idx)) {
 /* 3) href novo para ancora — o ID existe? */
 const todos = arq.filter(f => /\.html$/.test(f));
 for (const f of todos) {
-  const d = sh('git diff --cached -U0 -- ' + f) || sh('git diff -U0 -- ' + f);
+  const d = git('diff','--cached','-U0','--',f) || git('diff','-U0','--',f);
   for (const m of d.matchAll(/^\+.*href="#([A-Za-z][\w-]*)"/gm)) {
     const id = m[1];
     let html = ''; try { html = fs.readFileSync(f, 'utf8'); } catch (e) {}
@@ -85,7 +110,7 @@ if (ext.length) {
       '     ?v=<data> a mao.');
   }
   /* o ?v= mudou neste commit? */
-  const diffHtml = sh('git diff --cached -U0 -- index.html produtos') || sh('git diff -U0 -- index.html produtos');
+  const diffHtml = git('diff','--cached','-U0','--','index.html','produtos') || git('diff','-U0','--','index.html','produtos');
   if (!/^\+.*\?v=/m.test(diffHtml)) {
     avisos.push('Voce alterou ' + ext.length + ' arquivo(s) em js/ ou css/ e NAO subiu o ?v= das URLs\n' +
       '     nos HTML (versao atual: ' + (Array.from(versoes).join(', ') || 'nenhuma') + ').\n' +
@@ -94,8 +119,39 @@ if (ext.length) {
   }
 }
 
+/* 4b) ARTE SOBRESCRITA COM O MESMO NOME e o VER das galerias nao subiu?
+   ---------------------------------------------------------------------------
+   Esta regra existe por um defeito real de 2026-08-12. O dono viu, na galeria da Conexao
+   Green, um slide que NAO EXISTE MAIS ("TOP 3 CONEXAO GREEN"). Medido: o arquivo no disco e
+   no commit tinham o mesmo md5, e o do deck ANTIGO tinha outro — ou seja, o site estava
+   certo e o NAVEGADOR DELE servia a copia velha.
+
+   Por que so com algumas artes: o netlify.toml guarda /assets/* por UM DIA, de proposito
+   (arte aqui e SOBRESCRITA com o mesmo nome, entao cache eterno seria pior). Mas um dia ja
+   basta para o dono reexportar, subir e continuar vendo o antigo. Naquele dia QUATRO artes
+   foram sobrescritas mantendo o nome e as quatro tinham o problema.
+
+   O item (4) acima ja cobria isso para js/css. Esta cobre para IMAGEM: se um arquivo de
+   assets/img/ foi MODIFICADO (nao adicionado — nome novo ja e URL nova) e o `VER` das
+   galerias nao mudou no mesmo commit, avisa. */
+const artesMod = git('diff','--cached','--name-only','--diff-filter=M','--','assets/img')
+  .split('\n').filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f));
+if (artesMod.length) {
+  const jsGaleria = ['js/ecossistema-galeria.js', 'js/mapa-summit.js'].filter(f => fs.existsSync(f));
+  const diffGal = jsGaleria.length
+    ? git('diff','--cached','-U0','--',...jsGaleria) || git('diff','-U0','--',...jsGaleria)
+    : '';
+  if (!/^\+\s*var VER\s*=/m.test(diffGal)) {
+    avisos.push(artesMod.length + ' arte(s) foram SOBRESCRITAS com o mesmo nome e o `VER` das\n' +
+      '     galerias NAO subiu. O netlify.toml guarda /assets/* por 1 dia: quem ja viu a arte\n' +
+      '     antiga continua vendo ela, so no navegador dele, sem erro nenhum.\n' +
+      '     Suba o `var VER` em js/ecossistema-galeria.js e/ou js/mapa-summit.js.\n' +
+      '     Arquivos: ' + artesMod.slice(0, 4).join(', ') + (artesMod.length > 4 ? ' ...' : ''));
+  }
+}
+
 /* 5) o verificador de padroes passa? */
-const rev = sh('node .claude/scripts/revisar.js');
+const rev = node('.claude/scripts/revisar.js');
 const mErr = rev.match(/(\d+) erro\(s\)/);
 if (mErr && +mErr[1] > 0) {
   avisos.push('O revisar.js encontrou ' + mErr[1] + ' ERRO(S). Rode e corrija antes de commitar:\n' +
