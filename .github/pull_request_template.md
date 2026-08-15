@@ -26,3 +26,18 @@
 Antes de abrir a PR, vale ler `.claude/CLAUDE.md`. Se estiver usando Claude Code,
 o `git commit` já dispara essas conferências sozinho; para commit feito pela mão,
 ligue uma vez: `git config core.hooksPath .githooks`.
+
+---
+
+## ⚠️ Se este PR toca `.claude/` ou `.github/`
+
+**Revise pelo diff aqui no navegador. NÃO faça checkout local desta branch.**
+
+O `.claude/settings.json` configura hooks que executam automaticamente
+(`SessionStart`, `PreToolUse` em Bash, `PostToolUse` em Edit/Write/Bash).
+Abrir o repositório localmente com uma branch não revisada roda o código
+dela na sua máquina — **antes** de qualquer aprovação. O risco não está no
+merge, está na revisão.
+
+Se precisar testar de verdade: leia o diff destes diretórios primeiro, e só
+então faça checkout.

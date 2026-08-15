@@ -1,51 +1,71 @@
 ---
-description: Publica o trabalho já commitado nos dois remotos, na ordem certa
+description: Publica o trabalho já commitado — aqui é um push na main, e o Netlify republica sozinho
 ---
 
 # Publicar
 
-Este projeto tem **dois remotos com papéis diferentes**. Publicar significa atualizar os dois, nesta ordem. Não improvise: a ordem existe por um motivo explicado abaixo.
+⚠ **Este arquivo foi reescrito em 2026-08-10.** A versão anterior descrevia dois remotos
+(`empresa` e `origin`), um push que entrava por SSH no servidor de produção e um script
+`espelhar-visual.js`. **Nada disso existe neste repositório** — aquele era o
+`igreenlab/ui-apn-institucional`, que é outro projeto. Se você leu aquela versão em algum
+lugar, ignore: os comandos de lá falham aqui, e o `empresa` nem é um remoto deste clone.
+
+## Como publicar aqui
+
+```bash
+git push origin main
+```
+
+É isso. Um único remoto, um único passo. O **Netlify** está ligado a este repositório e
+republica a cada push na `main`. Não há build, não há script, não há SSH, não há segundo passo.
 
 | remoto | papel |
 |---|---|
-| `empresa` | `igreenlab/ui-apn-institucional`. É o **oficial** e vai **direto para produção** — ver o aviso abaixo. |
-| `origin` | Repo pessoal do dono. É o que a **Vercel** constrói, porque o repo da organização tem restrição que impede conectar a Vercel nele. Serve para as pessoas testarem o visual. |
+| `origin` | `MFiGreenSYS/GranShow-AP`, privado. Único remoto. Push na `main` republica o site. |
 
-## ⚠ Push na `main` da empresa PUBLICA EM PRODUÇÃO
+Está na conta pessoal e não na `igreenlab` porque a organização tem restrição de app de
+terceiro que já impediu conectar a Vercel ao repositório dela — o Netlify pede a mesma
+autorização e travaria na mesma porta.
 
-Não é só guardar código. O repo tem `.github/workflows/deploy-prod.yml` (posto pelo Antonio Marcos em 2026-07-28), que a cada push na `main` entra por SSH no servidor `162.141.111.97` e roda o `deploy.sh` do `igreen-vault`. **O site sai no ar na hora.**
+## ⚠ Push na `main` PUBLICA. Confirme antes.
 
-Consequência prática: aqui não existe "subir para guardar". Se o trabalho não está validado nas três configurações de tela e no modo apresentação, ele não deve ir para a `main`. Em dúvida, abra PR em vez de empurrar direto — o template de PR carrega o checklist.
+**O dono pediu para publicar explicitamente?** Se não, pare: relate o que fez e pergunte.
+Ele valida no navegador antes, e já estranhou site sem mudança por causa de push que não
+aconteceu. Como o push republica na hora, essa confirmação vale ainda mais.
 
-## Antes de qualquer coisa
+Se o trabalho não está validado nas três configurações de tela (1920×946, 1536×750 @125%,
+390×844 @3x) e no modo apresentação, ele não deve ir para a `main`.
 
-**O dono pediu para publicar explicitamente?** Se não, pare: relate o que fez e pergunte. Ele valida no navegador antes, e já estranhou site sem mudança por causa de push que não aconteceu. Agora que push publica em produção, essa confirmação vale ainda mais.
+## O caminho melhor: branch com pré-visualização
 
-**Alguém mais commita neste repo.** Um `git push` recusado com "fetch first" quer dizer que a empresa tem trabalho que você não tem — foi assim que quase perdemos o workflow do Antonio. Traga com `git pull --rebase empresa main`, confira que os arquivos dos dois lados sobreviveram, e só então publique. **Nunca** resolva com `--force`.
-
-## Os dois passos
-
-```bash
-git push empresa main
-node .claude/scripts/espelhar-visual.js
-```
-
-**Passo 1** manda o trabalho para o oficial.
-
-**Passo 2** espelha o conteúdo no pessoal. Ele **não** faz `git push origin main` — isso seria recusado, porque o histórico do pessoal é o antigo (anterior à limpeza que tirou 452 MB e o material privado) e os dois divergiram. O script grava lá um commit cujo *conteúdo* é idêntico ao daqui, em cima do topo que o pessoal já tem: avanço normal, nada forçado, histórico dele preservado como backup.
-
-O script **se recusa a rodar** se o seu `HEAD` não for igual ao `empresa/main`. Isso é de propósito: o que está no ar nunca deve conter algo que o repo oficial não tem.
-
-Para só conferir se estão alinhados, sem escrever nada:
+Aqui existe uma opção que o outro repositório não tinha, e ela é quase sempre a certa:
 
 ```bash
-node .claude/scripts/espelhar-visual.js --conferir
+git push -u origin nome-da-branch
+gh pr create
 ```
+
+O Netlify gera um **deploy de pré-visualização** com **URL própria** para a branch, sem
+tocar no site publicado. É um endereço de verdade: abre no celular, dá para mandar para
+outra pessoa, e o modo apresentação funciona nele (diferente de `file://`, onde o popup do
+vídeo, as fontes e o `navigator.share` falham por origem inválida).
+
+Ou seja: **valide na pré-visualização, depois faça o merge.** O merge é o que publica.
+O template em `.github/pull_request_template.md` carrega o checklist do projeto.
 
 ## Depois de publicar
 
-Diga ao dono **em que endereço testar** e o que esperar ver de diferente. Se a mudança foi só de pipeline ou documentação, avise que o site não muda visualmente — senão ele abre, não vê diferença e fica na dúvida se o push funcionou.
+Diga ao dono **em que endereço testar** e o que esperar ver de diferente. Se a mudança foi
+só de pipeline ou documentação, avise que o site não muda visualmente — senão ele abre, não
+vê diferença e fica na dúvida se o push funcionou.
 
-## Se o passo 1 for recusado
+O deploy leva alguns segundos. Se o site não mudou, antes de suspeitar do código confira no
+painel do Netlify se o deploy **terminou** e se ele apontou para o commit certo.
 
-Significa que o oficial tem commit que você não tem. Traga antes com `git pull --rebase empresa main`, confira que nada quebrou (`node .claude/scripts/revisar.js`) e só então publique. **Nunca** resolva isso com `--force`.
+## O que NÃO está no repositório, de propósito
+
+`.github/workflows/deploy-prod.yml` foi **removido** ao criar este repositório. Ele dispara
+em `push: branches: [main]`, entra por SSH em `162.141.111.97` como root e roda o `deploy.sh`
+do `igreen-vault` — o deploy do **site institucional**. Aqui ele faria uma de duas coisas:
+falhar em todo push por falta do secret, ou publicar a apresentação por cima do site
+institucional em produção. **Não devolva esse arquivo.**

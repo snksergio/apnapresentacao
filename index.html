@@ -1950,6 +1950,20 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
        O teto de 300 vem da largura util: 390 - 40 do padding-left da linha - 20 da margem = 330. */
     .jphoto{max-width:min(80vw,300px)}
     .jmedia .jphoto{width:min(80vw,300px);max-width:min(80vw,300px)}
+    /* ⚠ O SELO GPTW DIVIDE A LINHA COM A FOTO — e o teto de 300px acima foi calculado para a foto
+       SOZINHA. Sintoma do dono (2026-08-06): "no mobile alguns estao cortando a imagem da great
+       place to work, exemplo iphone 11". Medido: a linha `.jmedia` do item de 2026 pedia 300 + 12
+       de gap + 76 do selo = 388px, contra 295px de largura do `.jitem` — transbordava o proprio
+       item em 93px. O que acontecia depois disso variava com a tela, e e por isso que "alguns"
+       cortavam: em 414 a linha encostava exatamente na borda (direita em 414 de 414, zero folga);
+       em 390 ela era empurrada e comecava em x=2; em 375 comecava em -13, cortando 14px da FOTO
+       pela esquerda e deixando o selo colado na borda.
+       Correcao: a foto passa a poder ENCOLHER (`flex:0 1 auto` + `min-width:0`, porque um item
+       flex nao encolhe abaixo do conteudo sem isso). Assim a linha caber dentro do item e o selo
+       nunca e cortado, em largura nenhuma — sem numero magico novo. So esta linha e afetada: das
+       duas `.jmedia` do site, a outra (Expansao Internacional) nao tem foto, so os dois selos. */
+    .jmedia{max-width:100%}
+    .jmedia .jphoto{flex:0 1 auto;min-width:0}
     /* jp4 (Forbes/Amanda) e jp5 (BP/Gusttavo Lima) SEM RECORTE no mobile.
        As duas fontes sao QUADRADAS (1024x1024 e 460x460) e sao pecas de arte com texto no topo E
        no rodape. No 16:10 dos outros, o object-fit:cover tirava 37% da altura pelo meio: no Forbes
@@ -2295,6 +2309,10 @@ if(!forceHigh&&(forceLow||sd||(hc&&hc<=4)||(dm&&dm<=2)))document.documentElement
 </style>
 <link rel="stylesheet" href="css/page-transition.css?v=20260804">
 <link rel="stylesheet" href="css/presentation-mode.css?v=20260804" media="(min-width:1025px)">
+<!-- Reconhecimento por qualificacao (Senior, Gestor, Executivo). SEM media query aqui,
+     ao contrario do presentation-mode.css: a peca tem versao de retrato e precisa valer
+     no celular tambem. Nada dela e baixado ou desenhado antes de alguem abrir. -->
+<link rel="stylesheet" href="css/reconhecimento.css?v=20260809">
 <script>try{if(sessionStorage.getItem('pt')){sessionStorage.removeItem('pt');document.documentElement.setAttribute('data-pt-state','cover');}}catch(e){}</script>
 </head>
 <body>
@@ -2445,6 +2463,29 @@ window.igRefresh=(function(){
     <div class="sfloat" style="bottom:15%;left:12%"><div class="sfnum"><b data-target="3000">0</b><i>m²</i></div><span class="sflbl">de sede própria no Brasil<small>R. Marfim, 265 · Jaraguá, Uberlândia/MG</small></span></div>
     <div class="sfloat sf-team" style="bottom:8%;left:42%"><div class="sfnum"><i>+</i><b data-target="500">0</b></div><span class="sflbl">colaboradores na equipe interna</span></div>
     <div class="sfloat sr" style="top:24%;right:26%"><div class="sfnum"><i>+</i><b data-target="1000">0</b></div><span class="sflbl">Usinas Solares em Operação</span></div>
+    <!-- 8º item, pedido do dono em 2026-08-13: "+R$ 1 Bilhão de boletos pagos de energia".
+         ONDE: `bottom:15%;right:12%` — o vão livre do canto inferior direito, espelhando a sede
+         (que está em `bottom:15%;left:12%`). Conferido que não encosta em ninguém: o vizinho de
+         cima é os "milionários formados" em `top:44%`, e o de lado são os "colaboradores" em
+         `left:42%`, cuja caixa termina por volta de 1056px enquanto esta começa em ~1440px
+         (1920x946). Medido depois de inserir, não estimado.
+         ⚠ POR ÚLTIMO NO HTML, e isso é escolha dupla, não sobra: a ordem do HTML manda em DUAS
+         coisas nesta seção. No desktop ela define a ORDEM DE APARIÇÃO (`t0 = n*STEP` na timeline
+         mais abaixo), e no mobile ela define o EMPILHAMENTO — lá o `.sfloat` vira
+         `position:static` e os `top/right` daqui são simplesmente ignorados. Sendo o último, o
+         maior número fecha a sequência nos dois.
+         ⚠ ESTE É O ÚNICO DOS OITO SEM `data-target`, E NÃO É ESQUECIMENTO — é o que impede o
+         item de mostrar "+R$ 0 Bi". O contador anima de 0 até o alvo e arredonda; com alvo 1 ele
+         exibiria "0" durante METADE do percurso do scroll, e "R$ 0 Bi" lê como defeito para quem
+         está assistindo. Os outros sete contam por números que valem a viagem (150, 800, 3.000);
+         este não tem para onde contar. Então o "1" fica impresso aqui e o item só aparece.
+         A guarda que permite isso está na timeline (`if(b)`, procure por ITEM SEM data-target) e
+         no `countUp` do mobile. ⚠ Se um dia este número virar contável ("+R$ 2 Bi" e você quiser
+         a contagem), é só devolver `data-target` — mas aí volta o problema do "0" no meio.
+         ⚠ "Bi" E NÃO "Bilhão": o dono corrigiu logo depois de ver a primeira versão. Além de ser
+         o que ele quer, é o que combina com o vizinho — o "+R$ 150 mi" usa a abreviação, e
+         "Bilhão" inteiro fazia desta a única unidade extensa dos oito. -->
+    <div class="sfloat sr" style="bottom:15%;right:12%"><div class="sfnum"><i>+R$</i><b>1</b><i>Bi</i></div><span class="sflbl">de boletos pagos de energia</span></div>
   </div>
 </section>
 <section class="journey" id="trajetoria">
@@ -2551,15 +2592,43 @@ window.igRefresh=(function(){
     </div>
   </div>
 
-  <!-- Card "Assista ao vídeo institucional". O dono passou a URL do vídeo (2026-08-03) e pediu
-       que ele abra em POPUP dentro do site, não em nova aba. Quem faz isso é o #vmodal-app,
-       logo depois desta seção.
-       O href continua apontando para o vídeo de verdade, com target="_blank": é a rede de
-       segurança para o caso de o JS não rodar — aí o clique ainda leva a algum lugar útil em vez
-       de virar um botão morto. Com o JS ativo o popup dá preventDefault e o href só é usado se o
-       arquivo local do vídeo faltar (ver a "reserva" no #vmodal-app). -->
+  <!-- ============================================================
+       CARD "Assista ao vídeo institucional" — RELIGADO em 2026-08-12
+       ------------------------------------------------------------
+       Ele esteve COMENTADO entre 2026-08-09 e 2026-08-12 (marcador CTA-DESATIVADO): o dono
+       tinha pedido para ocultá-lo nos dois modos, site e apresentação. Agora pediu de volta:
+       *"coloque o video player [...] ele deve rodar dentro do site e quanto no modo site
+       quanto no modo apresentacao, finalizou o video no modo apresentacao ele sai da pagina
+       automatico e segue o fluxo"*.
+
+       ⚠ ESTE ELEMENTO É O INTERRUPTOR DE TODA A PEÇA, e é por isso que comentá-lo foi o jeito
+       certo de desligar — e descomentá-lo é o jeito certo de religar. O #vmodal-app começa com
+       `querySelector('.hqwatch')` e DESISTE se não achar. Sem o card:
+         · o popup não se monta e `window.IGREEN_VIDEO` não existe;
+         · o `buildStops` da Sede, que checa `if (!window.IGREEN_VIDEO) return [ y ]`, cai
+           sozinho no caminho de UMA parada e a parada do vídeo some da apresentação.
+       Um `display:none` NÃO teria feito isso: o card seguiria no DOM, o popup montado, e a
+       apresentação abriria o vídeo numa parada sem gatilho visível.
+
+       ⚠ O QUE O DONO PEDIU JÁ ESTAVA TODO IMPLEMENTADO — só estava desligado por este
+       comentário. A URL que ele mandou (youtu.be/qdeblguZdGc) é a MESMA que já estava aqui e
+       no `ID` do popup; o popup já toca dentro do site; e o fim do vídeo já dispara
+       `igreen:video-fim`, que o js/presentation-mode.js escuta para seguir sozinho.
+
+       O `href` com `target="_blank"` é de propósito: é a rede de segurança para o caso de o JS
+       não rodar. Com JS ativo o popup dá `preventDefault` e o href só entra em cena se o
+       arquivo local faltar E a página estiver em file:// (onde o embed dá Erro 153).
+       ============================================================ -->
   <a class="hqwatch" href="https://youtu.be/qdeblguZdGc" target="_blank" rel="noopener" aria-label="Assistir ao vídeo institucional">
-    <span class="hqthumb"><img alt=""><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
+    <!-- ⚠ A MINIATURA GANHOU src AGORA. Enquanto o card esteve comentado, este <img> ficou sem
+         endereço nenhum — no celular não importava (o CSS esconde a imagem e o círculo vira o
+         botão), mas no desktop ele desenharia uma caixa 16:10 VAZIA com o triângulo de play
+         em cima, que lê como imagem quebrada. `video-igreen-poster.jpg` é a arte da fachada
+         com os dois carros — a mesma que aparece na captura que o dono mandou.
+         width/height declarados: regra do projeto, e é o que torna o `loading="lazy"` seguro
+         aqui (lazy sem dimensão em caixa que tira a altura da imagem já apagou o fundo dos
+         planos neste projeto). -->
+    <span class="hqthumb"><img src="assets/img/video-igreen-poster.jpg" alt="" width="1920" height="1080" loading="lazy" decoding="async"><span class="hqplay"><svg width="18" height="18" viewBox="0 0 24 24" fill="#18FF00"><path d="M8 5v14l11-7z"/></svg></span></span>
     <span class="hqwtxt"><b>Assista ao vídeo institucional</b></span>
   </a>
   </div>
@@ -2660,12 +2729,31 @@ window.igRefresh=(function(){
     v.addEventListener('ended',fim);
     /* 'error' no proprio elemento video so dispara por causa do src; um 404 do arquivo cai aqui. */
     v.addEventListener('error',semArquivo);
+    /* ============================================================
+       SEM AUTOPLAY: ABRE NA CAPA COM O PLAY (2026-08-13)
+       ------------------------------------------------------------
+       Pedido do dono: *"pode tirar o automatico, faca igual esta no video do Gusttavo Lima que
+       abre a tela com o icone play e so comeca a tocar depois do clique"*.
+
+       ⚠ O `poster` É O QUE FAZ ISSO FUNCIONAR, e não é enfeite. Um `<video controls>` SEM
+       poster e sem tocar abre PRETO — a capa viria só depois de o navegador baixar o primeiro
+       quadro, e num arquivo de 76MB isso é tempo demais em cima da fala. Com poster, a imagem
+       aparece no mesmo quadro em que o pop-up abre, e o botão de play nativo vem por cima.
+       É a mesma arte que o card da Sede já usa como miniatura, então não entrou arquivo novo.
+
+       ⚠ O `v.play()` QUE SAIU DAQUI ERA A ÚNICA COISA que fazia o vídeo começar sozinho. O
+       comentário antigo dizia que o autoplay "depende de o navegador ter registrado interação"
+       e que, recusado, o vídeo ficaria parado com os controles à mostra — ou seja, o
+       comportamento que o dono quer JÁ ERA o caminho de exceção. Agora é o único.
+
+       ⚠ E ISSO MUDA O QUE A APRESENTAÇÃO FAZ NESTA PARADA: a parada abre o pop-up e para. Quem
+       toca é o apresentador, no clique. O encadeamento do fim continua igual — o `ended` segue
+       ligado logo acima e dispara o `igreen:video-fim`, que faz a apresentação seguir sozinha.
+       Ou seja: some o começo automático, permanece o fim automático, que é exatamente o par
+       que ele descreveu ao citar o vídeo do Seguros.
+       ============================================================ */
+    v.poster='assets/img/video-igreen-poster.jpg';
     panel.appendChild(v);
-    var p=v.play();
-    /* autoplay COM som depende de o navegador ter registrado interacao. No fluxo normal houve
-       clique (no card ou no avanco da apresentacao), entao toca. Se for recusado, o video fica
-       parado com os controles a mostra e o apresentador da play — melhor que tocar sem som. */
-    if(p&&p.catch) p.catch(function(){});
   }
   function montaYouTube(){
     var f=document.createElement('iframe');
@@ -2759,7 +2847,37 @@ window.igRefresh=(function(){
   }
   /* handle para o modo apresentacao abrir/fechar o video sem depender do clique no card */
   window.IGREEN_VIDEO={ abrir:function(){ abrir(); }, fechar:fechar,
-    aberto:function(){ return modal.classList.contains('open'); } };
+    aberto:function(){ return modal.classList.contains('open'); },
+    /* ⚠ `tocar()` EXISTE PARA A APRESENTAÇÃO, e é de propósito que ela não alcance o <video>
+       por conta própria. Quem sabe se o que está montado é o ARQUIVO LOCAL (<video>) ou a
+       reserva do YouTube (<iframe>) é esta peça — e os dois tocam de formas diferentes: um
+       tem `.play()`, o outro só responde a `postMessage`. Um `querySelector('video').play()`
+       lá de fora funcionaria hoje e falharia calado no dia em que o arquivo faltasse e o
+       embed entrasse no lugar.
+       Entrou em 2026-08-13, junto com a retirada do autoplay: o pop-up passou a abrir na capa,
+       e o dono pediu *"no proximo click ele da o play"*. */
+    tocar:function(){ return manda('play'); },
+    /* ⚠ `pausar()` É O PAR DO `tocar()`, e existe por causa de um defeito que só aparecia
+       VOLTANDO: sem ele, ao recuar da parada do play para a do pop-up o vídeo seguia tocando.
+       Parada de apresentação tem de estabelecer o estado completo, indo e voltando. */
+    pausar:function(){ return manda('pause'); } };
+
+  /* um caminho só para os dois comandos: quem sabe se o que está montado é o ARQUIVO LOCAL
+     (<video>, tem `.play()`) ou a reserva do YouTube (<iframe>, só responde a `postMessage`)
+     é esta peça. Duas cópias desta escolha discordariam no dia em que o arquivo faltasse. */
+  function manda(qual){
+    var v=panel.querySelector('video');
+    if(v){
+      if(qual==='pause'){ try{ v.pause(); }catch(e){} return true; }
+      var p=v.play(); if(p&&p.catch) p.catch(function(){}); return true;
+    }
+    var f=panel.querySelector('iframe');
+    if(f&&f.contentWindow){
+      try{ f.contentWindow.postMessage(JSON.stringify({event:'command',
+        func: qual==='pause' ? 'pauseVideo' : 'playVideo', args:[]}),'*'); return true; }catch(e){}
+    }
+    return false;
+  }
 })();
 </script>
 
@@ -3488,6 +3606,136 @@ window.igRefresh=(function(){
      ocupar uma LINHA PROPRIA embaixo do contador — sem isso, em notebook de 600px uteis a coluna
      kicker+card+contador+setas nao caberia. Efeito medido: 1920x946 -> 306 vira 360px;
      1229x600 (notebook) -> segue 232px, exatamente como antes. */
+  /* ============================================================
+     A CAPA DOS ROYAIS PRECISA RECEBER CLIQUE (2026-08-14)
+     ------------------------------------------------------------
+     Sintoma do dono, com print: *"eu clico na capa porem nao abro o popup"*.
+     Causa: `.carsrail` inteiro e `pointer-events:none`, de proposito — o trilho flutua sobre
+     as duas metades da cena e, sem isso, roubaria o toque que SELECIONA o carro de tras.
+     A capa herdava a regra e o clique nunca chegava nela. Nao havia erro no console: o evento
+     simplesmente passava direto para o que estava embaixo.
+     ⚠ E EU JA TINHA TRATADO ISSO uma vez, no componente que testei antes nesta mesma seccao, e
+     nao trouxe a licao para esta implementacao. Peca nova dentro do trilho PRECISA reativar o
+     ponteiro; e a segunda vez que este detalhe morde aqui.
+     `cursor:pointer` junto: sem ele nada indica que a carta e clicavel.
+     ============================================================ */
+  /* ============================================================
+     A CARTA RESPIRA, BRILHA E SOLTA PARTICULAS (2026-08-14)
+     ------------------------------------------------------------
+     Pedido do dono: *"movimente a carta do royal para cima e para baixo de maneira suave para
+     que ela nao fique estatica. coloque um glow de fundo... saindo umas particulas suaves de
+     energia animada"*.
+
+     ⚠ SO `transform` E `opacity`, em tudo. Sao as duas unicas propriedades que o navegador
+     anima na GPU sem recalcular layout nem repintar — a regra de desempenho deste projeto, que
+     ja teve blend de tela cheia assado em arquivo por causa de engasgo. Nada de `filter`,
+     `box-shadow` animado, `top` ou `width`.
+     ⚠ `will-change` NAO entra: em elemento que ja tem animacao de transform o navegador promove
+     sozinho, e declarar a mais gasta memoria de video a toa.
+     ⚠ Tudo cai fora em `prefers-reduced-motion` — a carta fica parada e visivel, sem glow
+     pulsando nem particula. Acessibilidade e regra do projeto, nao enfeite.
+     ============================================================ */
+  /* ============================================================
+     BORDA GIRANDO NO CARTAO SELECIONADO DO TRILHO (2026-08-14)
+     ------------------------------------------------------------
+     Pedido do dono, com print do cartao do Ecossistema: *"quero assim as bordas, tanto nos
+     card dos royais e no dos embaixadores quando selecionado"*.
+
+     ⚠ E A MESMA RECEITA DO `.ecard`, nao uma imitacao: `conic-gradient` girando por
+     `@property --a`, recortado com `mask-composite` para pintar SO a moldura. Copiei a formula
+     de la de proposito — duas versoes parecidas do mesmo efeito acabariam divergindo, e o
+     projeto ja tem o `--a` e o `brotate` declarados uma vez so.
+     ⚠ VALE PARA OS DOIS GRUPOS, Royais e Embaixadores, porque o seletor e `.rcard.on` — a
+     classe que o trilho ja usa para marcar o cartao em foco. Nenhuma regra por grupo.
+     ⚠ `z-index:4` para ficar ACIMA do glow e das particulas da capa (que estao em -1) e da
+     foto, mas o `pointer-events:none` garante que a moldura nunca roube o clique.
+     ⚠ Anima so a variavel de angulo — nada de layout, nada de filtro. Mesma regra do resto.
+     ============================================================ */
+     ⚠ NAO DECLARE `position` AQUI. Foi o defeito de 01d1e42: eu escrevi
+     `.carsrail .rcard{position:relative}` achando que a moldura precisava de contexto de
+     posicionamento. Ela ja tinha — `.rdeck .rcard` e `position:absolute`. E as duas regras
+     tem a MESMA especificidade (2 classes), entao a de baixo venceu e os 17 cartoes cairam
+     do posicionamento absoluto para o fluxo normal: medido, empilhados de 201,6px em 201,6px,
+     com o cartao do grupo no ar 3.398px ABAIXO da janela de 720px. Nao havia erro no console
+     nem opacidade zerada — `visibility:visible`, `opacity:1`, e nada na tela. Atingiu Royais
+     E Embaixadores, no site e na apresentacao. */
+  .carsrail .rcard::after{ content:''; position:absolute; inset:-1px; border-radius:inherit;
+    padding:1.5px; z-index:4; pointer-events:none; opacity:0; transition:opacity .3s;
+    background:conic-gradient(from var(--a),transparent 0 68%,var(--green) 84%,transparent 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude; }
+  .carsrail .rcard.on::after{ opacity:1; animation:brotate 2.6s linear infinite; }
+  @media (prefers-reduced-motion:reduce){
+    .carsrail .rcard.on::after{ animation:none; opacity:.9; }
+  }
+
+  /* ⚠ A FLUTUACAO USA `translate`, NAO `transform` — e isso nao e estilo, e necessidade.
+     O baralho posiciona cada cartao escrevendo `style.transform` a cada quadro (o
+     translateX/scale/rotateY do apply()), e ANIMACAO CSS VENCE ATE ESTILO EM LINHA: com o
+     keyframe mexendo em `transform`, o computado media `matrix(1,0,0,1,0,-0.016)` enquanto o
+     inline dizia `translateX(0px) scale(1) rotateY(0deg)` — o baralho perdia o comando da
+     capa em silencio. Hoje o grupo ROYAL tem 1 cartao e o deslocamento e zero, entao nao
+     aparece; volta a ter dois e a capa fica parada no lugar errado. A propriedade `translate`
+     e independente e SOMA ao `transform`, entao os dois convivem. */
+  .carsrail .rcard-capa{ pointer-events:auto; cursor:pointer;
+    animation:capaFlutua 4.2s ease-in-out infinite; }
+  @keyframes capaFlutua{ 0%,100%{ translate:0 0 } 50%{ translate:0 -12px } }
+
+  /* GLOW: fica ATRAS da carta (z-index -1) e pulsa so em opacidade. O gradiente e estatico;
+     o que anima e a transparencia, que nao custa repintura. */
+  .carsrail .rcard-capa::before{ content:''; position:absolute; z-index:-1;
+    inset:-18% -14%; border-radius:50%; pointer-events:none;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(24,255,0,.42), rgba(24,255,0,.10) 55%, rgba(24,255,0,0) 72%);
+    animation:capaGlow 4.2s ease-in-out infinite; }
+  @keyframes capaGlow{ 0%,100%{ opacity:.55; transform:scale(.96) } 50%{ opacity:1; transform:scale(1.06) } }
+
+  /* PARTICULAS: um unico elemento com varias sombras-de-caixa faria repintura; entao sao
+     pontos de gradiente numa camada so, subindo por transform. Custa um composite por quadro. */
+  /* ⚠ AS PARTICULAS FORAM PARA O `.rc-ph::after`, e nao ficam mais no `::after` do cartao.
+     Motivo, medido: a borda girando (`.carsrail .rcard::after`) precisa do `::after` do
+     ARTICLE, e um elemento so tem UM `::after`. Com as duas regras no mesmo pseudo-elemento, a
+     mais especifica (`.rcard-capa::after`) vencia e a capa ficava SEM borda — o `z-index:-1`
+     das particulas aparecia no lugar do `z-index:4` da moldura. Colisao silenciosa: nenhum
+     erro, so um efeito comendo o outro. */
+  .carsrail .rcard-capa .rc-ph::after{ content:''; position:absolute; z-index:-1; pointer-events:none;
+    left:-6%; right:-6%; bottom:-4%; height:118%;
+    background:
+      radial-gradient(2.5px 2.5px at 18% 92%, rgba(140,255,120,.95), rgba(140,255,120,0) 60%),
+      radial-gradient(2px 2px   at 74% 96%, rgba(24,255,0,.9),      rgba(24,255,0,0) 60%),
+      radial-gradient(1.8px 1.8px at 46% 88%, rgba(200,255,190,.85), rgba(200,255,190,0) 60%),
+      radial-gradient(2.2px 2.2px at 88% 90%, rgba(24,255,0,.75),    rgba(24,255,0,0) 60%),
+      radial-gradient(1.6px 1.6px at 32% 98%, rgba(160,255,140,.8),  rgba(160,255,140,0) 60%);
+    animation:capaFaisca 7s linear infinite; }
+  @keyframes capaFaisca{
+    0%   { transform:translateY(0)     scale(1);    opacity:0 }
+    12%  { opacity:.9 }
+    82%  { opacity:.45 }
+    100% { transform:translateY(-118%) scale(1.04); opacity:0 }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .carsrail .rcard-capa,
+    .carsrail .rcard-capa::before,
+    .carsrail .rcard-capa .rc-ph::after{ animation:none; }
+    .carsrail .rcard-capa .rc-ph::after{ opacity:0; }
+  }
+  /* ⚠ CONTADOR E SETAS SOMEM NO GRUPO ROYAL (2026-08-14) — *"oculte isso no do royal"*.
+     Eles existem para PASSAR de uma pessoa para outra, e o grupo ROYAL virou UMA carta: o
+     contador mostrava "01 / 01" e as setas nao levavam a lugar nenhum. Botao que nao faz nada
+     e pior que botao nenhum, e a barra cheia em 1 de 1 so confunde.
+     ⚠ Os EMBAIXADORES continuam com os dois — sao 2 cards e ali eles servem. Por isso a regra
+     e presa a um marcador de grupo, e nao ao `.carsrail` inteiro. */
+  /* ⚠ SÓ NO DESKTOP. É lá que o grupo ROYAL é uma capa só e o contador mostraria "01 / 01"
+     com setas que não levam a lugar nenhum. No CELULAR o ROYAL voltou a ter as 14 pessoas
+     (pedido do dono, 2026-08-14), e ali contador e setas servem — esconder os dois deixaria
+     o baralho sem nenhuma pista de que há mais 13 cartas ao lado. Sem este `@media`, a mesma
+     regra apagaria a navegação justamente onde ela é necessária. */
+  @media (min-width:1025px){
+    .carsrail[data-grupo="ROYAL"] .cr-meter,
+    .carsrail[data-grupo="ROYAL"] .cr-arrows{ display:none; }
+  }
+  .carsrail .rcard-capa:focus-visible{ outline:2px solid #18FF00; outline-offset:4px; }
+
   .carsrail .cr-deck{
     --cardw:min(clamp(232px,20vw,360px),calc((100vh - 235px) / 1.575));
     --cardh:calc(var(--cardw) * 1.575);
@@ -3552,9 +3800,29 @@ window.igRefresh=(function(){
      forcada. Fica sempre visivel: no mobile a cena e uma coluna, ninguem escurece metade nenhuma,
      entao nao existe "metade livre" para o trilho ocupar nem motivo para ele sumir. */
   @media (max-width:1024px){
+    /* ⚠ `pointer-events:auto` DEVOLVIDO AQUI, e é o que faz o dedo pegar no baralho.
+       Sintoma do dono (2026-08-14): *"nao esta rolando para o lado, esta no click ainda no
+       mobile"* — só as setas respondiam.
+       Medido: `.carsrail` e `.cr-deck` com `pointer-events:none` computado; as `.cr-arrows`
+       são o ÚNICO filho que reativa (`auto`), e por isso pareciam a única forma de andar. O
+       baralho estava rolável o tempo todo (scrollWidth 708 contra clientWidth 390, e
+       `scrollLeft` respondendo por código) — o toque é que nunca chegava nele.
+       ⚠ O `none` da regra base NÃO é engano: no DESKTOP o trilho flutua SOBRE o palco, e sem
+       ele roubaria o toque da metade escurecida que seleciona o carro. Mas no celular o
+       trilho está no FLUXO (`order:4`, `position:relative`), embaixo dos carros, sem cobrir
+       nada — o motivo do `none` simplesmente não existe aqui. Por isso a devolução é só
+       neste bloco; mexer na regra base quebraria a seleção do carro no desktop.
+       ⚠ `touch-action:pan-x` no baralho pelo mesmo motivo do carrossel dos Royais: sem
+       declarar, o navegador decide sozinho de quem é o gesto e costuma entregá-lo ao
+       ancestral que rola a página. */
     .carsrail{order:4;position:relative;top:auto;left:auto;transform:none;translate:none;
       opacity:1;visibility:visible;transition:none;width:100%;padding:2px 0 26px;gap:12px;
-      align-items:stretch}
+      align-items:stretch;pointer-events:auto}
+    /* ⚠ `pan-y` E NAO `pan-x`: o navegador fica dono do eixo VERTICAL (a pagina continua
+       rolando com o dedo em cima do baralho) e o HORIZONTAL e do arrasto por ponteiro logo
+       abaixo, no JS. Um dono por eixo, sem disputa. Deixar `pan-x` faria o nativo e o codigo
+       moverem o mesmo scroll no mesmo gesto, e o baralho andaria o dobro. */
+    .carsrail .cr-deck{touch-action:pan-y}
     /* TUDO CENTRALIZADO no mobile (pedido do dono, 2026-08-04). Antes so as setas estavam no
        centro e o rotulo + barra + contador ficavam encostados na esquerda, o que lia como
        desalinhado. A coluna e align-items:stretch (o deck precisa da largura toda), entao quem
@@ -3817,6 +4085,136 @@ window.igRefresh=(function(){
   .grad-modal .gm-dot{ width:9px; height:9px; border-radius:50%; border:none; background:rgba(255,255,255,.28); cursor:pointer; transition:.25s; padding:0; }
   .grad-modal .gm-dot.active{ background:#18FF00; width:22px; border-radius:5px; }
 
+  /* ===== galeria do ECOSSISTEMA — VISOR DE UMA IMAGEM (js/ecossistema-galeria.js) =====
+     Usa `class="grad-modal eco-modal"` e herda daqui de cima o que é infraestrutura: o
+     posicionamento do modal, o fundo desfocado, o ✕, as setas e as bolinhas. O que MUDA é
+     o conteúdo do painel: nas graduações são 8 fotos em volta de um miolo; aqui é UM slide
+     ocupando o painel (pedido do dono, 2026-08-10: "deve ser 1 imagem por vez").
+     O que chegou não é foto de evento — são slides 720x405 exportados de um deck. Slide
+     tem texto, e é por isso que aqui não existe recorte nem tint: `contain`, nunca `cover`. */
+  /* ⚠ A SAÍDA PRECISA QUE A `visibility` ESPERE O ESMAECER.
+     A regra base (`.grad-modal`) transiciona SÓ a opacidade, e a `visibility:hidden` do
+     estado fechado entra no mesmo quadro em que a classe `open` sai — então o painel
+     desaparece de estalo e a transição de opacidade nunca é vista. Foi metade do "ele volta
+     de uma vez" que o dono relatou (2026-08-10); a outra metade era o JS esvaziando a
+     trilha na mesma linha (ver `fechar()` em js/ecossistema-galeria.js).
+     `visibility 0s linear .34s` = mude a visibilidade só DEPOIS dos 340ms do esmaecer.
+     Na abertura não há atraso, senão o pop-up demoraria a responder ao clique. */
+  .eco-modal{ transition:opacity .34s ease, visibility 0s linear .34s; }
+  .eco-modal.open{ transition:opacity .28s ease, visibility 0s linear 0s; }
+  /* o painel também acompanha: ele já entra com um leve subir/escalar da regra base, e
+     agora sai pelo mesmo caminho em vez de piscar */
+  .eco-modal .gm-panel{ transition:transform .34s cubic-bezier(.16,1,.3,1); }
+  .eco-modal .gm-panel{
+    /* ⚠ A LARGURA É LIMITADA PELA ALTURA, e essa terceira parcela do min() é o que impede o
+       painel de estourar a tela. O slide é 16:9; se o painel só respeitasse a largura, numa
+       janela baixa (notebook 1920x946) um painel de 1480px pediria 833px de imagem + 56 do
+       rodapé = 889px, mais que os 870 de 92vh. Convertendo a altura disponível de volta em
+       largura (x16/9) o painel nunca passa da tela, em qualquer proporção de janela. */
+    width:min(1480px, 94vw, calc((92vh - 58px) * 16 / 9));
+    height:auto; max-height:92vh; border-radius:18px;
+    background:linear-gradient(180deg,#06110b,#04080a);
+    border:1px solid rgba(24,255,0,.16);
+  }
+  .eco-modal .gm-viewport{ height:auto; }
+  .eco-modal .gm-track{ height:auto; }
+  /* zera a grade de 3 colunas que o .gm-slide herda das graduações */
+  .eco-modal .gm-slide{ display:block; height:auto; padding:0; background:none; }
+  .eco-modal .eg-quadro{ position:relative; aspect-ratio:16/9; background:#04080a; border-radius:17px 17px 0 0; overflow:hidden; }
+  /* CAPA COM PLAY (2026-08-13, Conexão Seguros). Fica SOBRE o slide, que já é a capa.
+     ⚠ Só `opacity` e `transform` na transição — nada de `width/height/box-shadow` animado.
+     Esta peça abre no meio de uma apresentação ao vivo, e animar layout é a causa nº 1 de
+     engasgo no notebook do dono (ver o performance-guardian).
+     ⚠ O `::before` é o véu escuro. Ele NÃO usa `mix-blend-mode` nem `filter` de propósito:
+     camada de tela cheia com blend faz a GPU reler os pixels de baixo a cada quadro, e o
+     projeto já pagou por isso. Gradiente chapado resolve e custa nada. */
+  /* ⚠ ESTA LINHA NÃO É REDUNDANTE — SEM ELA O PLAY APARECE NO SLIDE ERRADO.
+     O atributo `hidden` esconde através de um `display:none` que vem da folha de estilo do
+     NAVEGADOR, e regra de navegador perde para qualquer regra de autor. Como a linha abaixo
+     define `display:flex` numa CLASSE, ela ganhava do `hidden` e o botão continuava na tela.
+     Defeito real, relatado pelo dono com print (2026-08-13): *"tira isso, nao tem player nesse
+     slide 2"* — o play aparecia por cima da tabela do Bônus Extra.
+     ⚠ E A MINHA MEDIÇÃO NÃO PEGOU porque eu conferi `elemento.hidden`, que era `true` e estava
+     CERTO. O atributo estava certo e o pixel estava errado. Para botão escondido, meça
+     `getComputedStyle(el).display`, nunca só a propriedade. */
+  .eco-modal .eg-play[hidden]{ display:none; }
+  .eco-modal .eg-play{ position:absolute; inset:0; z-index:3; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px; border:0; cursor:pointer; padding:0;
+    background:transparent; color:#eafff0; font:inherit; -webkit-tap-highlight-color:transparent; }
+  .eco-modal .eg-play::before{ content:''; position:absolute; inset:0;
+    background:radial-gradient(60% 60% at 50% 50%, rgba(2,10,4,.34), rgba(2,10,4,.72));
+    transition:opacity .25s ease; }
+  .eco-modal .eg-play:hover::before,
+  .eco-modal .eg-play:focus-visible::before{ opacity:.82; }
+  .eco-modal .eg-play-ico{ position:relative; width:76px; height:76px; border-radius:50%;
+    display:grid; place-items:center; background:rgba(6,20,8,.72);
+    border:1.5px solid rgba(24,255,0,.55); box-shadow:0 0 0 8px rgba(24,255,0,.08), 0 0 34px rgba(24,255,0,.28);
+    transition:transform .25s ease; }
+  .eco-modal .eg-play:hover .eg-play-ico,
+  .eco-modal .eg-play:focus-visible .eg-play-ico{ transform:scale(1.07); }
+  .eco-modal .eg-play-ico svg{ width:32px; height:32px; fill:#18FF00; margin-left:4px; }
+  .eco-modal .eg-play-txt{ position:relative; font-size:14px; letter-spacing:.06em;
+    text-transform:uppercase; color:rgba(234,255,240,.92); text-shadow:0 2px 14px rgba(0,0,0,.6); }
+  @media (max-width:1024px){
+    .eco-modal .eg-play-ico{ width:60px; height:60px; }
+    .eco-modal .eg-play-ico svg{ width:26px; height:26px; }
+    .eco-modal .eg-play-txt{ font-size:12.5px; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .eco-modal .eg-play::before,
+    .eco-modal .eg-play-ico{ transition:none; }
+    .eco-modal .eg-play:hover .eg-play-ico{ transform:none; }
+  }
+  /* contain e não cover: cortar um slide é cortar texto */
+  .eco-modal .eg-img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .eco-modal .eg-rodape{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:15px 22px; }
+  .eco-modal .eg-nome{ display:flex; align-items:baseline; gap:11px; min-width:0; }
+  .eco-modal .eg-tag{ font-style:normal; font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:rgba(242,255,240,.5); white-space:nowrap; }
+  .eco-modal .eg-titulo{ font-size:16px; font-weight:600; color:var(--acc); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .eco-modal .eg-conta{ font-size:12px; letter-spacing:.3em; color:#f2fff0; opacity:.5; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  /* as bolinhas das graduações moram sobre o painel; aqui o rodapé é opaco e elas ficariam
+     em cima do texto — sobem para fora dele. Só aparecem até 8 imagens, de qualquer forma. */
+  .eco-modal .gm-dots{ bottom:auto; top:-22px; }
+  /* ⚠ NO RETRATO OS SELETORES PRECISAM DE `.grad-modal.eco-modal`, com as duas classes.
+     O bloco mobile da galeria das graduações mora MAIS ABAIXO neste arquivo e crava
+     `.grad-modal .gm-panel{ height:min(84vh,640px) }` e `.grad-modal .gm-slide{ padding:54px
+     18px 50px }`. Com um seletor de mesma força (`.eco-modal .gm-panel`), quem ganha é o
+     último no arquivo — e o último é o deles. Medido antes desta correção: painel de 640px de
+     altura com só 224px de conteúdo, 416px de vazio, e a seta pousando 300px abaixo do rodapé.
+     Duas classes no mesmo elemento sobem a especificidade e o resultado passa a não depender
+     da ordem em que os blocos aparecem. */
+  @media (max-width:1024px), (orientation:portrait){
+    /* no retrato a conta se inverte: quem limita é a LARGURA, e o painel encolhe até caber */
+    /* ⚠ FAIXA NO TOPO PARA O X, e não um deslocamento negativo. Sintoma do dono, 2026-08-14,
+       com print: *"na versao mobile ficou o botao de fechar encima da escrita"* — o X caía
+       exatamente sobre a caixa "Quanto mais portabilidades / MAIOR O BÔNUS POR VENDA" da arte
+       do Telecom. Medido a 390x844: o botão ocupa de 0,846 a 0,956 da LARGURA e de 0,078 a
+       0,273 da ALTURA da arte, bem dentro daquela caixa.
+       A causa é o botão ser de 40px FIXOS: numa arte de 1444px (desktop) ele cobre 3% da
+       largura e fica acima da caixa; numa de 365px (celular) cobre 11% e cai dentro dela.
+       Encolher o botão não resolve — a caixa ocupa TODO o canto superior direito da arte, então
+       ele precisa sair da arte.
+       Não dá para empurrá-lo para fora com `top` negativo: o `.gm-panel` é `overflow:hidden`
+       (é ele que arredonda os cantos da imagem) e o botão simplesmente sumiria. Então o painel
+       ganha uma faixa própria em cima, da cor do painel, e o X mora nela.
+       ⚠ O `- 52px` da largura virou `- 98px` junto: aquela conta desconta a altura que NÃO é
+       imagem para o painel não estourar a tela em paisagem, e agora são 52 do rodapé + 46 da
+       faixa. Esquecer isso devolve o painel maior que a janela em celular deitado. */
+    .grad-modal.eco-modal .gm-panel{ width:min(94vw, calc((80vh - 98px) * 16 / 9)); height:auto; max-height:88vh; padding-top:46px; }
+    .grad-modal.eco-modal .gm-close{ top:9px; right:11px; width:32px; height:32px; font-size:13px; }
+    /* sem a faixa, o topo da arte encostava no canto arredondado do painel e herdava o raio;
+       agora ela é um retângulo dentro da faixa, e quem arredonda em cima é o painel */
+    .grad-modal.eco-modal .eg-quadro{ border-radius:0; }
+    .grad-modal.eco-modal .gm-slide{ display:block; padding:0; overflow:visible; gap:0; }
+    .grad-modal.eco-modal .eg-rodape{ padding:11px 14px; }
+    .grad-modal.eco-modal .eg-titulo{ font-size:14px; }
+    .grad-modal.eco-modal .eg-tag{ font-size:10px; letter-spacing:.22em; }
+    .grad-modal.eco-modal .eg-conta{ font-size:11px; letter-spacing:.2em; }
+    /* o bloco mobile das graduações joga as setas para `bottom:8px`, que aqui cairia sobre o
+       rodapé — o painel do visor é muito mais baixo que o daquela galeria */
+    .grad-modal.eco-modal .gm-nav{ top:50%; bottom:auto; transform:translateY(-50%); width:38px; height:38px; font-size:20px; }
+  }
+
   /* notebook: título menor + header mais alto (reduz o vão vindo do simulador);
      tooltip acima do título/descrição (z-index) */
   @media (min-width:1025px) and (max-width:1440px){
@@ -3947,7 +4345,7 @@ window.igRefresh=(function(){
       </button>
     </div>
     <div class="stage">
-      <svg id="gradChart" viewBox="0 -210 1200 1040" aria-label="Escada de qualificações: Senior, Gestor, Executivo, Diretor e Acionista">
+      <svg id="gradChart" viewBox="0 -210 1200 1040" aria-label="Escada de qualificações: Sênior, Gestor, Executivo, Diretor e Acionista">
         <defs id="gradDefs">
           <linearGradient id="glassSheen" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#ffffff" stop-opacity=".85"/>
@@ -4106,7 +4504,8 @@ window.igRefresh=(function(){
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Suporte ao licenciado</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Benefícios Exclusivos iGreen Club (Clube de descontos)</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Acesso ao iGreen Pay (Plano Basic)</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Voucher no valor de R$50,00 para compras no iGreen Store (liberado após a primeira conexão direta válida)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Voucher no valor de R$50,00 para compras de chips físicos iGreen Telecom ou na loja iGreen Store (Valor liberado após a primeira conexão direta válida)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Chips eSim iGreen Telecom ilimitados</li>
           </ul>
           <!-- CTA-DESATIVADO (2026-07-28): sem destino ainda. Religar quando existir o fluxo.
                Ver .claude/mapas/ctas-desativados.md
@@ -4135,7 +4534,8 @@ window.igRefresh=(function(){
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Suporte ao licenciado</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Benefícios Exclusivos iGreen Club (Clube de descontos)</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Acesso ao iGreen Pay (Plano Basic)</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Voucher no valor de R$100,00 para compras no iGreen Store (liberado após a primeira conexão direta válida)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Voucher no valor de R$100,00 para compras de chips físicos iGreen Telecom ou na loja iGreen Store (Valor liberado após a primeira conexão direta válida)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Chips eSim iGreen Telecom ilimitados</li>
           </ul>
           <!-- CTA-DESATIVADO (2026-07-28): sem destino ainda. Religar quando existir o fluxo.
                Ver .claude/mapas/ctas-desativados.md
@@ -4452,12 +4852,26 @@ window.igRefresh=(function(){
     var floats=document.querySelectorAll('.sfloat');
     var STEP=.32, APPEAR=.45, TOTAL=floats.length*STEP+1.1;
     floats.forEach(function(item,n){
+      /* ⚠ ITEM SEM `data-target` NAO CONTA, E ISSO PASSOU A SER CASO REAL EM 2026-08-13.
+         Antes esta linha era `var target=+b.getAttribute(...)` direto, e um item sem o
+         atributo LANCARIA aqui — matando a timeline INTEIRA da secao, os oito reveals e o
+         parallax do fundo junto. Nao era hipotese remota: bastava alguem acrescentar um
+         numero que nao conta.
+         QUEM PRECISOU DISSO: o "+R$ 1 Bi de boletos pagos". O contador anima de 0 ao alvo e
+         arredonda, entao com alvo 1 ele mostra "+R$ 0 Bi" durante METADE do percurso do
+         scroll — e "R$ 0 Bi" le como defeito para quem esta assistindo. Os outros sete
+         contam por numeros que valem a viagem (150, 800, 3.000); este nao tem para onde
+         contar. Sem `data-target`, o "1" fica impresso no HTML e o item so aparece.
+         O gemeo no mobile (`countUp`, perto do fim do arquivo) ja tinha a guarda `if(b&&...)`
+         desde sempre — era so o desktop que estava descoberto. */
       var b=item.querySelector('b[data-target]');
-      var target=+b.getAttribute('data-target');
       var obj={v:0}, t0=n*STEP;
       tl.to(item,{autoAlpha:1,y:0,duration:APPEAR,ease:'power2.out'},t0);
-      tl.to(obj,{v:target,duration:.8,ease:'none',
-        onUpdate:function(){ b.textContent=Math.round(obj.v).toLocaleString('pt-BR'); }},t0);
+      if(b){
+        var target=+b.getAttribute('data-target');
+        tl.to(obj,{v:target,duration:.8,ease:'none',
+          onUpdate:function(){ b.textContent=Math.round(obj.v).toLocaleString('pt-BR'); }},t0);
+      }
       var dist=-(60+((n*53)%90))*DRIFTK;
       tl.to(item,{y:dist,duration:TOTAL-(t0+APPEAR),ease:'none'},t0+APPEAR);
     });
@@ -5730,7 +6144,7 @@ if(window.gsap&&window.ScrollTrigger){
   })();
 
   var DATA = [
-    { num:"01", name:"Senior",
+    { num:"01", name:"Sênior",
       points:"10.000", gain:"R$ 500", perk:null, H:112,
       c:{ base:"#22c55e", light:"#86efac", dark:"#065f46" } },
     { num:"02", name:"Gestor",
@@ -5746,7 +6160,7 @@ if(window.gsap&&window.ScrollTrigger){
       points:"1.000.000", gain:"R$ 50.000", perk:"Viagem internacional", H:328,
       c:{ base:"#f5c542", light:"#fde68a", dark:"#92600a" } }
   ];
-  DATA[0].file="assets/pins/grad-senior.webp";   /* Senior (Ê = %C3%8A) */
+  DATA[0].file="assets/pins/grad-senior.webp";   /* o nome exibido tem acento (SÊNIOR); o ARQUIVO nao — nada aqui deriva de `name` */
   DATA[1].file="assets/pins/grad-gestor.webp";
   DATA[2].file="assets/pins/grad-executivo.webp";
   DATA[3].file="assets/pins/grad-diretor.webp";
@@ -5965,8 +6379,35 @@ if(window.gsap&&window.ScrollTrigger){
       onUpdate:function(){ drawBar(b); positionTooltip(b); } });
     gsap.to(tooltip,{ opacity:1, y:-6, duration:.3, overwrite:"auto" });
     if(!reduced){
+      /* ============================================================
+         UM GIRO SÓ, E DEPOIS PARA (2026-08-13)
+         ------------------------------------------------------------
+         Pedido do dono: *"os pins da qualificacao ficam girando sem parar, ele podia apenas
+         dar o primeiro giro e depois parar, e depois continuar so flutuando levemente como
+         esta"*.
+
+         ⚠ ERA `repeat:-1`, ou seja, giro infinito enquanto o pin estivesse em foco. Numa
+         apresentação ao vivo o pin fica em foco o tempo todo em que se fala daquele nível —
+         então o giro nunca terminava e virava ruído atrás da fala.
+
+         ⚠ O `repeat` SAIU, mas o `ease` continua `"none"`: com um giro só, uma aceleração
+         faria a volta começar devagar e frear no fim, que lê como travada. Linear é o certo
+         para rotação completa. E `+=360` (relativo) em vez de `360` (absoluto) importa —
+         `spin` acumula, e um valor absoluto faria o pin girar PARA TRÁS até 360 se já
+         estivesse além disso.
+
+         ⚠ A FLUTUAÇÃO NÃO É DAQUI e continua intacta: é o tween de `bob` lá embaixo, com
+         `yoyo:true, repeat:-1`, ligado uma vez para todas as barras. Quem mexer aqui achando
+         que está tirando "a animação do pin" tira o giro e deixa a flutuação — que é
+         exatamente o que o dono pediu.
+
+         ⚠ O `deactivate` continua matando o tween e arredondando para o múltiplo de 360 mais
+         próximo. Isso deixou de ser essencial (o giro já termina redondo sozinho), mas segue
+         valendo para o caso de o pin perder o foco NO MEIO da volta — sem ele, o pin ficaria
+         parado de lado.
+         ============================================================ */
       if(b.spinTween) b.spinTween.kill();
-      b.spinTween=gsap.to(b.state,{ spin:"+=360", duration:2.4, ease:"none", repeat:-1, onUpdate:function(){ drawMedal(b); } });
+      b.spinTween=gsap.to(b.state,{ spin:"+=360", duration:2.4, ease:"none", onUpdate:function(){ drawMedal(b); } });
     }
   }
 
@@ -6000,7 +6441,28 @@ if(window.gsap&&window.ScrollTrigger){
       /* data-lvl, nao data-i: b.i e o nivel na escada, e data-i e a posicao do slide.
          Sem dot = nivel sem galeria (Senior). Precisa SAIR aqui: abrir o modal sem selecionar o
          slide mostraria a galeria de OUTRO nivel, que e pior que nao abrir nada. */
-      if(!dot) return;
+      if(!dot){
+        /* ...MAS o Senior passou a ter RECONHECIMENTO sem ter galeria (pedido do dono,
+           2026-08-09: a animacao entra nele, e as fotos de treinamento continuam fora).
+           Entao "sem dot" deixou de significar "nada acontece": significa "nao ha fotos".
+           Se este nivel tem reconhecimento, ele abre direto — e o clique volta a ter efeito
+           numa barra que estava muda desde 04/08. */
+        /* as DUAS listas: nomes (Senior/Gestor/Executivo) e imagens (Diretor/Acionista).
+           Hoje so o Senior chega aqui — e os dois com imagem TEM galeria, entao passam pelo
+           dot logo abaixo. Mas somar as duas listas evita o silencio do dia em que um nivel
+           de imagem perder a galeria: aí ele abriria nada, sem erro nenhum. */
+        /* ⚠ ESTE RAMO ESTA INERTE HOJE, e nao por acaso — leia antes de "consertar".
+           Ele so e alcancado por nivel SEM galeria, e o unico e o Senior; o Senior saiu de
+           `GRAD_REC_LEVELS` em 2026-08-12, entao o `indexOf` da -1 e o clique nao faz nada.
+           A partir de 2026-08-13 o reconhecimento saiu do FLUXO INTEIRO das graduacoes (ver
+           RECONHECIMENTO-FORA-DO-FLUXO-DAS-GRADUACOES, mais abaixo neste arquivo). Se algum
+           dia um nivel voltar a esta lista, este clique volta a abrir os nomes por um caminho
+           que o resto do fluxo nao tem mais — e o sintoma seria "uma barra abre nomes e as
+           outras nao". Mexeu la, olhe aqui e no gemeo do mobile. */
+        var LR=window.GRAD_REC_LEVELS||[];
+        if(LR.indexOf(b.i)>=0) abreRecGlobal(b.i);
+        return;
+      }
       dot.click();                                      // seleciona o slide dessa qualificacao
       var btn=document.getElementById("gradEventsBtn");
       if(btn) btn.click();                              // abre o modal (openM)
@@ -6113,10 +6575,27 @@ if(window.gsap&&window.ScrollTrigger){
         /* confere o dot ANTES de abrir: sem galeria (Senior) nao abre nada. Se abrisse primeiro,
            o modal apareceria no slide de outro nivel — o mesmo erro que a ordem inversa causava. */
         var dot=document.querySelector('#gradEventsModal .gm-dot[data-lvl="'+i+'"]');
-        if(!dot) return;
+        if(!dot){
+          /* mesma regra do desktop: sem dot = sem FOTOS, nao mais "sem nada". O Senior
+             ganhou reconhecimento em 2026-08-09 e continua sem galeria, entao o toque
+             abre a animacao direto. */
+          /* ⚠ INERTE HOJE, igual ao gemeo do desktop algumas dezenas de linhas acima — e a
+             mesma advertencia vale: se um nivel voltar a `GRAD_REC_LEVELS`, este toque abre
+             os nomes por um caminho que o fluxo novo nao tem mais. Ver
+             RECONHECIMENTO-FORA-DO-FLUXO-DAS-GRADUACOES. */
+          var LR=window.GRAD_REC_LEVELS||[];
+          if(LR.indexOf(i)>=0 && abreRecGlobal(i)) mhint.classList.add("used");
+          return;
+        }
+        /* SELECIONA E DEPOIS ABRE. A ordem estava invertida e era o mesmo defeito do
+           desktop visto no celular: o modal reabria no nivel ANTERIOR e deslizava 0,5s ate
+           o certo. Com o modal fechado o `go()` posiciona instantaneo, entao selecionar
+           primeiro faz o primeiro quadro ja ser o nivel tocado.
+           O `dot` ja foi conferido acima (sem dot = sem fotos, sai antes daqui), entao
+           selecionar antes nao corre o risco de abrir a galeria de outro nivel. */
+        try{ dot.click(); }catch(e){}
         var btn=document.getElementById("gradEventsBtn");
         if(btn) try{ btn.click(); }catch(e){}
-        try{ dot.click(); }catch(e){}
         mhint.classList.add("used");   /* a dica de "toque numa barra" cumpriu o papel */
       });
     });
@@ -6159,6 +6638,15 @@ if(window.gsap&&window.ScrollTrigger){
       .from("#graduacoes .grad-cta",{ y:18, autoAlpha:0, duration:.55, ease:"power2.out" }, "-=.4");
 
     igRefresh();
+  }
+
+  /* Abre o reconhecimento para quem esta FORA do escopo do buildEventsModal (o clique na
+     barra do grafico e o toque na coluna do mobile). Hoje so o Senior chega aqui — os
+     outros quatro tem galeria e passam pelo dot. */
+  function abreRecGlobal(lvl){
+    var R = window.IGREEN_RECONHECIMENTO;
+    if(R){ try{ R.abrir(lvl); return true; }catch(e){} }
+    return false;
   }
 
   /* ===== modal "Nossos Eventos": bento paginado por qualificacao
@@ -6220,14 +6708,81 @@ if(window.gsap&&window.ScrollTrigger){
     function evQr(gal){ var f=EV+gal+"-qrcode";
       return '<picture><source srcset="'+f+'.webp" type="image/webp">'
         +'<img src="'+f+'.png" alt="QR code do canal do YouTube" loading="lazy" decoding="async"></picture>'; }
+    /* BOTÃO DO RECONHECIMENTO (pedido do dono, 2026-08-09: a animação vem "sempre após
+       as imagens"). Só aparece nos níveis que TÊM reconhecimento — a lista de verdade é
+       window.GRAD_REC_LEVELS, publicada pelo js/reconhecimento.js. Repetir a lista aqui
+       seria criar um segundo lugar para dessincronizar, que é o erro clássico desta base.
+       O fallback [0,1,2] existe só para o caso de o script não ter carregado: sem ele o
+       botão sumiria calado, que é pior que aparecer e não abrir. */
+    /* UMA PEÇA para os cinco níveis. Em 2026-08-10 houve uma versão com duas peças (um
+       visor de imagens à parte para Diretor e Acionista); ela foi DESFEITA no mesmo dia,
+       quando o dono pediu que a sequência fosse "idêntica" à do Sênior/Executivo — e a
+       forma de ser idêntica é ser o MESMO código, não uma imitação. Hoje o
+       js/reconhecimento.js atende os cinco: três com mural de nomes, dois com arte, e
+       quem pergunta aqui não precisa saber qual dos dois 2os atos é. */
+    /* ============================================================
+       RECONHECIMENTO-FORA-DO-FLUXO-DAS-GRADUACOES (2026-08-13)
+       ------------------------------------------------------------
+       SINTOMA DO DONO: *"e no mobile a parte de nomes quando clica no grafico ainda estao os
+       nomes etc."*
+
+       CAUSA RAIZ, MEDIDA no celular (390x844, servido por http):
+       `window.__pmode` **nao existe abaixo de 1025px** — o modo apresentacao e so desktop.
+       Em 2026-08-12 a parada dos nomes saiu da apresentacao (marcador
+       RECONHECIMENTO-FORA-DA-APRESENTACAO, no js/presentation-mode.js) e eu registrei ali,
+       com todas as letras, que "a peca nao ficou orfa: fora da apresentacao o caminho de
+       clique continua inteiro". Estava certo como descricao e ERRADO como decisao: no
+       celular NAO EXISTE outro modo. Aquele "caminho de clique que continua inteiro" era,
+       para quem abre o site no telefone, o unico caminho — e ele levava exatamente aos nomes
+       que o fluxo novo tinha tirado. Medido, tocando de verdade: barra do Gestor -> galeria
+       -> botao "Ver reconhecimento" (327x38, visivel) -> capa de video -> toque no cartao ->
+       RECONHECIMENTO GESTOR, 114 nomes na tela.
+
+       O FLUXO QUE O DONO DEFINIU (2026-08-13, e ja em 2026-08-10) e: fotos -> video -> **sai
+       e volta para o grafico**. Nao ha etapa de nomes nele, em NENHUM nivel. Entao a correcao
+       nao e "esconder no mobile": e a funcao abaixo deixar de dizer que este fluxo tem
+       reconhecimento. Um `if(mobile)` aqui criaria dois comportamentos para o mesmo botao e
+       seria a terceira mecanica a discordar das outras duas nesta regiao.
+
+       O QUE ESTA UNICA LINHA GOVERNA (os quatro lugares, todos conferidos):
+         1. o rotulo do botao da galeria: "Ver reconhecimento" -> **"Ver video"**;
+         2. o texto do cartao da capa: "seguir para os reconhecidos do mes" -> **"voltar as
+            fotos do evento"** (era a frase mentirosa que sobrou anotada em EM ABERTO ontem);
+         3. o clique no cartao: `fechaVid(); if(temRec(l)) abreRec(l);` -> so fecha;
+         4. `depoisDasFotos`: cai sempre na capa de video (os 4 niveis com galeria a tem).
+
+       ⚠ NADA FOI APAGADO, e o `js/reconhecimento.js` (1,7k linhas, os 313 nomes do Senior e
+       as artes) NAO virou peso morto: `abreRec` continua exportado em
+       `GRAD_REC_FLOW.abrirReconhecimento`, e `window.IGREEN_RECONHECIMENTO` seguem de pe.
+       Religar o fluxo inteiro e trocar `false` pela expressao comentada aqui embaixo — uma
+       linha, e os quatro lugares acima voltam juntos.
+       ⚠ E NAO CONFUNDA com o corte do Senior: aquele foi na LISTA (`GRAD_REC_LEVELS` virou
+       [1,2,3,4] no js/reconhecimento.js, 12/08) e continua valendo por si. Este e o fluxo
+       todo. Se um dia so o Senior precisar voltar, mexa na lista, nao aqui.
+       ============================================================ */
+    function temRec(lvl){ return false; }
+    /* a linha original, para religar: */
+    /* function temRec(lvl){ var L=window.GRAD_REC_LEVELS||[0,1,2,3,4]; return L.indexOf(lvl)>=0; } */
+    /* NÍVEIS COM CAPA DE VÍDEO. A lista de verdade é o `LVLS_VID`, mais abaixo neste mesmo
+       IIFE — mas os slides são montados ANTES dele existir, então o número está repetido
+       aqui. Os dois estão a poucas dezenas de linhas de distância de propósito: mexeu num,
+       mexa no outro. É a única duplicação desta região e este aviso existe para ela. */
+    function temCapa(lvl){ return [1,2,3,4].indexOf(lvl)>=0; }
     var slides=EVENTS.map(function(ev){
       var v="--acc:"+ev.color+";--acc-line:rgba("+ev.rgb+",.5);--acc-glow:rgba("+ev.rgb+",.14);--acc-glow2:rgba("+ev.rgb+",.45);--acc-tint:rgba("+ev.rgb+",.16)";
+      /* O rótulo diz para onde o botão leva: onde há nomes ele anuncia o reconhecimento,
+         onde só há a capa de vídeo ele anuncia o vídeo. Botão que promete o que não
+         entrega é pior que botão nenhum. */
+      var btnRec = (temRec(ev.lvl) || temCapa(ev.lvl))
+        ? '<button class="gm-rec-btn" type="button" data-rec-lvl="'+ev.lvl+'">'
+          +(temRec(ev.lvl)?'Ver reconhecimento':'Ver vídeo')+'</button>' : '';
       return '<div class="gm-slide" style="'+v+'">'
         +'<div class="gm-badge">'+ev.name+'</div>'
         +'<div class="gm-side gm-left">'+photos(ev.gal,1,4)+'</div>'
         +'<div class="gm-mid"><div class="gm-event">'+ev.logo+'</div>'
         +'<img class="gm-coin" src="'+ev.pin+'" alt="'+ev.name+'">'
-        +'<div class="gm-qr"><div class="gm-qr-code">'+evQr(ev.gal)+'</div><p>Veja em nosso<br>Canal do YouTube</p></div></div>'
+        +'<div class="gm-qr"><div class="gm-qr-code">'+evQr(ev.gal)+'</div><p>Veja em nosso<br>Canal do YouTube</p></div>'
+        +btnRec+'</div>'
         +'<div class="gm-side gm-right">'+photos(ev.gal,5,8)+'</div></div>';
     }).join("");
     /* DOIS índices no mesmo botão, e trocar um pelo outro quebra em silêncio:
@@ -6252,7 +6807,33 @@ if(window.gsap&&window.ScrollTrigger){
     var track=modal.querySelector(".gm-track");
     var dotEls=[].slice.call(modal.querySelectorAll(".gm-dot"));
     var idx=0;
-    function go(i){ idx=(i+EVENTS.length)%EVENTS.length; track.style.transform="translateX(-"+(idx*100)+"%)"; dotEls.forEach(function(d,k){ d.classList.toggle("active",k===idx); }); }
+    /* ============================================================
+       COM O MODAL FECHADO, O SALTO NÃO DESLIZA
+       ------------------------------------------------------------
+       Defeito relatado pelo dono em 2026-08-10, com print: entrando no GESTOR aparecia a
+       galeria do EXECUTIVO inteira e só depois virava Gestor.
+       A causa não era o nível errado — era o DESLIZE. O modal guarda o slide de quando foi
+       fechado; quem o reabre seleciona o novo slide, mas a transição `transform 0.5s`
+       continuava correndo, e o modal aparecia NO MEIO dela. Meio segundo do nível anterior
+       na tela, em cima da fala.
+       A correção mora AQUI, e não em cada quem-abre, porque são TRÊS caminhos e cada um
+       errava do seu jeito: a apresentação (`abrirGaleriaDe`), o clique na barra do desktop
+       (ordem certa, mas deslizando) e o toque na coluna do mobile (ordem invertida).
+       Consertar em três lugares seria três chances de esquecer um — e foi assim que este
+       defeito sobreviveu ao primeiro conserto.
+       Regra: modal FECHADO = posiciona instantâneo (ninguém vê o salto). Modal ABERTO =
+       desliza, porque aí a troca de slide é gesto à vista e o deslize é o certo.
+       O `void track.offsetWidth` é obrigatório: sem essa leitura forçada o navegador agrupa
+       as duas mudanças de estilo no mesmo quadro e a transição volta a valer para o salto.
+       ============================================================ */
+    function go(i){
+      idx=(i+EVENTS.length)%EVENTS.length;
+      var semDeslize = !modal.classList.contains("open"), tr;
+      if(semDeslize){ tr=track.style.transition; track.style.transition="none"; }
+      track.style.transform="translateX(-"+(idx*100)+"%)";
+      if(semDeslize){ void track.offsetWidth; track.style.transition=tr; }
+      dotEls.forEach(function(d,k){ d.classList.toggle("active",k===idx); });
+    }
     modal.querySelector(".gm-prev").addEventListener("click",function(){ go(idx-1); });
     modal.querySelector(".gm-next").addEventListener("click",function(){ go(idx+1); });
     dotEls.forEach(function(d){ d.addEventListener("click",function(){ go(+d.getAttribute("data-i")); }); });
@@ -6274,14 +6855,189 @@ if(window.gsap&&window.ScrollTrigger){
         if(!im.getClientRects().length) return;   /* escondida por CSS: nao baixa */
         im.removeAttribute('loading'); }); }
     function openM(){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); liberaFotos(); if(sm) sm.paused(true); else document.body.style.overflow="hidden"; }
-    function closeM(){ modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); if(sm) sm.paused(false); else document.body.style.overflow=""; }
+    function closeM(){
+      /* fecha o que estiver POR CIMA antes de fechar a galeria. Sem isto, sair da seção
+         no modo apresentação (que chama o .gm-close) deixaria a peça de reconhecimento
+         em tela cheia por cima da próxima seção — exatamente o que o onLeave do vídeo
+         institucional já evitava para o popup dele. */
+      fechaVid();
+      if(window.IGREEN_RECONHECIMENTO && window.IGREEN_RECONHECIMENTO.aberto()) window.IGREEN_RECONHECIMENTO.fechar();
+      modal.classList.remove("open"); modal.setAttribute("aria-hidden","true");
+      if(sm) sm.paused(false); else document.body.style.overflow="";
+    }
+
+    /* ===== POPUP DE VÍDEO — a "capa" de cada evento, entre as fotos e o que vem depois =====
+       Pedido do dono (2026-08-09): "no do executivo preciso que antes do nome ele apareça
+       as fotos e algum popup sinalizando um play de video. sem funcionalidade." No mesmo
+       dia ele pediu a MESMA capa para o Diretor e o Acionista.
+       Por isso ele é um CARTÃO POR CIMA da galeria e não uma tela nova: as fotos precisam
+       continuar visíveis atrás, e é o que o fundo semitransparente do .recvid preserva.
+       ⚠ NÃO TOCA VÍDEO NENHUM, de propósito. Não existe elemento de video aqui, nem iframe,
+       nem requisição: é sinalização. No dia em que existir vídeo de verdade, é aqui dentro
+       que ele entra.
+       (Escrito sem a tag literal de propósito: o revisar.js varre o texto e uma tag citada
+       dentro de comentário virava aviso de "video sem muted/playsinline" para sempre.)
+
+       ONDE ELE APARECE: níveis 1, 2, 3 e 4 — Gestor, Executivo, Diretor e Acionista. O
+       GESTOR entrou em 2026-08-10 ("adicione o player ilustrativo no pin do gestor"). Nos
+       quatro a capa usa a 1ª foto da galeria daquele evento e a cor daquele nível, então
+       cada um tem a sua capa e não uma cópia da do Executivo — no Gestor sai a foto do
+       iGreen Experience em laranja, sem nenhum arquivo novo no projeto.
+       O único nível de fora é o SÊNIOR, e não por esquecimento: ele não tem galeria, e a
+       capa é um cartão que aparece POR CIMA das fotos — sem fotos atrás ela não é capa de
+       nada. Se um dia o Sênior ganhar galeria, é só entrar nesta lista.
+       O QUE O CLIQUE FAZ depende do nível: onde existe reconhecimento (Gestor e Executivo)
+       ele segue para os nomes; onde não existe (Diretor e Acionista), a capa apenas fecha e
+       a galeria continua atrás. É o mesmo botão fazendo a coisa certa nos dois casos. */
+    var LVLS_VID = [1,2,3,4];               /* Gestor, Executivo, Diretor, Acionista */
+    function temVid(l){ return LVLS_VID.indexOf(l) >= 0; }
+    var vid=null, vidLvl=null;
+    function evPorLvl(l){ for(var i=0;i<EVENTS.length;i++) if(EVENTS[i].lvl===l) return EVENTS[i]; return null; }
+    function montaVid(l){
+      var ev=evPorLvl(l); if(!ev) return null;
+      if(!vid){
+        vid=document.createElement("div");
+        vid.className="recvid"; vid.id="gradRecVideo"; vid.setAttribute("aria-hidden","true");
+        document.body.appendChild(vid);
+      }
+      if(vidLvl===l) return vid;            /* já montado para este nível */
+      vidLvl=l;
+      var f=EV+ev.gal+"-1";
+      vid.style.cssText="--recvid-acc:"+ev.color+";--recvid-line:rgba("+ev.rgb+",.5);--recvid-glow:rgba("+ev.rgb+",.24)";
+      /* O QUE O CARTAO PROMETE TEM DE SER O QUE O CLIQUE FAZ — botao que mente e pior que
+         botao nenhum, e este cartao ja mentiu duas vezes nesta base.
+         Hoje sao tres destinos possiveis, nesta ordem de prioridade:
+           1. TOCA O VIDEO daquela qualificacao, se a peca js/video-reconhecimento.js estiver
+              carregada e conhecer o nivel (2026-08-13). E o caso normal dos quatro niveis.
+           2. segue para os NOMES, se o reconhecimento voltar ao fluxo (`temRec`, hoje false).
+           3. so FECHA e as fotos ficam atras.
+         ⚠ Quem responde "existe video para este nivel?" e a PROPRIA peca do video
+         (`IGREEN_REC_VIDEO.temVideo`), nao uma lista repetida aqui. Repetir a lista era o
+         caminho garantido para os dois discordarem com o tempo — foi o que aconteceu com
+         `LVLS_VID` (que ainda esta duplicado nesta regiao, com o aviso dele acima). */
+      var toca  = !!(window.IGREEN_REC_VIDEO && window.IGREEN_REC_VIDEO.temVideo(l));
+      var segue = temRec(l);
+      vid.innerHTML='<div class="recvid-bd"></div>'
+        +'<div class="recvid-card" role="dialog" aria-modal="true" aria-label="Vídeo do reconhecimento '+ev.name+'" tabindex="0">'
+        +'<button class="recvid-x" type="button" aria-label="Fechar">✕</button>'
+        +'<div class="recvid-thumb">'
+        +'<picture><source srcset="'+f+'.avif" type="image/avif"><source srcset="'+f+'.webp" type="image/webp">'
+        /* SEM loading="lazy" de propósito, e isso não custa nada no carregamento da página:
+           este nó só é criado no primeiro clique. Aí a imagem precisa aparecer na hora, e
+           lazy dentro de um popup ainda invisível pode adiar justo o quadro em que ele abre.
+           O fetchpriority="low" é o que diz ao navegador que ela pode esperar as outras. */
+        +'<img src="'+f+'.jpg" alt="" width="1600" height="900" decoding="async" fetchpriority="low"></picture>'
+        +'<span class="recvid-pulso" aria-hidden="true"></span>'
+        +'<span class="recvid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>'
+        +'</div>'
+        +'<div class="recvid-txt"><span class="recvid-kick">'+ev.name+'</span>'
+        +'<h4>Vídeo do reconhecimento</h4>'
+        +'<p>'+(toca?"Toque para assistir ao vídeo."
+                    :segue?"Toque para seguir para os reconhecidos do mês."
+                    :"Toque para voltar às fotos do evento.")+'</p></div></div>';
+      vid.querySelector(".recvid-x").addEventListener("click",function(e){ e.stopPropagation(); fechaVid(); });
+      vid.querySelector(".recvid-bd").addEventListener("click", fechaVid);
+      vid.querySelector(".recvid-card").addEventListener("click",function(){
+        fechaVid();
+        /* A MESMA ORDEM do texto do cartão acima. Ela é repetida porque são dois momentos
+           diferentes (montagem x clique) e não há como derivar um do outro — mas se você
+           mexer numa, mexa na outra: cartão e clique discordando é o defeito clássico daqui.
+           ⚠ `abrir()` devolve false se a peça não conhecer o nível, e aí caímos no resto em
+           vez de o toque morrer em silêncio. */
+        if(window.IGREEN_REC_VIDEO && window.IGREEN_REC_VIDEO.abrir(l)) return;
+        if(temRec(l)) abreRec(l);
+      });
+      return vid;
+    }
+    function abreVid(l){ var v=montaVid(l); if(!v) return; v.classList.add("open"); v.setAttribute("aria-hidden","false"); }
+    function fechaVid(){ if(vid){ vid.classList.remove("open"); vid.setAttribute("aria-hidden","true"); } }
+    function vidAberto(){ return !!(vid && vid.classList.contains("open")); }
+    function abreRec(l){ if(window.IGREEN_RECONHECIMENTO) window.IGREEN_RECONHECIMENTO.abrir(l); }
+
+    /* O passo depois das fotos: onde existe capa de vídeo (Gestor, Executivo, Diretor e
+       Acionista) ela vem primeiro; onde não existe, vai direto para os nomes. */
+    function depoisDasFotos(l){ if(temVid(l)) abreVid(l); else abreRec(l); }
+
+    [].forEach.call(modal.querySelectorAll(".gm-rec-btn"), function(b){
+      b.addEventListener("click", function(){ depoisDasFotos(+b.getAttribute("data-rec-lvl")); });
+    });
+
+    /* API para o modo apresentação. Mesmo motivo do window.GRAD_GAL_LEVELS: a verdade
+       mora aqui, ao lado do EVENTS, e a apresentação só pede. */
+    window.GRAD_REC_FLOW = {
+      /* ============================================================
+         SELECIONA O SLIDE **ANTES** DE ABRIR, E SEM DESLIZAR
+         ------------------------------------------------------------
+         Antes era `openM()` e depois o clique no dot, e isso tinha um defeito que o dono
+         viu na apresentação (2026-08-10): *"você só trocou o fundo no segundo clique, o
+         primeiro ainda sendo [o anterior]"*.
+         O motivo, medido: o modal guarda o slide de quando foi fechado. Ao reabrir no
+         nível seguinte ele aparecia AINDA no nível anterior e só então corria até o certo
+         — `translateX(-300%)` (Acionista) no instante da abertura, com `transform 0.5s` de
+         transição. Meio segundo mostrando as fotos erradas, em cima da fala do apresentador.
+         Agora: posiciona com a transição DESLIGADA enquanto está fechado (ninguém vê), e só
+         então abre. O primeiro quadro já é o nível certo.
+         O `void track.offsetWidth` não é enfeite: sem essa leitura forçada o navegador
+         agrupa as duas mudanças de estilo no mesmo quadro e a transição volta a valer para
+         o salto — o deslize reapareceria.
+         Se o modal JÁ está aberto, o deslize fica: aí ele é troca de slide à vista, que é o
+         comportamento certo (e dentro do mesmo nível o dot é o mesmo, não move nada).
+         ============================================================ */
+      abrirGaleriaDe:function(l){
+        /* SELECIONA ANTES DE ABRIR. Com o modal fechado o `go()` posiciona sem deslizar,
+           entao o primeiro quadro ja e o nivel certo. Inverter esta ordem devolve o defeito
+           de "no primeiro clique ainda e o anterior". */
+        var d=modal.querySelector('.gm-dot[data-lvl="'+l+'"]');
+        if(d) d.click();
+        openM();
+      },
+      posFotos:depoisDasFotos, abrirVideo:abreVid, fecharVideo:fechaVid, videoAberto:vidAberto,
+      abrirReconhecimento:abreRec,
+      /* quais níveis têm capa de vídeo — lido pelo presentation-mode.js para criar a parada
+         dela. Era um número só (nivelDoVideo) quando só o Executivo tinha. */
+      niveisDoVideo:LVLS_VID.slice()
+    };
+
     var btn=document.getElementById("gradEventsBtn");
     if(btn) btn.addEventListener("click", openM);
     modal.querySelector(".gm-close").addEventListener("click", closeM);
     modal.querySelector(".gm-backdrop").addEventListener("click", closeM);
     document.addEventListener("keydown", function(e){
       if(!modal.classList.contains("open")) return;
+      /* QUEM ESTÁ POR CIMA MANDA. O reconhecimento é tela cheia e o popup de vídeo é um
+         cartão sobre a galeria: se este bloco continuasse escutando, uma seta trocaria a
+         foto ATRÁS de uma tela que o usuário nem está vendo, e o Esc fecharia a galeria
+         inteira em vez de só o que está na frente. O reconhecimento também deixa a seta
+         passar de propósito quando acaba a última página (para a apresentação avançar) —
+         sem esta guarda, essa seta cairia aqui e mudaria de qualificação sozinha. */
+      if(window.IGREEN_RECONHECIMENTO && window.IGREEN_RECONHECIMENTO.aberto()) return;
+      /* ⚠ O PLAYER DO RECONHECIMENTO ENTROU NESTA FILA EM 2026-08-13, e ele fica ACIMA da
+         capa: a capa se fecha ao abrir o player, mas a ordem aqui é a de quem está por cima.
+         Sem esta linha, o Esc com o vídeo tocando fecharia a GALERIA inteira em vez do vídeo,
+         e a seta trocaria a foto atrás de uma tela que ninguém está vendo. O player só escuta
+         Esc (as setas ele deixa passar de propósito, para a apresentação poder cortar o
+         vídeo), então quem tem de sair da frente aqui é este bloco. */
+      if(window.IGREEN_REC_VIDEO && window.IGREEN_REC_VIDEO.aberto()) return;
+      if(vidAberto()){ if(e.key==="Escape"){ e.preventDefault(); fechaVid(); } return; }
       if(e.key==="Escape") closeM();
+      /* ============================================================
+         NA APRESENTAÇÃO, QUEM MANDA NO PASSO É ELA
+         ------------------------------------------------------------
+         Sem esta guarda havia DOIS DONOS da seta →, e o dono sentiu os dois sintomas:
+         1. *"o modo para baixo está dando certo mas o do lado não está indo quando passa o
+            passador de slide"* — a ↓ este bloco ignora (só trata Esc/←/→), então ela chegava
+            à apresentação e avançava; a → era consumida AQUI e a apresentação não andava.
+         2. *"entro no gestor e exibe o fundo do executivo"* — medido: na parada da galeria
+            do GESTOR, uma → levava a galeria de Gestor para EXECUTIVO por conta própria,
+            enquanto a apresentação continuava no Gestor. O fundo passava a ser do vizinho
+            sem ninguém ter pedido.
+         Este era o ÚNICO dos quatro tratadores de teclado do projeto sem a guarda: o do
+         ecossistema (`js/ecossistema-galeria.js`), o dos destaques (`js/destaques.js`) e o do
+         reconhecimento (`js/reconhecimento.js`) já cediam. Era esquecimento, não decisão.
+         FORA da apresentação as setas continuam trocando de qualificação aqui, que é o certo
+         para quem navega o site com o teclado.
+         ============================================================ */
+      else if(window.__pmode && window.__pmode.isActive && window.__pmode.isActive()) return;
       else if(e.key==="ArrowLeft") go(idx-1);
       else if(e.key==="ArrowRight") go(idx+1);
     });
@@ -6385,6 +7141,249 @@ if(window.gsap&&window.ScrollTrigger){
       justify-content:center; text-align:center; }
   }
 </style>
+
+<!-- ===== AGENDA DA SEMANA — carrossel de dias (pedido do dono, 2026-08-09) =====
+     Vem do pacote Agenda_Carrossel.zip: um Web Component com Shadow DOM, sem dependência,
+     sem CDN e sem requisição externa. Diferente do reconhecimento (que veio em React e
+     precisou de porte), este entra como está — Shadow DOM significa que o CSS deste site
+     não entra nele e o dele não sai daqui, então ele renderiza igual à referência.
+
+     ONDE ELA FICA: o dono pediu "abaixo da bonificação, depois que aparece a parte dos
+     embaixadores". A posição final não é decidida por esta linha do HTML e sim pelo
+     #reorder-secoes lá no fim do arquivo, que é quem monta a ordem do final da página —
+     'agenda' entrou na lista dele logo depois de 'bonificacao'.
+
+     OS DADOS FICAM EMBUTIDOS, não em arquivo à parte. O componente aceita `src` com um
+     JSON, mas isso seria uma requisição a mais e, pior, quebraria em file:// por CORS —
+     e este projeto é aberto em file:// o tempo todo. Com o JSON aqui dentro a agenda
+     funciona sem servidor e sem rede. É a mesma lista da arte oficial que o dono mandou:
+     9 treinamentos em 5 dias.
+
+     auto="off" É PEDIDO EXPLÍCITO: "ela não fica passando de forma automática". Quem troca
+     o dia é o apresentador — clique, seta, ou o passo do modo apresentação. -->
+<style id="agenda-ajuste">
+  /* AJUSTE FINO DA AGENDA (pedido do dono, 2026-08-09, depois de ver no modo apresentacao).
+     Tudo daqui atravessa o Shadow DOM pelos dois unicos caminhos que existem: custom
+     properties e ::part(). Nao ha uma linha de CSS do site entrando na peca por acidente —
+     e e exatamente essa a garantia que o Shadow DOM da.
+
+     1) CABECALHO: SO O TITULO, CENTRALIZADO. Primeiro o dono mandou tirar o bloco inteiro
+        ("retira aquelas palavras treinamentos e o iGreen academy"); depois pediu "coloca em
+        cima Agenda Oficial como titulo". Entao a logomarca e o subtitulo ficam escondidos e
+        sobra UMA linha, centralizada, escrita "Agenda Oficial" — o texto vem do atributo
+        titulo= no proprio elemento, nao daqui.
+     2) CIRCULOS MENORES. O --D governa o carrossel inteiro (o palco tem 1,72 x D). O padrao
+        do pacote era min(30cqw, 34vh) com teto 320: numa tela de 800px de altura dava um
+        palco de 468px e o conjunto passava de 900px — as atividades ficavam abaixo da
+        dobra, que e o print que o dono mandou. Com 24vh e teto 240 o conjunto continua
+        cabendo inteiro mesmo com o titulo de volta em cima. */
+  /* ============================================================
+     AGENDA-DESATIVADA (2026-08-13) — *"pode retirar a agenda oficial dos treinamentos"*.
+     ⚠ `display:none` e NÃO remover o HTML: convenção do projeto (ver TOP10-DESATIVADA e
+     DESTAQUES-DESATIVADA). Devolver exige TRÊS coisas, ou ela volta pela metade: apagar este
+     `display:none`, recolocar 'agenda' no #reorder-secoes e trocar `on:false` por `on:true`
+     no js/presentation-mode.js.
+     ⚠ A seção é um componente próprio (`igreen-agenda`), com os horários da semana escritos
+     no HTML — nada foi apagado, só escondido. ============================================ */
+  #agenda{ display:none; }
+  #agenda igreen-agenda{
+    --D:clamp(110px, min(24cqw, 24vh), 240px);
+    --iga-padding:clamp(14px,2vw,26px);
+  }
+  #agenda igreen-agenda::part(topo){ justify-content:center; }
+  #agenda igreen-agenda::part(marca){ display:none; }
+  #agenda igreen-agenda::part(titulo){ text-align:center; }
+  #agenda igreen-agenda::part(subtitulo){ display:none; }
+</style>
+<section id="agenda" aria-label="Agenda da semana">
+  <igreen-agenda id="agendaSemana" auto="off"
+                 titulo="Agenda Oficial" subtitulo="Agenda Oficial"
+                 marcador="Agenda da semana">
+    <script type="application/json">
+[
+  { "dia":"Segunda-feira", "abrev":"SEG", "imagem":null, "eventos":[
+      { "hora":"20h", "nome":"(APN) Plano de Negócios" },
+      { "hora":"21h", "nome":"Start iGreen" } ] },
+  { "dia":"Quarta-feira", "abrev":"QUA", "imagem":null, "eventos":[
+      { "hora":"20h",   "nome":"Na Prática Conexão Green" },
+      { "hora":"20h40", "nome":"Na Prática Conexão Telecom" },
+      { "hora":"21h20", "nome":"Na Prática Conexão Seguros" } ] },
+  { "dia":"Quinta-feira", "abrev":"QUI", "imagem":null, "eventos":[
+      { "hora":"21h", "nome":"Na Prática Conexão Telecom USA" } ] },
+  { "dia":"Sexta-feira", "abrev":"SEX", "imagem":null, "eventos":[
+      { "hora":"20h", "nome":"Na Prática Conexão Livre" },
+      { "hora":"21h", "nome":"Na Prática Conexão Placas/Solar" } ] },
+  { "dia":"Sábado", "abrev":"SÁB", "imagem":null, "eventos":[
+      { "hora":"16h", "nome":"Mentoria: Liderança e Mentalidade" } ] }
+]
+    </script>
+  </igreen-agenda>
+</section>
+
+<!-- ============================================================================
+     DESTAQUES — carrossel horizontal de 3 telas (pedido do dono, 2026-08-10)
+     "adicione uma nova seção abaixo da agenda, onde será um carrossel que passará por
+      clique e no modo apresentação também... rolado na horizontal. E depois que passar a
+      última ela continua para a última seção."
+     As três telas são arte pronta (iGreen Creator, Escritório Virtual, iGreen Summit) —
+     ele disse "que será em si a seção", então aqui não há título nem texto do site por
+     cima: a imagem É o conteúdo. Comportamento em js/destaques.js.
+
+     ⚠ O LUGAR NA PÁGINA NÃO É DECIDIDO AQUI. Quem monta a ordem do final é o
+     #reorder-secoes, no fim deste arquivo — 'destaques' entrou na lista dele entre
+     'agenda' e o rodapé. Mover no HTML não muda nada.
+     ============================================================================ -->
+<style id="top10-estilo">
+  /* ============================================================================
+     TOP 10 GREEN POINTS — arte unica, entre a Bonificacao e a Agenda (2026-08-10)
+     ----------------------------------------------------------------------------
+     Pedido do dono: "essa tabela precisa estar ao meio, entre os carros e a agenda, ela
+     precisa ficar ao meio, uma secao". O trecho entre o ultimo carro e a Agenda era um
+     vao — e o "preciso melhorar isso" era esse vao. A tabela ocupa exatamente esse lugar.
+     Sem carrossel, sem titulo do site: e uma arte so, e ela ja tem o titulo dentro.
+     ============================================================================ */
+  /* ============================================================
+     TOP10-DESATIVADO (2026-08-12) — pedido do dono: "a imagem anexo retire essa secao",
+     com o print da tabela TOP 10 Green Points em anexo.
+     ------------------------------------------------------------
+     `display:none` e o MESMO tratamento que a #rede e a #recorrencia levaram neste
+     projeto (ver REDE-DESATIVADO no js/presentation-mode.js). E de proposito nao apagar:
+     a secao inteira sao ~50 linhas entre CSS, HTML e o script da arte que falta, e
+     devolver ela e trocar esta linha por `display:grid`, devolver 'top10' na lista de
+     ordem la embaixo, e por `on:true` na parada da apresentacao.
+     Secao oculta nao ocupa altura, entao nada abaixo dela se deslocou — medido.
+     A arte segue em assets/img/top10/ (278kB), fora do caminho de carregamento: com a
+     secao oculta o `loading="lazy"` nunca dispara e a imagem nao e baixada.
+     ============================================================ */
+  #top10{ display:none;
+    position:relative; min-height:100vh; place-items:center;
+    padding:clamp(24px,4vh,64px) clamp(16px,4vw,48px); background:#04070a; overflow:hidden; }
+  /* mesma conta do visor do ecossistema e dos Destaques: a terceira parcela do min()
+     converte a ALTURA disponivel de volta em largura (x16/9) e e o que impede a arte de
+     estourar a tela num notebook baixo. */
+  #top10 .t10-moldura{ position:relative; width:min(1320px, 92vw, calc((84vh - 40px) * 16 / 9));
+    aspect-ratio:16/9; border-radius:20px; overflow:hidden; background:#04070a;
+    box-shadow:0 30px 90px rgba(0,0,0,.6); display:grid; place-items:center; }
+  /* contain e nunca cover: e uma TABELA, cortar borda corta nome e numero */
+  #top10 .t10-arte{ width:100%; height:100%; object-fit:contain; display:block; }
+  #top10 .t10-falta{ display:none; }
+  #top10 .t10-moldura.t10-sem-arte .t10-arte{ display:none; }
+  #top10 .t10-moldura.t10-sem-arte .t10-falta{ display:grid; gap:10px; place-items:center; text-align:center;
+    padding:24px; margin:24px; border:1.5px dashed rgba(24,255,0,.34); border-radius:16px;
+    font-family:'Inter Display',sans-serif; }
+  #top10 .t10-moldura.t10-sem-arte .t10-falta b{ font-size:clamp(18px,2vw,26px); color:#18FF00; font-weight:600; }
+  #top10 .t10-moldura.t10-sem-arte .t10-falta span{ font-size:12px; letter-spacing:.06em; color:rgba(242,255,240,.55); }
+  @media (max-width:1024px){
+    #top10{ min-height:auto; padding:40px 16px; }
+    #top10 .t10-moldura{ width:min(96vw, calc((70vh) * 16 / 9)); border-radius:14px; }
+  }
+</style>
+<section id="top10" aria-label="TOP 10 Green Points">
+  <div class="t10-moldura">
+    <img class="t10-arte" src="assets/img/top10/top10-green-points.jpeg"
+         alt="TOP 10 Green Points do mes" width="1920" height="1080" loading="lazy" decoding="async">
+    <figcaption class="t10-falta"><b>TOP 10 Green Points</b><span>assets/img/top10/top10-green-points.jpeg</span></figcaption>
+  </div>
+</section>
+<script>
+/* Arte que falta vira moldura marcada, nao retangulo preto — mesmo padrao dos Destaques.
+   Aqui a imagem esta no fluxo vertical normal, entao o loading="lazy" nativo funciona (o
+   problema de lazy que nunca dispara e das telas que saem da janela na HORIZONTAL). */
+(function(){
+  var m = document.querySelector("#top10 .t10-moldura");
+  if(!m) return;
+  var im = m.querySelector(".t10-arte");
+  var falhou = function(){ m.classList.add("t10-sem-arte"); };
+  if(im.complete && !im.naturalWidth) falhou();
+  im.addEventListener("error", falhou);
+  im.addEventListener("load", function(){ m.classList.remove("t10-sem-arte"); });
+})();
+</script>
+
+<style id="destaques-estilo">
+  /* A seção é uma tela cheia com a arte centrada. `min-height:100vh` porque o modo
+     apresentação enquadra a seção inteira: com altura de conteúdo, a arte pousaria
+     colada no que vem antes. */
+  /* ============================================================
+     DESTAQUES-DESATIVADA (2026-08-13) — *"slides do Creator e Escritorio Virtual pode tirar
+     tambem"*. O carrossel tinha TRÊS telas; a do Summit já havia saído em 2026-08-12 (virou a
+     seção #summit). Tirando as outras duas sobrava um palco VAZIO, então a seção inteira saiu.
+     ⚠ `display:none` e NÃO remover o HTML: convenção do projeto (ver TOP10-DESATIVADA logo
+     acima). Devolver é apagar este `display:none`, recolocar 'destaques' no #reorder-secoes e
+     trocar `on:false` por `on:true` no js/presentation-mode.js — os três, ou ela volta pela
+     metade.
+     ⚠ Em seção oculta o `loading="lazy"` nunca dispara, então as artes deixam de ser baixadas
+     — o peso sai junto, sem precisar mexer em arquivo. */
+  #destaques{ display:none;
+    position:relative; min-height:100vh; place-items:center;
+    padding:clamp(24px,4vh,64px) clamp(16px,4vw,48px); background:#04070a; overflow:hidden; }
+  /* ⚠ A TERCEIRA PARCELA DO min() É O QUE IMPEDE A ARTE DE ESTOURAR A TELA. A arte é 16:9;
+     limitando só pela largura, num notebook baixo (1920x946) uma moldura de 1320px pediria
+     743px de altura e, com o padding, passaria da janela. Convertendo a altura disponível de
+     volta em largura (x16/9) a moldura nunca passa — mesma conta do visor do ecossistema. */
+  #destaques .dq-palco{ position:relative; width:min(1320px, 92vw, calc((84vh - 40px) * 16 / 9));
+    border-radius:20px; overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.6); }
+  #destaques .dq-trilho{ display:flex; will-change:transform;
+    transition:transform .55s cubic-bezier(.16,1,.3,1); }
+  @media (prefers-reduced-motion:reduce){ #destaques .dq-trilho{ transition:none; } }
+  #destaques .dq-tela{ flex:0 0 100%; margin:0; position:relative; aspect-ratio:16/9;
+    background:#04070a; display:grid; place-items:center; }
+  /* contain e nunca cover: são artes com texto, e recortar corta texto */
+  #destaques .dq-tela img{ width:100%; height:100%; object-fit:contain; display:block; }
+  /* a legenda só aparece na tela cuja arte ainda não existe — é o que mostra, na própria
+     página, o caminho exato onde o arquivo deve ser colocado */
+  #destaques .dq-falta{ display:none; }
+  #destaques .dq-tela.dq-sem-arte img{ display:none; }
+  #destaques .dq-tela.dq-sem-arte .dq-falta{ display:grid; gap:10px; place-items:center; text-align:center;
+    padding:24px; border:1.5px dashed rgba(24,255,0,.34); border-radius:16px; margin:24px;
+    font-family:'Inter Display',sans-serif; }
+  #destaques .dq-tela.dq-sem-arte .dq-falta b{ font-size:clamp(18px,2vw,26px); color:#18FF00; font-weight:600; }
+  #destaques .dq-tela.dq-sem-arte .dq-falta span{ font-size:12px; letter-spacing:.06em; color:rgba(242,255,240,.55); }
+  #destaques .dq-nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+    width:46px; height:46px; border-radius:50%; border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.38); color:#fff; font-size:26px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:.2s;
+    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+  #destaques .dq-nav:hover{ background:rgba(0,0,0,.7); }
+  #destaques .dq-nav[aria-disabled="true"]{ opacity:.28; pointer-events:none; }
+  #destaques .dq-ant{ left:14px; } #destaques .dq-pro{ right:14px; }
+  #destaques .dq-pontos{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    z-index:3; display:flex; gap:9px; }
+  #destaques .dq-ponto{ width:9px; height:9px; border-radius:50%; border:none; padding:0;
+    background:rgba(255,255,255,.28); cursor:pointer; transition:.25s; }
+  #destaques .dq-ponto.on{ background:#18FF00; width:22px; border-radius:5px; }
+  @media (max-width:1024px){
+    #destaques{ min-height:auto; padding:40px 16px; }
+    #destaques .dq-palco{ width:min(96vw, calc((70vh) * 16 / 9)); border-radius:14px; }
+    #destaques .dq-nav{ width:38px; height:38px; font-size:20px; }
+    #destaques .dq-ant{ left:8px; } #destaques .dq-pro{ right:8px; }
+  }
+</style>
+<section id="destaques" aria-label="Destaques iGreen">
+  <div class="dq-palco">
+    <div class="dq-trilho">
+      <!-- Cada figure é uma tela. A legenda só aparece quando o arquivo NÃO existe: é o
+           que mostra, na própria página, onde cada arte deve ser colocada. -->
+      <figure class="dq-tela">
+        <img src="assets/img/destaques/creator.jpeg" alt="iGreen Creator: crie vídeos com os conteúdos da iGreen e seja remunerado pela performance"
+             width="1672" height="941" loading="lazy" decoding="async">
+        <figcaption class="dq-falta"><b>iGreen Creator</b><span>assets/img/destaques/creator.jpeg</span></figcaption>
+      </figure>
+      <figure class="dq-tela">
+        <img src="assets/img/destaques/escritorio-virtual.jpeg" alt="Escritório Virtual: portal com todas as informações da sua rede, dados em tempo real e suporte 24h"
+             width="1920" height="1080" loading="lazy" decoding="async">
+        <figcaption class="dq-falta"><b>Escritório Virtual</b><span>assets/img/destaques/escritorio-virtual.jpeg</span></figcaption>
+      </figure>
+    </div>
+    <button class="dq-nav dq-ant" type="button" aria-label="Tela anterior">‹</button>
+    <button class="dq-nav dq-pro" type="button" aria-label="Próxima tela">›</button>
+    <div class="dq-pontos" role="tablist" aria-label="Telas"></div>
+  </div>
+</section>
+
+
+
+
 <footer id="rodape">
   <div class="ft-inner">
     <div class="ft-brand">
@@ -6392,7 +7391,9 @@ if(window.gsap&&window.ScrollTrigger){
       <p class="ft-desc">O maior ecossistema de energia e serviços sustentáveis do Brasil: energia, telecom, seguros, pay e expansão em uma única plataforma, para quem quer empreender e crescer.</p>
     </div>
     <div>
-      <span class="ft-kicker">Sociais</span>
+      <!-- "Sociais" -> "Links importantes" (pedido do dono, 2026-08-04): a lista deixou de ser só
+           redes sociais quando entraram Escritório Virtual, Store e agora a Newsletter. -->
+      <span class="ft-kicker">Links importantes</span>
       <ul class="ft-soc">
         <li><a href="https://www.instagram.com/igreen.academy/" target="_blank" rel="noopener"><span class="n">001.</span>Instagram Licenciado<span class="ft-h">@igreen.academy</span><span class="arw">↗</span></a></li>
         <li><a href="https://www.instagram.com/igreen.energy/" target="_blank" rel="noopener"><span class="n">002.</span>Instagram Cliente<span class="ft-h">@igreen.energy</span><span class="arw">↗</span></a></li>
@@ -6400,6 +7401,11 @@ if(window.gsap&&window.ScrollTrigger){
         <li><a href="https://escritorio.igreenenergy.com.br/" target="_blank" rel="noopener"><span class="n">004.</span>Escritório Virtual<span class="ft-h">escritorio.igreenenergy.com.br</span><span class="arw">↗</span></a></li>
         <li><a href="https://store.igreenenergy.com.br/" target="_blank" rel="noopener"><span class="n">005.</span>iGreen Store<span class="ft-h">store.igreenenergy.com.br</span><span class="arw">↗</span></a></li>
         <li><a href="https://whatsapp.com/channel/0029Vb7Lh8TCBtx6tec4kN1G" target="_blank" rel="noopener"><span class="n">006.</span>WhatsApp<span class="ft-h">Canal Igreen News</span><span class="arw">↗</span></a></li>
+        <!-- Newsletter (pedido do dono, 2026-08-04). O dono passou o link em http://; aqui vai
+             HTTPS, como todos os outros desta lista — de uma página https, um link http é queda de
+             protocolo. Verificado num navegador de verdade: o endereço responde e leva à newsletter
+             (o curl deste ambiente devolve 403 até na raiz do domínio, então não servia de prova). -->
+        <li><a href="https://igreenenergy.com.br/newsletter" target="_blank" rel="noopener"><span class="n">007.</span>Newsletter<span class="ft-h">Promoções do Mês Vigente</span><span class="arw">↗</span></a></li>
       </ul>
     </div>
   </div>
@@ -6703,6 +7709,37 @@ if(window.gsap&&window.ScrollTrigger){
 })();
 </script>
 <script src="js/video-inview.js?v=20260804"></script>
+<!-- Reconhecimento por qualificacao. Precisa vir ANTES da linha que injeta o
+     js/presentation-mode.js (fim do arquivo): e este script que publica o
+     window.GRAD_REC_LEVELS, e a apresentacao le essa lista ao montar as paradas.
+     Se carregasse depois, as paradas de reconhecimento simplesmente nao existiriam —
+     o mesmo tipo de silencio que ja aconteceu aqui com os dots da galeria. -->
+<script src="js/reconhecimento.js?v=20260812"></script>
+<!-- Player do vídeo do reconhecimento, um por qualificação (2026-08-13). ARQUIVO LOCAL
+     primeiro, embed do YouTube como reserva — o mesmo padrão do vídeo institucional da Sede,
+     que foi o que o dono pediu ("aquele padrao do video, para rodar ofiline").
+     ⚠ NÃO tem a exigência de ordem dos três scripts vizinhos: a apresentação não monta
+     nenhuma parada a partir dele. Quem consulta é o cartão da capa da galeria, e só no
+     CLIQUE — muito depois de qualquer script ter carregado. Fica aqui por assunto, colado no
+     reconhecimento, não por dependência.
+     ⚠ Ele encadeia o `window.onYouTubeIframeAPIReady` em vez de sobrescrever, porque o vídeo
+     institucional define o mesmo global; ver o comentário lá dentro. -->
+<script src="js/video-reconhecimento.js?v=20260814"></script>
+<!-- Galeria de fotos do ecossistema (uma por conexão). Mesma exigência de ordem do
+     reconhecimento: precisa vir ANTES da injeção do js/presentation-mode.js, porque é
+     este script que publica o window.ECO_GAL_CARDS que a apresentação lê para montar as
+     paradas. Carregado depois, as paradas de foto do ecossistema não existiriam e ninguém
+     veria erro nenhum — o tipo de silêncio que esta base já pagou caro. -->
+<script src="js/ecossistema-galeria.js?v=20260814"></script>
+<!-- Carrossel dos Destaques (3 telas, abaixo da agenda). Mesma exigência de ordem dos dois
+     acima: precisa vir ANTES da injeção do js/presentation-mode.js, porque é ele que publica
+     o window.IGREEN_DESTAQUES que a apresentação consulta para saber quantas paradas criar. -->
+<script src="js/destaques.js?v=20260810"></script>
+<!-- Carrossel da agenda. A <section id="agenda"> ja apareceu no HTML bem antes desta linha,
+     e isso NAO e problema: custom element registrado depois faz "upgrade" retroativo em
+     quem ja esta no DOM. Fica aqui embaixo junto dos outros scripts para nao bloquear a
+     renderizacao do meio da pagina. -->
+<script src="js/igreen-agenda.js?v=20260809"></script>
 <script>
 /* Tiles do carrossel de logos do clube (orbita): 12 dos 48 nunca carregavam.
    Sao duplicatas do carrossel infinito que vivem FORA da viewport na horizontal, e o
@@ -6762,7 +7799,7 @@ if(window.gsap&&window.ScrollTrigger){
       img:"assets/img/rede/fellipe-andrea.jpg" },
     { first:"Sanzio e Soraia", last:"Morvan", lvl:"EMBAIXADOR",
       img:"assets/img/rede/sanzio-soraia.jpg" },
-    /* ---------- ROYAIS (13) ----------
+    /* ---------- ROYAIS (14) ----------
        A ORDEM AQUI E A ORDEM DO TRILHO. O dono passou a lista completa em 2026-08-03 (2a rodada),
        em ordem alfabetica de primeiro nome, e ela substituiu a anterior. Quatro nomes mudaram:
          - "André Maluf"        -> "André Maluf e Beatriz Guimarães"
@@ -6795,7 +7832,18 @@ if(window.gsap&&window.ScrollTrigger){
     { first:"Orlando Ferreira", last:"e Florence Gentil", lvl:"ROYAL",
       img:"assets/img/rede/orlando-ferreira.jpg" },
     { first:"Renato e Jéssica", last:"Cardoso", lvl:"ROYAL",
-      img:"assets/img/rede/renato-cardoso.jpg" }
+      img:"assets/img/rede/renato-cardoso.jpg" },
+    /* MADSON E JHENIFFER SAO O ULTIMO DA LISTA DE PROPOSITO, e nao por ordem alfabetica.
+       Entraram em 2026-08-06 ("eles sao novos Royais") e ficaram entre Luiz Carlos e Orlando,
+       que era a ordem alfabetica de primeiro nome usada pelo resto da lista. Em 2026-08-09 o
+       dono pediu para mover para o fim, "por ocasiao que ele e o novo Royal": quem chegou por
+       ultimo fecha a vitrine. Se um Royal novo entrar, ele passa a ser o ultimo e o Madson
+       volta para a ordem alfabetica.
+       A foto veio 273x415 com fundo TRANSPARENTE (as outras sao 273x426 opacas), entao foi achatada
+       sobre #070A08 — a --rede-surface, cor de fundo do card — antes de virar JPEG. Sem achatar, o
+       JPEG (que nao tem canal alpha) renderizaria o vazado como preto chapado. */
+    { first:"Madson", last:"e Jheniffer", lvl:"ROYAL",
+      img:"assets/img/rede/madson-jheniffer.jpg" }
   ];
   var N=P.length;
 
@@ -7096,11 +8144,64 @@ if(window.gsap&&window.ScrollTrigger){
     { lvl:'ROYAL',      rotulo:'Acionistas Royal',       idx:[] },
     { lvl:'EMBAIXADOR', rotulo:'Acionistas Embaixadores', idx:[] }
   ];
-  P.forEach(function(p,i){ (p.lvl==='EMBAIXADOR'?G[1]:G[0]).idx.push(i); });
+  /* ============================================================
+     O GRUPO ROYAL VIROU UMA CAPA SO (2026-08-14)
+     ------------------------------------------------------------
+     Pedido do dono: *"nessa parte especifica dos acionistas royais tem a imagem capa... e
+     quando eu clicar ele abre um pop up com todas os quatorze nomes e imagens"*.
+
+     ⚠ NAO MEXI NA COREOGRAFIA, e isso foi decisao. O trilho monta um card por pessoa e o
+     grupo indexa nesse baralho; as paradas da apresentacao saem dai. Em vez de reescrever a
+     mecanica, acrescento UM card (a capa) ao fim do baralho e aponto o grupo ROYAL so para
+     ele. O resto — o pin, o rotulo, a barra, o contador, o pin do ScrollTrigger — continua
+     funcionando exatamente como antes, agora com 1 item em vez de 14.
+     ⚠ Os 14 NAO saem do `P`: o pop-up le a mesma lista. Nada foi duplicado e nada se perdeu.
+     ⚠ Os EMBAIXADORES nao foram tocados, a pedido dele — G[1] continua igual.
+     ============================================================ */
+  /* ⚠ A CAPA É SÓ DO DESKTOP (2026-08-14, pedido do dono): *"no do mobile na parte dos royais
+     pode manter da mesma forma que o dos embaixadores, nao precisa abrir popup no mobile dos
+     royais"*. E faz sentido: a capa nasceu para poupar 12 cliques na APRESENTAÇÃO ao vivo, que
+     é desktop. No celular ninguém apresenta — ali o gesto natural é arrastar o baralho, igual
+     aos Embaixadores, e um pop-up no meio disso só atrapalha.
+     ⚠ A DECISÃO É TOMADA AQUI, ao montar os grupos, e não escondendo a capa com CSS: se ela
+     continuasse no grupo, o baralho teria 1 item no celular e não haveria o que arrastar —
+     era exatamente o sintoma que ele relatou. Quem manda no que aparece é o `G[].idx`.
+     ⚠ O pop-up dos 14 continua existindo e intacto — só não é alcançável pelo celular. */
+  var ehDesk = window.matchMedia('(min-width:1025px)').matches;
+  var iCapa = -1;
+  if (ehDesk) (function(){
+    var art=document.createElement('article');
+    art.className='rcard rcard-capa';
+    art.innerHTML='<div class="rc-ph"><img src="assets/img/rede/CapaRoyais.jpg?v=20260814"'
+      + ' alt="Acionistas Royal — abrir a lista completa" width="273" height="415"'
+      + ' decoding="async"></div>';
+    art.setAttribute('role','button');
+    art.setAttribute('tabindex','0');
+    art.setAttribute('aria-label','Ver os 14 Acionistas Royal');
+    deck.appendChild(art); cards.push(art); iCapa=cards.length-1;
+    function abre(e){ e.preventDefault(); e.stopPropagation();
+      if(window.IGREEN_ROYAIS) window.IGREEN_ROYAIS.abrir(); }
+    art.addEventListener('click',abre);
+    art.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' ') abre(e);
+    });
+  })();
+  N = cards.length;                       /* o baralho cresceu: quem conta cards precisa saber */
+  P.forEach(function(p,i){ if(p.lvl==='EMBAIXADOR') G[1].idx.push(i); });
+  /* DESKTOP: ROYAL é só a capa (1 parada na apresentação em vez de 14).
+     CELULAR: ROYAL são as 14 pessoas, do mesmo jeito que os Embaixadores. */
+  if(iCapa>=0) G[0].idx.push(iCapa);
+  else P.forEach(function(p,i){ if(p.lvl==='ROYAL') G[0].idx.push(i); });
   if(!(G[0].idx.length && G[1].idx.length)) return;   /* sem os dois grupos nao ha coreografia */
   /* mapa "este card pertence a este grupo?" pronto — o apply() roda por quadro e um indexOf()
      dentro de laco daria 15x13 comparacoes a cada um deles. */
   G.forEach(function(g){ g.tem=new Array(N); g.idx.forEach(function(i){ g.tem[i]=true; }); });
+  /* ⚠ ESTADO INICIAL do marcador de grupo. Ele tambem e escrito quando o trilho TROCA de
+     grupo — mas essa troca so acontece ao rolar, e no carregamento o atributo ficava `null`.
+     Sintoma medido: o contador "01 / 01" e as setas continuavam a vista no grupo ROYAL, porque
+     a regra de CSS depende deste atributo e ele ainda nao existia. Marcar aqui e o unico
+     momento garantido: e logo depois de os grupos existirem e antes de qualquer quadro. */
+  if(rail) rail.setAttribute('data-grupo', G[0].lvl);
 
   /* GAPX sai da largura REAL do card, nao de getPropertyValue('--gapx'): aqui --cardw e um
      min()/clamp() e uma custom property com calc() volta como string nao resolvida ("calc(...)"),
@@ -7175,9 +8276,21 @@ if(window.gsap&&window.ScrollTrigger){
        do outro lado; e a unica parte do curso sem card, e ela existe para a troca nao acontecer
        com um card na tela deslizando de um lado para o outro. */
     var CABECA=55, PASSO=40, PONTE=40, CAUDA=45;
-    var yR0=CABECA,        yRn=CABECA+(NR-1)*PASSO;
-    var yE0=yRn+PONTE,     yEn=yE0+(NE-1)*PASSO;
-    var CURSO=yEn+CAUDA;                            /* 660vh com 13+2 */
+    /* ⚠ UM GRUPO DE UM CARTAO PRECISA DE TRECHO PROPRIO — `(n-1)*PASSO` daria ZERO.
+       O trecho e o que decide por quanto tempo o trilho fica NA TELA: fora dele o `.rail-on`
+       cai e a `.carsrail` volta a `opacity:0`. Com o grupo ROYAL virando uma capa so (14 -> 1),
+       o trecho zerou e a janela virou apenas as duas FOLGAs: medido, 18vh de um curso de 180vh,
+       ou 130px de rolagem — e a `.carsrail` leva 0,55s so para aparecer. Numa rolagem comum
+       (~1000px/s) a capa cruzava a janela em ~130ms e nunca chegava a aparecer por inteiro.
+       Era o segundo motivo de *"no modo site nao esta exibindo a carta"*; o primeiro era a
+       regra de `position` de 01d1e42 (ver o comentario la em cima, no CSS).
+       Com o piso de UM PASSO a janela do ROYAL vai a 58vh — a MESMA dos Embaixadores, que sao
+       dois cartoes e sempre funcionaram. A PONTE continua intacta: o trecho cresce ANTES dela,
+       entao a troca de carro segue acontecendo com o trilho fora da tela. */
+    var TRECHO=function(n){ return Math.max(n-1,1)*PASSO; };
+    var yR0=CABECA,        yRn=CABECA+TRECHO(NR);
+    var yE0=yRn+PONTE,     yEn=yE0+TRECHO(NE);
+    var CURSO=yEn+CAUDA;                            /* 660vh com 13+2; 220vh com 1+2 */
     sec.style.height=(100+CURSO)+'vh';
 
     /* FOLGA nas pontas de cada trecho, e ela nao e enfeite: a parada da ultima pessoa cai
@@ -7254,6 +8367,7 @@ if(window.gsap&&window.ScrollTrigger){
 
         if(!dentro) return;
         if(kicker && kicker.textContent!==G[grupo].rotulo) kicker.textContent=G[grupo].rotulo;
+        if(rail) rail.setAttribute('data-grupo', G[grupo].lvl);   /* CSS esconde contador/setas no ROYAL */
         var snapped=Math.round(localEm(v,grupo)*((grupo===0?NR:NE)-1));
         if(snapped===target) return;
         target=snapped;
@@ -7339,6 +8453,7 @@ if(window.gsap&&window.ScrollTrigger){
       var tem=G[grupo].tem;
       for(var i=0;i<N;i++) cards[i].style.display = tem[i] ? '' : 'none';
       if(kicker) kicker.textContent=G[grupo].rotulo;
+      if(rail) rail.setAttribute('data-grupo', G[grupo].lvl);   /* CSS esconde contador/setas no ROYAL */
       atual=0; deck.scrollLeft=0;
       var n=visiveis().length;
       if(countEl) countEl.textContent='01 / '+String(n).padStart(2,'0');
@@ -7352,12 +8467,44 @@ if(window.gsap&&window.ScrollTrigger){
     });
 
     /* setas empurram o proprio scroll horizontal do deck (nao existe pin aqui) */
-    function irCard(k){
+    /* ⚠ O CONTADOR E A BARRA SAO PINTADOS AQUI, e nao so pelo rAF do listener de scroll.
+       O listener existe e continua valendo (ele cobre o arrasto EM ANDAMENTO), mas depender
+       so dele deixa o numero atras do dedo quando o quadro demora — e "14 cartas com o
+       contador travado em 01" le como se nada tivesse acontecido, que e exatamente a
+       reclamacao que este trilho ja gerou. Pintar tambem no destino e barato e deterministico. */
+    function pintaConta(k,n){
+      if(countEl) countEl.textContent=String(k+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+      if(bar) bar.style.width=(n<2?100:Math.max(5,(k/(n-1))*100))+'%';
+    }
+    /* ⚠ O POUSO E UM TWEEN DO GSAP, e nao o `scrollTo({behavior:'smooth'})` do navegador.
+       Pedido do dono: *"deixe o scroll mais suave"*. O `smooth` nativo tem curva e duracao
+       FIXAS: passar uma carta e atravessar cinco levam o mesmo tempo, entao o passo curto sai
+       lento e o longo sai correndo. Com o tween a duracao acompanha a distancia e a curva e
+       `power3.out` — sai rapido e assenta devagar, que e a sensacao de inercia.
+       ⚠ O SNAP FICA DESLIGADO ATE O FIM DO POUSO. Ele e `mandatory`: com ele ligado, cada
+       quadro do tween seria puxado de volta para o ponto de encaixe e o movimento sairia aos
+       trancos. Voltar so no `onComplete` e seguro porque nesse instante ja estamos EXATAMENTE
+       sobre um ponto de encaixe.
+       ⚠ Anima `scrollLeft`, que e rolagem — nao e animacao de layout. O navegador nao refaz
+       leiaute nenhum por causa disso.
+       ⚠ Sem GSAP ou com movimento reduzido, salta direto: melhor um pulo do que uma peca que
+       nao responde. */
+    function alvoDe(k){
       var v=visiveis();
-      k=Math.min(v.length-1,Math.max(0,k)); atual=k;
+      k=Math.min(v.length-1,Math.max(0,k));
       var c=cards[v[k]];
-      deck.scrollTo({left:c.offsetLeft-(deck.clientWidth-c.offsetWidth)/2,
-        behavior:reduce?'auto':'smooth'});
+      return { k:k, n:v.length, left:c.offsetLeft-(deck.clientWidth-c.offsetWidth)/2 };
+    }
+    function irCard(k){
+      var a=alvoDe(k); atual=a.k;
+      pintaConta(a.k,a.n); atualizaSetas();
+      if(reduce || !window.gsap){ deck.style.scrollSnapType=''; deck.scrollLeft=a.left; return; }
+      deck.style.scrollSnapType='none';
+      var dist=Math.abs(deck.scrollLeft-a.left);
+      gsap.killTweensOf(deck);
+      gsap.to(deck,{ scrollLeft:a.left, overwrite:true, ease:'power3.out',
+        duration:Math.min(1.05, 0.34 + dist/2600),
+        onComplete:function(){ deck.style.scrollSnapType=''; } });
     }
     atualizaSetas=function(){
       var n=visiveis().length;
@@ -7378,11 +8525,109 @@ if(window.gsap&&window.ScrollTrigger){
           if(d<bd){ bd=d; best=k; }
         }
         atual=best;
-        if(countEl) countEl.textContent=String(best+1).padStart(2,'0')+' / '+String(v.length).padStart(2,'0');
-        if(bar) bar.style.width=(v.length<2?100:Math.max(5,(best/(v.length-1))*100))+'%';
+        pintaConta(best,v.length);
         atualizaSetas();
       });
     },{passive:true});
+
+    /* ============================================================
+       ARRASTO POR PONTEIRO — o dedo passa a mover o baralho por CÓDIGO (2026-08-14)
+       ------------------------------------------------------------
+       Sintoma do dono, relatado TRÊS vezes: *"nao esta rolando para o lado"*, *"esta
+       scrollando no click no mobile"* — só as setas andavam.
+
+       Duas causas já foram consertadas antes desta (`pointer-events:none` no trilho, e o
+       grupo Royal com um cartão só). Depois delas TUDO o que dá para medir dizia que o
+       arrasto nativo devia funcionar: `overflow-x:auto`, `touch-action:pan-x`,
+       `pointer-events:auto` na cadeia inteira, `scroll-snap-align:center` nas cartas,
+       ninguém cancelando o `touchmove`, 3.985px de curso e `scrollLeft` respondendo por
+       código. E mesmo assim, no aparelho dele, não andava.
+
+       ⚠ ENTÃO A DECISÃO AQUI NÃO É "MAIS UM PALPITE DE CSS": é tirar o navegador da
+       decisão. Com `touch-action:pan-y` o navegador fica dono do eixo VERTICAL (a página
+       continua rolando normalmente com o dedo em cima do baralho) e o HORIZONTAL passa a
+       ser deste código. Um dono por eixo, sem disputa — a mesma lição de posse explícita
+       que este projeto já aprendeu com o snap brigando com o auto-scroll.
+
+       ⚠ E TEM UM GANHO QUE NÃO É ESTÉTICO: arrasto nativo eu NÃO consigo testar neste
+       ambiente (toque real não se simula, e as tentativas travaram o painel). Isto aqui eu
+       testo — `pointerdown`/`pointermove`/`pointerup` sintéticos movem o `scrollLeft` e a
+       verificação vira número em vez de esperança.
+
+       ⚠ O snap é DESLIGADO durante o arrasto e devolvido ao soltar. Com `mandatory` ligado,
+       cada escrita em `scrollLeft` seria puxada de volta para o ponto de encaixe e o
+       movimento sairia aos trancos.
+       ⚠ A folga de 4px antes de assumir o gesto existe para um TOQUE não virar arrasto: sem
+       ela, encostar na carta já mexeria o baralho.
+       ============================================================ */
+    (function(){
+      var pegou=false, idp=null, x0=0, sl0=0, moveu=false, vx=0, tAnt=0, xAnt=0;
+      /* carta cujo CENTRO fica mais perto de uma posicao de rolagem qualquer — recebe a
+         posicao como parametro para poder perguntar tanto pela posicao ATUAL quanto pela
+         PROJETADA pela inercia */
+      function maisProxima(pos){
+        var v=visiveis(), mid=pos+deck.clientWidth/2, best=0, bd=Infinity;
+        for(var k=0;k<v.length;k++){
+          var c=cards[v[k]], cc=c.offsetLeft+c.offsetWidth/2, d=Math.abs(cc-mid);
+          if(d<bd){ bd=d; best=k; }
+        }
+        return best;
+      }
+      deck.addEventListener('pointerdown',function(e){
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        if(window.gsap) gsap.killTweensOf(deck);   /* pegar no meio do pouso para o pouso */
+        pegou=true; moveu=false; idp=e.pointerId; x0=e.clientX; sl0=deck.scrollLeft;
+        vx=0; tAnt=e.timeStamp; xAnt=e.clientX;
+      });
+      deck.addEventListener('pointermove',function(e){
+        if(!pegou || e.pointerId!==idp) return;
+        var dx=e.clientX-x0;
+        if(!moveu){
+          if(Math.abs(dx)<4) return;              /* toque parado nao vira arrasto */
+          moveu=true;
+          deck.style.scrollSnapType='none';       /* senao o encaixe puxa de volta */
+          try{ deck.setPointerCapture(idp); }catch(err){}
+        }
+        /* VELOCIDADE SUAVIZADA (media exponencial). A instantanea do ultimo par de eventos
+           oscila demais — um tremor no fim do gesto mandaria o baralho para longe. Com o
+           peso 0,7 no historico, o que manda e a tendencia do movimento, nao o ultimo pixel.
+                   ⚠ E O INTERVALO TEM PISO DE 8ms. Dois eventos chegando quase juntos dao um `dt`
+           minusculo e a divisao explode: um deslocamento de 30px em 0,2ms daria 150 px/ms, mil
+           vezes o de um peteleco real, e o baralho voaria ate o limite. Medido aqui com eventos
+           sinteticos (que chegam com dt ~0): a velocidade estourava e SO o teto de 3 cartas
+           segurava — o teto e a ultima trava, nao a primeira. 8ms e o intervalo de uma tela de
+           120Hz, entao nenhum aparelho real perde precisao com este piso. */
+        var dt=Math.max(e.timeStamp-tAnt, 8);
+        vx = vx*0.7 + ((e.clientX-xAnt)/dt)*0.3; tAnt=e.timeStamp; xAnt=e.clientX;
+        deck.scrollLeft = sl0 - dx;
+        e.preventDefault();
+      },{passive:false});
+      function solta(e){
+        if(!pegou) return;
+        pegou=false;
+        try{ deck.releasePointerCapture(idp); }catch(err){}
+        /* ⚠ TOQUE SEM ARRASTO TEM DE DEVOLVER O ENCAIXE. O `pointerdown` mata o tween do
+           pouso (para o dedo poder pegar o baralho no meio do deslize), e quem devolvia o
+           `scroll-snap-type` era o `onComplete` desse tween — que nunca vai rodar. Sem esta
+           linha, um toque no meio do deslize deixava o baralho SEM encaixe ate o proximo
+           pouso: as cartas paravam em qualquer lugar. Nao dava erro, so ficava relaxado. */
+        if(!moveu){ deck.style.scrollSnapType=''; return; }
+        /* INERCIA: a posicao de pouso sai de onde o baralho ESTARIA se continuasse no embalo,
+           e nao de onde o dedo soltou. E isso que transforma um peteleco rapido em "passa tres
+           cartas" e um arrasto lento em "passa uma" — sem inercia, os dois passavam uma so.
+           ⚠ O sinal e invertido: o dedo indo para a ESQUERDA (vx negativo) avanca a rolagem.
+           ⚠ O teto de 3 cartas existe para o peteleco nao atravessar as 14 e perder o contexto
+              de onde se estava. */
+        var passo=deck.clientWidth*0.8;
+        var proj=deck.scrollLeft - vx*260;
+        proj=Math.max(deck.scrollLeft-passo*3, Math.min(deck.scrollLeft+passo*3, proj));
+        moveu=false; vx=0;
+        irCard(maisProxima(proj));
+      }
+      deck.addEventListener('pointerup',solta);
+      deck.addEventListener('pointercancel',solta);
+    })();
+
     /* comeca no grupo do carro que o site seleciona sozinho no fim do video (Royal 5K) */
     pintaGrupo();
   }
@@ -7394,6 +8639,167 @@ if(window.gsap&&window.ScrollTrigger){
     if(agora===eraDesk) return;
     eraDesk=agora; location.reload();
   },{passive:true});
+})();
+</script>
+
+<style id="royais-estilo">
+  /* Pop-up dos 14 Acionistas Royal (2026-08-14). Herda o visual do `.grad-modal` que a galeria
+     das graduacoes ja usa — mesma borda, mesmo fundo, mesmo comportamento de abrir/fechar.
+     ⚠ So o MIOLO e novo: la e um visor de uma imagem por vez; aqui e uma GRADE com os 14.
+     ⚠ Sem `mix-blend-mode` e sem `filter` de tela cheia: o projeto ja pagou caro por isso
+     (a GPU rele os pixels de baixo a cada quadro). Fundo chapado resolve. */
+  .rylst .gm-panel{ display:flex; flex-direction:column; }
+  .rylst-grade{ display:grid; gap:clamp(10px,1.4vw,20px); overflow:auto; padding:clamp(12px,2vw,26px);
+    grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr)); align-content:start; }
+  /* ⚠ CONTORNO NEON — pedido do dono (2026-08-14). O brilho e `box-shadow`, NAO `filter`
+     nem `drop-shadow`: sao 14 cartas na tela ao mesmo tempo, e filtro obriga a GPU a reler os
+     pixels de baixo a cada quadro. Este projeto ja pagou por isso (ver o performance-guardian
+     e os blends de tela cheia). `box-shadow` a GPU compoe direto, sem releitura.
+     ⚠ Duas camadas de sombra: uma justa e forte (o "tubo" do neon) e outra larga e fraca (o
+     halo). Uma so da ou risco duro ou borrao — o neon vem do par.
+     ⚠ Nada animado aqui: as cartas aparecem juntas num pop-up que abre no meio de uma
+     apresentacao ao vivo, e 14 animacoes simultaneas e onde o notebook do dono engasga. */
+  .rylst-p{ position:relative; border-radius:14px; overflow:hidden; background:#050b06;
+    border:1.5px solid rgba(24,255,0,.85);
+    box-shadow:0 0 6px rgba(24,255,0,.55), 0 0 18px rgba(24,255,0,.28); }
+  /* ⚠ `.rylst-p > img` COM O FILHO DIRETO, e nao `.rylst-p img` — foi o defeito do print do
+     dono ("o icone esta por cima"). O seletor descendente pegava TAMBEM o pin, que e um <img>
+     dentro do mesmo <figure>; e como `.rylst-p img` (0,1,1) tem especificidade MAIOR que
+     `.rylst-pin` (0,1,0), o pin herdava `width:100%` e `aspect-ratio:273/415` e cobria a foto
+     inteira. Nao havia erro nenhum: era so cascata. */
+  .rylst-p > img{ display:block; width:100%; height:auto; aspect-ratio:273/415; object-fit:cover; }
+  /* ⚠ `padding-right` MAIOR que os outros: e o espaco reservado do pin, que agora fica no
+     canto inferior direito. Medido antes: o pin encostava na faixa do nome (34x14px). Sem esta
+     reserva, um nome comprido ("e Valquiria Ferreira") passaria por baixo dele. */
+  .rylst-nome{ position:absolute; left:0; right:0; bottom:0; padding:26px 48px 9px 10px;
+    background:linear-gradient(180deg,rgba(3,8,4,0),rgba(3,8,4,.93) 62%);
+    font-size:clamp(10.5px,1vw,12.5px); line-height:1.25; color:#eafff0; }
+  .rylst-nome b{ display:block; color:#18FF00; font-weight:600; }
+  /* especificidade alta de proposito: se alguem reintroduzir uma regra descendente para as
+     imagens do cartao, o pin nao volta a ser engolido por ela. */
+  /* ⚠ CANTO INFERIOR DIREITO, nao o superior — pedido do dono (2026-08-14).
+     O `z-index:2` importa aqui mais do que importava em cima: o rodape do nome e um gradiente
+     absoluto ancorado no `bottom:0`, entao sem a camada o pin ficaria POR BAIXO dele. E o
+     `bottom` e maior que o `right` de proposito — o pin sobe o suficiente para nao encostar no
+     texto, que e alinhado a esquerda e ocupa a base do cartao. */
+  .rylst-p img.rylst-pin{ position:absolute; bottom:6px; right:6px; z-index:3;
+    width:clamp(26px,2.4vw,34px); height:auto; aspect-ratio:auto; object-fit:contain; }
+  /* ============================================================
+     NO CELULAR A GRADE VIRA CARROSSEL HORIZONTAL (2026-08-14)
+     ------------------------------------------------------------
+     Pedido do dono, com print: *"no mobile ficou assim, deve ser em carrossel normal na
+     horizontal"*. A grade de 2 colunas empilhava as 14 cartas numa coluna de rolagem
+     vertical mais alta que a tela, e o X de fechar caía em cima da 2ª carta.
+
+     ⚠ E O MESMO IDIOMA DO BARALHO DA BONIFICACAO no mobile (`.carsrail .cr-deck`), de
+     proposito: flex em linha, `scroll-snap-type:x mandatory`, barra de rolagem escondida e
+     `padding` lateral de `calc(50% - cardw/2)` para a primeira e a ultima carta poderem
+     parar CENTRADAS. Duas versoes parecidas do mesmo carrossel acabariam divergindo.
+     ⚠ `grid-template-columns:none` explicito: sem isso a declaracao da grade continua valendo
+     e briga com o flex em navegador que ainda calcula as duas.
+     ⚠ `align-items:center` porque flex em linha estica os filhos por padrao — sem isso a
+     carta perde a proporcao 273/415 e a foto deforma.
+     ⚠ `padding-top` de 56px e a reserva do X, o mesmo remedio da galeria do ecossistema: o
+     botao e `position:absolute` no painel e nao ha como tira-lo de la sem `overflow:hidden`
+     corta-lo. Aqui a folga vai no proprio carrossel.
+     ============================================================ */
+  @media (max-width:1024px){
+    .rylst.grad-modal .gm-panel{ height:auto; max-height:88vh; }
+    /* ⚠ `touch-action:pan-x` É O QUE FAZ O DEDO ANDAR, e faltava. Sintoma do dono
+       (2026-08-14): *"o scroll do mobile nos do acionistas nao esta permitindo rolar para o
+       lado"*. Sem esta declaração o navegador decide sozinho de quem é o gesto, e num
+       rolador horizontal DENTRO de um modal de tela cheia ele costuma entregar o toque ao
+       ancestral em vez do carrossel — o dedo arrasta e nada acontece.
+       ⚠ Medido antes: CSS liberado (`touch-action:auto` em toda a cadeia), NINGUÉM cancelando
+       o `touchmove` (testado com evento sintético, `defaultPrevented` falso nos quatro
+       estágios) e `scrollLeft` respondendo por código (0 → 200). Ou seja: o container ESTÁ
+       rolável e o problema é a ATRIBUIÇÃO do gesto, não a rolagem.
+       ⚠ Declarar `pan-x` também diz explicitamente que o eixo vertical não é deste elemento,
+       o que evita o outro sintoma da mistura `overflow-x:auto` + `overflow-y:hidden` no iOS:
+       o gesto ser engolido pelo eixo que não rola.
+       ⚠ NÃO É VERIFICÁVEL AQUI. Toque de verdade não se simula neste ambiente — o `scroll`
+       sintético do navegador automatizado não moveu o `scrollLeft` e o painel travou. Quem
+       confirma é o celular do dono. */
+    .rylst .rylst-grade{ --rycard:min(58vw,230px);
+      display:flex; grid-template-columns:none; align-items:center;
+      gap:12px; overflow-x:auto; overflow-y:hidden; touch-action:pan-x;
+      scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+      padding:56px calc(50% - var(--rycard) / 2) 18px; }
+    .rylst .rylst-grade::-webkit-scrollbar{ display:none; }
+    .rylst .rylst-p{ flex:0 0 var(--rycard); scroll-snap-align:center; }
+    .rylst .rylst-nome{ font-size:12.5px; padding:26px 46px 10px 11px; }
+  }
+</style>
+<script id="royais-app">
+/* ============================================================================
+   OS 14 ACIONISTAS ROYAL NUM POP-UP (2026-08-14)
+   ----------------------------------------------------------------------------
+   Pedido do dono: a capa no trilho, e o clique abrindo *"um pop up com todas os quatorze
+   nomes e imagens"*, com "a funcionalidade do clique da apresentacao".
+
+   ⚠ ZERO DADO NOVO: nome, sobrenome, foto e pin saem de `window.REDE_DATA` (P e PIN), que o
+   #rede-app ja publica. Repetir aqui seria o segundo lugar que discorda com o tempo.
+   ⚠ MONTA UMA VEZ SO, na primeira abertura: 14 imagens no DOM desde o carregamento seriam
+   peso que ninguem pediu — e a secao pode nem ser visitada.
+   ============================================================================ */
+(function(){
+  "use strict";
+  var modal=null;
+
+  function monta(){
+    var D=window.REDE_DATA; if(!D||!D.P) return null;
+    var royais=D.P.filter(function(p){ return p.lvl==='ROYAL'; });
+    if(!royais.length) return null;
+
+    modal=document.createElement('div');
+    modal.className='grad-modal rylst';
+    modal.id='royaisModal';
+    modal.setAttribute('aria-hidden','true');
+    var pin=(D.PIN&&D.PIN.ROYAL)||'';
+    modal.innerHTML='<div class="gm-backdrop"></div>'
+      +'<div class="gm-panel" role="dialog" aria-modal="true" aria-label="Acionistas Royal">'
+      +'<button class="gm-close" aria-label="Fechar">\u2715</button>'
+      +'<div class="rylst-grade">'
+      + royais.map(function(p){
+          return '<figure class="rylst-p">'
+            +'<img src="'+p.img+'" alt="'+p.first+' '+(p.last||'')+'" loading="lazy"'
+            +' decoding="async" width="273" height="415">'
+            + (pin?'<img class="rylst-pin" src="'+pin+'" alt="" width="34" height="34" loading="lazy" decoding="async">':'')
+            /* ⚠ o `<b>` e bloco (display:block no CSS), entao a quebra visual existe — mas o
+               TEXTO lido por leitor de tela e por copiar/colar sairia colado ("Gesslere Debora").
+               O espaco resolve os dois sem mudar o desenho. */
+            +'<figcaption class="rylst-nome"><b>'+p.first+'</b>'+(p.last?' '+p.last:'')+'</figcaption>'
+            +'</figure>';
+        }).join('')
+      +'</div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector('.gm-close').addEventListener('click',fechar);
+    modal.querySelector('.gm-backdrop').addEventListener('click',fechar);
+    return modal;
+  }
+
+  function abrir(){
+    if(!modal && !monta()) return false;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    return true;
+  }
+  function fechar(){
+    if(!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+  }
+  function aberto(){ return !!(modal && modal.classList.contains('open')); }
+
+  /* ⚠ A GUARDA DA APRESENTACAO E A PRIMEIRA LINHA, e este projeto ja tem CINCO tratadores de
+     teclado que precisaram dela. Sem isso o Esc/seta daqui brigaria com o passador de slide. */
+  document.addEventListener('keydown',function(e){
+    if(!aberto()) return;
+    if(window.__pmode && window.__pmode.isActive && window.__pmode.isActive()) return;
+    if(e.key==='Escape'){ e.preventDefault(); fechar(); }
+  },true);
+
+  window.IGREEN_ROYAIS={ abrir:abrir, fechar:fechar, aberto:aberto };
 })();
 </script>
 
@@ -7435,6 +8841,30 @@ if(window.gsap&&window.ScrollTrigger){
      reposiciona. */
   var rod=document.getElementById('rodape');
   if(rod && rod.parentNode){
+    /* 'agenda' entrou em 2026-08-09, depois da bonificacao: o dono pediu a secao "abaixo da
+       parte de bonificacao, depois que aparece a parte dos embaixadores". A ordem desta
+       lista E a ordem final da pagina — o lugar do HTML nao decide nada aqui. */
+    /* 'destaques' entrou em 2026-08-10, "abaixo da agenda": carrossel de 3 telas
+       (Creator, Escritório Virtual, Summit) e a última seção antes do rodapé. */
+    /* 'top10' SAIU desta lista em 2026-08-12 (TOP10-DESATIVADO): a secao esta display:none
+       por pedido do dono. Mesmo raciocinio da 'rede' acima — mover secao oculta nao faz mal,
+       mas listar aqui daria a entender que ela ainda participa da ordem. Devolver 'top10'
+       entre 'bonificacao' e 'agenda' e o que reverte. */
+    /* 'summit' entrou em 2026-08-12, DEPOIS dos destaques: o dono pediu "crie uma nova
+       secao abaixo para mapa summit", tirando a 3a tela do carrossel dos Destaques (a arte
+       da agenda) e dando a ela uma secao propria com o mapa clicavel. E a ultima secao
+       antes do rodape, e a ordem aqui tem de concordar com a posicao da entrada no SECTIONS
+       do js/presentation-mode.js. */
+    /* ⚠ 'agenda' e 'destaques' SAÍRAM desta lista em 2026-08-13 (AGENDA-DESATIVADA e
+       DESTAQUES-DESATIVADA). Pedido do dono: *"pode retirar a agenda oficial dos
+       treinamentos"* e *"slides do Creator e Escritorio Virtual pode tirar tambem"*.
+       ⚠ OS DESTAQUES SUMIRAM POR INTEIRO, e não por decisão minha de arredondar o pedido: o
+       carrossel tinha TRÊS telas e a do Summit já havia saído em 2026-08-12 (virou a seção
+       #summit). Tirando Creator e Escritório Virtual, sobrava um carrossel VAZIO — pior que
+       seção nenhuma, porque a apresentação criaria parada para um palco em branco.
+       Mesmo raciocínio do 'top10' logo acima: as duas estão `display:none`, e listar aqui
+       daria a entender que ainda participam da ordem. Devolver é recolocar o id na lista e
+       tirar o `display:none`. */
     ['planos','graduacoes','bonificacao'].forEach(function(id){
       var el=document.getElementById(id);
       if(el && el!==rod){ rod.parentNode.insertBefore(el, rod); moved=true; }
@@ -7444,7 +8874,7 @@ if(window.gsap&&window.ScrollTrigger){
 })();
 </script>
 <script>/* PERF: modo apresentacao e desktop-only (o JS ja faz early-return no mobile). Carrega so no desktop p/ poupar ~41KB no mobile. */
-if(window.matchMedia&&matchMedia('(min-width:1025px)').matches){var pm=document.createElement('script');pm.src='js/presentation-mode.js?v=20260804';document.body.appendChild(pm);}</script>
+if(window.matchMedia&&matchMedia('(min-width:1025px)').matches){var pm=document.createElement('script');pm.src='js/presentation-mode.js?v=20260814b';document.body.appendChild(pm);}</script>
 <script src="js/page-transition.js?v=20260804"></script>
 </body>
 </html>

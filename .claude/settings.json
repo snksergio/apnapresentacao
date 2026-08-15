@@ -3,7 +3,10 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "node .claude/scripts/hook.js sessao" }
+          {
+            "type": "command",
+            "command": "node .claude/scripts/hook.js sessao"
+          }
         ]
       }
     ],
@@ -11,7 +14,10 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "node .claude/scripts/hook.js antes-bash" }
+          {
+            "type": "command",
+            "command": "node .claude/scripts/hook.js antes-bash"
+          }
         ]
       }
     ],
@@ -19,9 +25,28 @@
       {
         "matcher": "Edit|Write|Bash",
         "hooks": [
-          { "type": "command", "command": "node .claude/scripts/hook.js depois-edicao" }
+          {
+            "type": "command",
+            "command": "node .claude/scripts/hook.js depois-edicao"
+          }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(curl*| sh*)",
+      "Bash(curl*| bash*)",
+      "Bash(wget*| sh*)",
+      "Bash(wget*| bash*)",
+      "Bash(chmod 777*)",
+      "Bash(:(){*"
     ]
   }
 }
